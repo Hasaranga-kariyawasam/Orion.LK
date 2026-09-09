@@ -6,20 +6,27 @@ import {
 } from 'lucide-react';
 import { formatLKR } from '../data';
 import { useShop } from '../context/ShopContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function Profile() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'orders' | 'addresses' | 'settings'>('dashboard');
   const navigate = useNavigate();
   const { wishlist, cart } = useShop();
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  const handleLogout = () => {
-    // Mock logout action
-    navigate('/');
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
   };
+
+  // Real user data from Firebase
+  const displayName = user?.displayName || 'User';
+  const userEmail = user?.email || '';
+  const userAvatar = user?.photoURL || null;
 
   // Mock Orders Data
   const mockOrders = [

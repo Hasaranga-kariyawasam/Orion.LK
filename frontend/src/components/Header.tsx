@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { BRAND_NEW_CATEGORIES, USED_CATEGORIES, MOCK_PRODUCTS } from '../data';
 import { useShop } from '../context/ShopContext';
 import { formatLKR } from '../data';
+import { useAuth } from '../context/AuthContext';
 
 export default function Header() {
   const [isVisible, setIsVisible] = useState(true);
@@ -27,8 +28,15 @@ export default function Header() {
   };
   
   const { cart, wishlist, setIsCartOpen, setIsWishlistOpen, cartTotal, compareList, setIsCompareModalOpen, notifications, markNotificationsRead } = useShop();
+  const { user, logout } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  const handleSignOut = async () => {
+    setShowProfileDropdown(false);
+    await logout();
+    navigate('/login');
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -169,20 +177,31 @@ export default function Header() {
           </div>
           
           <div className="relative group" onMouseEnter={() => setShowProfileDropdown(true)} onMouseLeave={() => setShowProfileDropdown(false)}>
-            <Link to="/profile" title="My Account" className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:border-[#2ee661] hover:bg-[#2ee661]/10 transition-colors">
-              <User size={20} />
-            </Link>
+            {user ? (
+              <button className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center overflow-hidden hover:border-[#2ee661] transition-colors">
+                {user.photoURL ? (
+                  <img src={user.photoURL} alt={user.displayName || 'User'} className="w-full h-full object-cover" />
+                ) : (
+                  <User size={20} className="text-[#8B949E]" />
+                )}
+              </button>
+            ) : (
+              <Link to="/login" title="Sign In" className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:border-[#2ee661] hover:bg-[#2ee661]/10 transition-colors">
+                <User size={20} />
+              </Link>
+            )}
             
             <AnimatePresence>
-              {showProfileDropdown && (
+              {showProfileDropdown && user && (
                 <motion.div 
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
-                  className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[100]"
+                  className="absolute top-full right-0 mt-2 w-52 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[100]"
                 >
-                  <div className="p-3 bg-gray-50 border-b border-gray-100 text-sm font-bold text-gray-900 truncate">
-                    hass.kariyawasam@gmail.com
+                  <div className="p-3 bg-gray-50 border-b border-gray-100">
+                    <p className="text-sm font-bold text-gray-900 truncate">{user.displayName || 'User'}</p>
+                    <p className="text-xs text-gray-500 truncate">{user.email}</p>
                   </div>
                   <div className="py-2">
                     <Link to="/profile" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-600 hover:text-black hover:bg-gray-50 transition-colors">
@@ -196,7 +215,7 @@ export default function Header() {
                     </Link>
                   </div>
                   <div className="py-2 border-t border-gray-100">
-                    <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors text-left font-bold">
+                    <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors text-left font-bold">
                       <LogOut size={16} /> Sign Out
                     </button>
                   </div>
