@@ -13,7 +13,17 @@ export async function GET(req: NextRequest) {
     const decoded = await verifyToken(authHeader);
 
     await connectDB();
-    const user = await User.findOne({ uid: decoded.uid });
+    let user = await User.findOne({ uid: decoded.uid });
+
+    if (!user && decoded.email) {
+      user = await User.create({
+        uid: decoded.uid,
+        name: decoded.name || decoded.email.split('@')[0] || 'Customer',
+        email: decoded.email,
+        avatar: decoded.picture || '',
+        addresses: [],
+      });
+    }
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -27,6 +37,17 @@ export async function GET(req: NextRequest) {
     }
     return NextResponse.json({ error: err.message || 'Server error' }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, PATCH, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
 }
 
 /**
@@ -48,8 +69,15 @@ export async function PATCH(req: NextRequest) {
     await connectDB();
     const user = await User.findOneAndUpdate(
       { uid: decoded.uid },
-      { $set: updates },
-      { new: true, runValidators: true }
+      { 
+        $set: updates,
+        $setOnInsert: {
+          uid: decoded.uid,
+          email: decoded.email || '',
+          name: decoded.name || 'User',
+        }
+      },
+      { new: true, upsert: true, runValidators: true }
     );
 
     if (!user) {

@@ -4,11 +4,12 @@ import Product from '@/models/Product';
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     await connectDB();
-    const product = await Product.findById(params.id);
+    const product = await Product.findById(id);
     if (!product) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
@@ -21,12 +22,13 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     await connectDB();
     const body = await req.json();
-    const product = await Product.findByIdAndUpdate(params.id, body, { new: true });
+    const product = await Product.findByIdAndUpdate(id, body, { new: true });
     if (!product) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
@@ -39,11 +41,12 @@ export async function PATCH(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     await connectDB();
-    await Product.findByIdAndDelete(params.id);
+    await Product.findByIdAndDelete(id);
     return NextResponse.json({ success: true });
   } catch (err: any) {
     console.error('[DELETE /api/products/:id]', err);

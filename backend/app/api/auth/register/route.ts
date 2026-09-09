@@ -31,7 +31,10 @@ export async function POST(req: NextRequest) {
       { upsert: true, new: true, runValidators: true }
     );
 
-    return NextResponse.json({ success: true, user }, { status: 201 });
+    return NextResponse.json({ success: true, user }, { 
+      status: 201,
+      headers: { 'Access-Control-Allow-Origin': '*' }
+    });
   } catch (err: any) {
     console.error('[POST /api/auth/register]', err);
     if (err.message?.includes('Authorization')) {
@@ -39,4 +42,15 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json({ error: err.message || 'Server error' }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
 }

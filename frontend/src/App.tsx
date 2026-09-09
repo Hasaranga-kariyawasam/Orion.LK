@@ -41,9 +41,10 @@ export default function App() {
           <ScrollToTop />
           <div className="min-h-screen flex flex-col font-sans relative">
             <Routes>
-              {/* Auth pages — no header/footer */}
+              {/* Auth and Admin pages — no store header/footer */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/admin" element={<Admin />} />
 
               {/* Main app layout */}
               <Route path="*" element={
@@ -62,7 +63,6 @@ export default function App() {
                       <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
                       <Route path="/offers" element={<SpecialOffers />} />
                       <Route path="/build" element={<BuildMyPC />} />
-                      <Route path="/admin" element={<Admin />} />
                     </Routes>
                   </main>
                   <Footer />

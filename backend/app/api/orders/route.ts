@@ -41,7 +41,10 @@ export async function POST(req: NextRequest) {
       orderNumber: generateOrderNumber(),
     });
 
-    return NextResponse.json({ order }, { status: 201 });
+    return NextResponse.json({ order }, { 
+      status: 201,
+      headers: { 'Access-Control-Allow-Origin': '*' }
+    });
   } catch (err: any) {
     console.error('[POST /api/orders]', err);
     if (err.message?.includes('Authorization')) {
@@ -49,4 +52,15 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
 }

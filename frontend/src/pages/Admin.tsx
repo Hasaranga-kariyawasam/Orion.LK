@@ -1,364 +1,404 @@
-import React, { useState, useRef } from 'react';
-import { useAdmin } from '../context/AdminContext';
-import { Trash2, Plus, Save, Image as ImageIcon, Video, MonitorPlay, Tags, LayoutDashboard, UploadCloud, Eye, EyeOff } from 'lucide-react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import {
+  LayoutDashboard, Package, Plus, ShoppingBag, Users, Home, Tags,
+  LayoutGrid, CreditCard, Star, Save, Menu, X, ChevronRight,
+  Bell, Settings, LogOut, Lock, ShieldAlert, AlertCircle, Eye, EyeOff, Loader2, ArrowLeft, LogIn
+} from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useAdmin } from '../context/AdminContext';
+import { useAuth } from '../context/AuthContext';
+import { loginWithEmail } from '../lib/firebase';
+import { formatAvatarUrl } from '../lib/api';
+import AdminDashboard from './admin/AdminDashboard';
+import AdminProducts from './admin/AdminProducts';
+import AdminAddItem from './admin/AdminAddItem';
+import AdminOrders from './admin/AdminOrders';
+import AdminUsers from './admin/AdminUsers';
+import AdminHomePage from './admin/AdminHomePage';
+import AdminSpecialOffers from './admin/AdminSpecialOffers';
+import AdminCategories from './admin/AdminCategories';
+import AdminBrands from './admin/AdminBrands';
+import AdminPayments from './admin/AdminPayments';
 
-// Mock data for dashboard
-const salesData = [
-  { name: 'Mon', sales: 4000 },
-  { name: 'Tue', sales: 3000 },
-  { name: 'Wed', sales: 2000 },
-  { name: 'Thu', sales: 2780 },
-  { name: 'Fri', sales: 1890 },
-  { name: 'Sat', sales: 2390 },
-  { name: 'Sun', sales: 3490 },
-];
+const ALLOWED_ADMIN_EMAILS = ['orian@admin.lk', 'orion@admin.lk'];
 
-const trafficData = [
-  { name: 'Processors', views: 400 },
-  { name: 'GPUs', views: 700 },
-  { name: 'Memory', views: 200 },
-  { name: 'Motherboards', views: 450 },
-  { name: 'Storage', views: 300 },
+export const isAuthorizedAdmin = (email?: string | null): boolean => {
+  if (!email) return false;
+  return ALLOWED_ADMIN_EMAILS.includes(email.trim().toLowerCase());
+};
+
+type TabId = 'dashboard' | 'products' | 'add-item' | 'orders' | 'users' | 'home-page' | 'special-offers' | 'categories' | 'brands' | 'payments';
+
+interface NavItem {
+  id: TabId;
+  label: string;
+  icon: React.FC<any>;
+  badge?: number;
+}
+
+const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
+  {
+    title: 'Overview',
+    items: [
+      { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    ],
+  },
+  {
+    title: 'Catalog',
+    items: [
+      { id: 'products', label: 'Products', icon: Package },
+      { id: 'add-item', label: 'Add Item', icon: Plus },
+      { id: 'categories', label: 'Categories', icon: LayoutGrid },
+      { id: 'brands', label: 'Brands', icon: Tags },
+      { id: 'special-offers', label: 'Special Offers', icon: Star },
+    ],
+  },
+  {
+    title: 'Commerce',
+    items: [
+      { id: 'orders', label: 'Orders', icon: ShoppingBag },
+      { id: 'users', label: 'Users', icon: Users },
+      { id: 'payments', label: 'Payment Options', icon: CreditCard },
+    ],
+  },
+  {
+    title: 'Site',
+    items: [
+      { id: 'home-page', label: 'Home Page', icon: Home },
+    ],
+  },
 ];
 
 export default function Admin() {
-  const { heroImages, setHeroImages, videoUrl, setVideoUrl, accessories, setAccessories, brands, setBrands, saveSettings } = useAdmin();
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [uploadStatus, setUploadStatus] = useState<string>('');
-  const [uploadedImages, setUploadedImages] = useState<{name: string, original: string, optimized: string, url: string}[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [activeTab, setActiveTab] = useState<TabId>('dashboard');
+  const [editItemId, setEditItemId] = useState<string | undefined>(undefined);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { saveSettings, orders } = useAdmin();
+  const { user, mongoUser, loading, logout } = useAuth();
 
-  const addHeroImage = () => setHeroImages([...heroImages, '']);
-  const updateHeroImage = (idx: number, val: string) => {
-    const newImgs = [...heroImages];
-    newImgs[idx] = val;
-    setHeroImages(newImgs);
-  };
-  const removeHeroImage = (idx: number) => {
-    setHeroImages(heroImages.filter((_, i) => i !== idx));
-  };
+  // Admin login states
+  const [authEmail, setAuthEmail] = useState('orian@admin.lk');
+  const [authPassword, setAuthPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const [authSubmitting, setAuthSubmitting] = useState(false);
 
-  const addAccessory = () => {
-    setAccessories([...accessories, { id: Date.now().toString(), name: 'New Accessory', image: '', colorClass: 'bg-gray-800', gradientClass: 'from-gray-700 to-gray-900' }]);
-  };
-  const updateAccessory = (id: string, field: string, val: string) => {
-    setAccessories(accessories.map(acc => acc.id === id ? { ...acc, [field]: val } : acc));
-  };
-  const removeAccessory = (id: string) => {
-    setAccessories(accessories.filter(acc => acc.id !== id));
+  const pendingOrders = orders.filter(o => o.status === 'Pending').length;
+
+  const handleAddItem = () => { setEditItemId(undefined); setActiveTab('add-item'); };
+  const handleEditItem = (id: string) => { setEditItemId(id); setActiveTab('add-item'); };
+  const handleBackFromAddItem = () => { setEditItemId(undefined); setActiveTab('products'); };
+
+  const navigate = (tab: TabId) => {
+    setActiveTab(tab);
+    setSidebarOpen(false);
   };
 
-  const addBrand = () => {
-    setBrands([...brands, { id: Date.now().toString(), name: 'New Brand', image: '', banner: '', visible: true }]);
-  };
-  const updateBrand = (id: string, field: string, val: any) => {
-    setBrands(brands.map(brand => brand.id === id ? { ...brand, [field]: val } : brand));
-  };
-  const removeBrand = (id: string) => {
-    setBrands(brands.filter(brand => brand.id !== id));
-  };
-  const toggleBrandVisibility = (id: string) => {
-    setBrands(brands.map(brand => brand.id === id ? { ...brand, visible: !brand.visible } : brand));
-  };
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
-    
-    setUploadStatus('Processing and compressing images...');
-    
-    // Simulate bulk upload and optimization
-    setTimeout(() => {
-      const newUploads = Array.from(e.target.files as FileList).map((file: File) => {
-        const originalSize = (file.size / 1024).toFixed(1);
-        const optimizedSize = (file.size / 1024 * 0.4).toFixed(1); // Mock 60% compression
-        return {
-          name: file.name,
-          original: `${originalSize} KB`,
-          optimized: `${optimizedSize} KB`,
-          url: URL.createObjectURL(file)
-        };
-      });
-      setUploadedImages(prev => [...prev, ...newUploads]);
-      setUploadStatus('');
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }, 1500);
+  const handleAdminSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError('');
+    const trimmed = authEmail.trim().toLowerCase();
+    if (!isAuthorizedAdmin(trimmed)) {
+      setAuthError('Access Denied: Only orian@admin.lk is authorized to access the Admin Console.');
+      return;
+    }
+    setAuthSubmitting(true);
+    try {
+      await loginWithEmail(trimmed, authPassword);
+    } catch (err: any) {
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
+        setAuthError('Invalid credentials. Please verify your password for orian@admin.lk.');
+      } else {
+        setAuthError(err.message || 'Authentication failed. Please try again.');
+      }
+    } finally {
+      setAuthSubmitting(false);
+    }
   };
 
-  const tabs = [
-    { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },
-    { id: 'brands', name: 'Brand Management', icon: Tags },
-    { id: 'images', name: 'Bulk Image Upload', icon: UploadCloud },
-    { id: 'hero', name: 'Hero Banner', icon: ImageIcon },
-    { id: 'video', name: 'Video Banner', icon: Video },
-    { id: 'accessories', name: 'Accessories', icon: MonitorPlay },
-  ];
+  // 1. Loading verification state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0d1117] flex items-center justify-center font-sans text-white">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 rounded-full border-4 border-[#2ee661] border-t-transparent animate-spin" />
+          <p className="text-gray-400 text-sm font-medium">Verifying administrator credentials...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. Not logged in -> Render dedicated Admin Portal Authentication
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-[#0d1117] flex items-center justify-center p-4" style={{ fontFamily: "'Inter', sans-serif" }}>
+        <div className="w-full max-w-md bg-[#161B22] border border-[#30363D] rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+          {/* Ambient Glows */}
+          <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#2ee661]/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          {/* Header */}
+          <div className="text-center mb-8 relative">
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-[#0d1117] border border-[#30363D] flex items-center justify-center text-[#2ee661] shadow-inner mb-4">
+              <Lock size={26} />
+            </div>
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <span className="text-white font-black text-2xl tracking-tight" style={{ fontFamily: "'Orbitron', sans-serif" }}>ORION</span>
+              <span className="text-xs bg-[#2ee661] text-black font-black px-2 py-0.5 rounded">ADMIN</span>
+            </div>
+            <p className="text-gray-400 text-xs mt-1">Authorized Administrator Portal</p>
+            <div className="inline-flex items-center gap-1.5 mt-3 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[11px] text-emerald-400 font-mono">
+              <span>Restricted to:</span>
+              <span className="font-bold">orian@admin.lk</span>
+            </div>
+          </div>
+
+          {/* Error Message */}
+          {authError && (
+            <div className="mb-6 p-3.5 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-3 text-red-400 text-xs">
+              <AlertCircle size={16} className="shrink-0 mt-0.5" />
+              <span>{authError}</span>
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleAdminSignIn} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Admin Email</label>
+              <input
+                type="email"
+                value={authEmail}
+                onChange={e => setAuthEmail(e.target.value)}
+                placeholder="orian@admin.lk"
+                required
+                className="w-full bg-[#0d1117] border border-[#30363D] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#2ee661] transition-colors"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Password</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={authPassword}
+                  onChange={e => setAuthPassword(e.target.value)}
+                  placeholder="••••••••••••"
+                  required
+                  className="w-full bg-[#0d1117] border border-[#30363D] rounded-xl px-4 py-3 pr-10 text-white text-sm focus:outline-none focus:border-[#2ee661] transition-colors"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={authSubmitting}
+              className="w-full mt-2 bg-[#2ee661] hover:bg-[#24c24e] text-black font-black py-3 rounded-xl text-sm transition-all shadow-lg shadow-[#2ee661]/20 flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {authSubmitting ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Authenticating...</span>
+                </>
+              ) : (
+                <>
+                  <LogIn size={16} />
+                  <span>Sign In as Admin</span>
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Footer Back */}
+          <div className="mt-6 pt-5 border-t border-[#30363D] text-center">
+            <Link to="/" className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-white transition-colors">
+              <ArrowLeft size={14} /> Return to Orion.LK Store
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 3. Logged in with a different (unauthorized) email -> Access Denied 403
+  if (!isAuthorizedAdmin(user.email)) {
+    return (
+      <div className="min-h-screen bg-[#0d1117] flex items-center justify-center p-4" style={{ fontFamily: "'Inter', sans-serif" }}>
+        <div className="w-full max-w-md bg-[#161B22] border border-red-500/30 rounded-3xl p-8 shadow-2xl text-center relative overflow-hidden">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400 mb-5">
+            <ShieldAlert size={32} />
+          </div>
+
+          <span className="text-xs bg-red-500/10 text-red-400 font-bold px-3 py-1 rounded-full border border-red-500/20">
+            403 • ACCESS RESTRICTED
+          </span>
+
+          <h2 className="text-xl font-bold text-white mt-4 mb-2">Administrator Access Required</h2>
+          <p className="text-gray-400 text-xs leading-relaxed mb-5">
+            This administration console is strictly restricted. Only the designated administrator email (<span className="text-white font-mono font-bold">orian@admin.lk</span>) is authorized to access this page.
+          </p>
+
+          <div className="bg-[#0d1117] border border-[#30363D] rounded-xl p-3 mb-6 text-left">
+            <p className="text-[11px] text-gray-500">Currently signed in as:</p>
+            <p className="text-xs font-mono font-bold text-red-400 truncate mt-0.5">{user.email || 'Anonymous User'}</p>
+          </div>
+
+          <div className="space-y-2">
+            <button
+              onClick={logout}
+              className="w-full bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/40 rounded-xl py-3 font-bold text-sm transition-colors"
+            >
+              Sign Out & Switch Account
+            </button>
+            <Link
+              to="/"
+              className="block w-full text-center py-2.5 text-xs text-gray-500 hover:text-white transition-colors"
+            >
+              ← Return to Orion.LK Store
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-gray-50 min-h-screen pb-16 pt-32">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-black text-gray-900 uppercase tracking-tight">Admin Dashboard</h1>
-          <button onClick={saveSettings} className="bg-[#2ee661] text-black px-6 py-3 rounded-xl font-bold uppercase flex items-center gap-2 hover:bg-[#24c24e] transition-colors shadow-lg shadow-[#2ee661]/20">
-            <Save size={20} /> Save Changes
-          </button>
+    <div className="min-h-screen bg-[#0d1117] flex" style={{ fontFamily: "'Inter', sans-serif" }}>
+
+      {/* Mobile overlay */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setSidebarOpen(false)}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Sidebar */}
+      <aside className={`fixed top-0 left-0 h-full w-64 bg-[#161B22] border-r border-[#30363D] z-50 flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+        {/* Logo */}
+        <div className="h-16 flex items-center justify-between px-5 border-b border-[#30363D] shrink-0">
+          <Link to="/" className="flex items-center gap-2">
+            <span className="text-[#2ee661] font-black text-xl tracking-tight" style={{ fontFamily: "'Orbitron', sans-serif" }}>ORION</span>
+            <span className="text-xs text-gray-500 bg-[#0d1117] border border-[#30363D] rounded px-1.5 py-0.5 font-bold">ADMIN</span>
+          </Link>
+          <button onClick={() => setSidebarOpen(false)} className="p-1.5 text-gray-500 hover:text-white lg:hidden"><X size={18} /></button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar */}
-          <div className="lg:col-span-1 space-y-2">
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center gap-3 p-4 rounded-xl font-bold transition-all ${activeTab === tab.id ? 'bg-black text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
-              >
-                <tab.icon size={20} className={activeTab === tab.id ? 'text-[#2ee661]' : ''} />
-                {tab.name}
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto py-4 px-3">
+          {NAV_GROUPS.map(group => (
+            <div key={group.title} className="mb-6">
+              <p className="text-xs font-bold text-gray-600 uppercase tracking-widest px-3 mb-2">{group.title}</p>
+              <div className="space-y-0.5">
+                {group.items.map(item => {
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => navigate(item.id)}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all relative group ${isActive
+                        ? 'bg-[#2ee661]/10 text-[#2ee661] border border-[#2ee661]/20'
+                        : 'text-gray-400 hover:text-white hover:bg-white/5'
+                      }`}
+                    >
+                      <item.icon size={17} className={isActive ? 'text-[#2ee661]' : 'text-gray-500 group-hover:text-white transition-colors'} />
+                      <span>{item.label}</span>
+                      {item.id === 'orders' && pendingOrders > 0 && (
+                        <span className="ml-auto bg-red-500 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center">{pendingOrders}</span>
+                      )}
+                      {item.id === 'add-item' && !isActive && (
+                        <ChevronRight size={14} className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </nav>
+
+        {/* User Footer */}
+        <div className="border-t border-[#30363D] p-3 shrink-0">
+          <div className="flex items-center gap-3 px-2 py-2">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#2ee661] to-teal-500 flex items-center justify-center text-black font-black text-sm shrink-0 overflow-hidden">
+              {formatAvatarUrl(mongoUser?.avatar || user?.photoURL) ? (
+                <img src={formatAvatarUrl(mongoUser?.avatar || user?.photoURL)!} alt="" className="w-full h-full object-cover" />
+              ) : (user?.displayName?.[0] || 'A')}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white text-xs font-bold truncate">{user?.displayName || 'Admin'}</p>
+              <p className="text-gray-500 text-[11px] truncate">{user?.email}</p>
+            </div>
+            <button onClick={logout} className="p-1.5 text-gray-600 hover:text-red-400 transition-colors rounded-lg hover:bg-red-400/10">
+              <LogOut size={15} />
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <div className="flex-1 lg:ml-64 flex flex-col min-h-screen">
+        {/* Top Bar */}
+        <header className="h-16 bg-[#161B22] border-b border-[#30363D] flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setSidebarOpen(true)} className="p-2 text-gray-500 hover:text-white lg:hidden">
+              <Menu size={20} />
+            </button>
+            <div>
+              <h1 className="text-white font-bold text-sm capitalize">
+                {activeTab.replace('-', ' ')}
+              </h1>
+              <p className="text-gray-600 text-xs hidden sm:block">Orion.LK Admin Panel</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            {pendingOrders > 0 && (
+              <button onClick={() => navigate('orders')} className="relative p-2 text-gray-500 hover:text-white transition-colors">
+                <Bell size={20} />
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-black w-4.5 h-4.5 w-5 h-5 rounded-full flex items-center justify-center">{pendingOrders}</span>
               </button>
-            ))}
+            )}
+            <button onClick={saveSettings}
+              className="flex items-center gap-2 bg-[#2ee661] text-black px-4 py-2 rounded-xl font-bold text-sm hover:bg-[#24c24e] transition-colors shadow-md shadow-[#2ee661]/20">
+              <Save size={15} /> Save
+            </button>
+            <Link to="/" className="text-gray-500 hover:text-white transition-colors text-xs font-medium hidden sm:block">← View Site</Link>
           </div>
+        </header>
 
-          {/* Main Content */}
-          <div className="lg:col-span-3 bg-white rounded-2xl shadow-sm border border-gray-200 p-6 min-h-[600px]">
-            
-            {activeTab === 'dashboard' && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
-                <div>
-                  <h2 className="text-2xl font-black mb-2">Store Analytics Overview</h2>
-                  <p className="text-gray-500 mb-6">Visualize recent sales data and product category traffic.</p>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-                    <h3 className="font-bold text-gray-700 mb-4 uppercase tracking-wider text-sm">Weekly Sales (LKR)</h3>
-                    <div className="h-64">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={salesData}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} />
-                          <YAxis axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} />
-                          <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                          <Line type="monotone" dataKey="sales" stroke="#2ee661" strokeWidth={3} dot={{r: 4, fill: '#2ee661', strokeWidth: 0}} activeDot={{r: 6}} />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-
-                  <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-                    <h3 className="font-bold text-gray-700 mb-4 uppercase tracking-wider text-sm">Category Traffic</h3>
-                    <div className="h-64">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={trafficData}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} />
-                          <YAxis axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} />
-                          <Tooltip cursor={{fill: '#f3f4f6'}} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                          <Bar dataKey="views" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {activeTab === 'brands' && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-                <div>
-                  <h2 className="text-2xl font-black mb-2">Brand Management</h2>
-                  <p className="text-gray-500 mb-6">CRUD hardware brands, assign banners, and toggle home page visibility.</p>
-                </div>
-                <div className="grid grid-cols-1 gap-6">
-                  {brands.map((brand) => (
-                    <div key={brand.id} className={`bg-gray-50 p-4 rounded-xl border ${brand.visible !== false ? 'border-gray-200' : 'border-red-200 opacity-60'} flex flex-col md:flex-row gap-6`}>
-                      
-                      {/* Left: Logos & Banner Preview */}
-                      <div className="w-full md:w-48 space-y-4 shrink-0">
-                        <div className="w-full h-24 bg-white rounded-lg border border-gray-200 p-2 flex items-center justify-center">
-                          {brand.image ? (
-                            <img src={brand.image} alt={brand.name} className="max-w-full max-h-full object-contain" />
-                          ) : (
-                            <span className="text-xs text-gray-400">No Logo</span>
-                          )}
-                        </div>
-                        {brand.banner && (
-                          <div className="w-full h-16 bg-gray-200 rounded-lg overflow-hidden relative">
-                            <img src={brand.banner} className="w-full h-full object-cover" />
-                            <span className="absolute inset-0 bg-black/40 flex items-center justify-center text-[10px] text-white font-bold tracking-widest uppercase">Banner</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Right: Inputs */}
-                      <div className="flex-1 space-y-3">
-                        <div>
-                          <label className="text-[10px] font-bold text-gray-500 uppercase">Brand Name</label>
-                          <input type="text" value={brand.name} onChange={(e) => updateBrand(brand.id, 'name', e.target.value)} className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="e.g. ASUS ROG" />
-                        </div>
-                        <div>
-                          <label className="text-[10px] font-bold text-gray-500 uppercase">Logo Image URL</label>
-                          <input type="text" value={brand.image} onChange={(e) => updateBrand(brand.id, 'image', e.target.value)} className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="SVG or PNG URL" />
-                        </div>
-                        <div>
-                          <label className="text-[10px] font-bold text-gray-500 uppercase">Banner Image URL (Optional)</label>
-                          <input type="text" value={brand.banner || ''} onChange={(e) => updateBrand(brand.id, 'banner', e.target.value)} className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="URL for brand spotlight banner" />
-                        </div>
-                        <div className="flex items-center gap-4 pt-2">
-                          <button 
-                            onClick={() => toggleBrandVisibility(brand.id)} 
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors ${brand.visible !== false ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}
-                          >
-                            {brand.visible !== false ? <><Eye size={16} /> Visible on Home</> : <><EyeOff size={16} /> Hidden</>}
-                          </button>
-                          <button onClick={() => removeBrand(brand.id)} className="text-red-500 hover:bg-red-50 p-2 rounded-lg ml-auto flex items-center gap-2 text-sm font-bold">
-                            <Trash2 size={16} /> Delete
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  <button onClick={addBrand} className="border-2 border-dashed border-gray-300 text-gray-500 rounded-xl p-6 font-bold flex items-center justify-center gap-2 hover:border-[#2ee661] hover:text-[#2ee661] transition-colors">
-                    <Plus size={20} /> Add New Brand
-                  </button>
-                </div>
-              </motion.div>
-            )}
-
-            {activeTab === 'images' && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-                <div>
-                  <h2 className="text-2xl font-black mb-2">Bulk Image Optimization</h2>
-                  <p className="text-gray-500 mb-6">Upload product gallery images. Images are automatically compressed and tagged with metadata.</p>
-                </div>
-
-                <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-2xl p-12 flex flex-col items-center justify-center text-center">
-                  <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-4">
-                    <UploadCloud size={32} />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">Drag & Drop Images</h3>
-                  <p className="text-gray-500 mb-6 text-sm">Supports JPG, PNG, WEBP (Max 10MB per file)</p>
-                  
-                  <input 
-                    type="file" 
-                    multiple 
-                    accept="image/*"
-                    className="hidden" 
-                    ref={fileInputRef}
-                    onChange={handleFileUpload}
-                  />
-                  <button 
-                    onClick={() => fileInputRef.current?.click()}
-                    className="bg-black text-white px-8 py-3 rounded-xl font-bold hover:bg-gray-800 transition-colors"
-                  >
-                    Select Files
-                  </button>
-                  {uploadStatus && (
-                    <p className="mt-4 text-sm font-bold text-blue-600 animate-pulse">{uploadStatus}</p>
-                  )}
-                </div>
-
-                {uploadedImages.length > 0 && (
-                  <div className="mt-8">
-                    <h3 className="font-bold text-gray-900 mb-4">Recently Processed ({uploadedImages.length})</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {uploadedImages.map((img, i) => (
-                        <div key={i} className="border border-gray-200 rounded-xl overflow-hidden bg-white">
-                          <div className="h-32 bg-gray-100">
-                            <img src={img.url} alt={img.name} className="w-full h-full object-cover" />
-                          </div>
-                          <div className="p-3">
-                            <p className="text-xs font-bold truncate text-gray-800">{img.name}</p>
-                            <div className="flex justify-between items-center mt-2 text-[10px] uppercase font-bold tracking-wider">
-                              <span className="text-gray-400 line-through">{img.original}</span>
-                              <span className="text-[#2ee661] bg-[#2ee661]/10 px-2 py-0.5 rounded text-black">{img.optimized}</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </motion.div>
-            )}
-
-            {activeTab === 'hero' && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-                <div>
-                  <h2 className="text-2xl font-black mb-2">Hero Slider Images</h2>
-                  <p className="text-gray-500 mb-6">Manage the main image carousel on the home page.</p>
-                </div>
-                {heroImages.map((img, idx) => (
-                  <div key={idx} className="flex gap-4 items-center bg-gray-50 p-4 rounded-xl border border-gray-200">
-                    <img src={img || 'https://via.placeholder.com/150'} alt="preview" className="w-24 h-16 object-cover rounded-lg bg-gray-200" />
-                    <div className="flex-1">
-                      <label className="text-xs font-bold text-gray-500 uppercase">Image URL {idx + 1}</label>
-                      <input type="text" value={img} onChange={(e) => updateHeroImage(idx, e.target.value)} className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 mt-1 focus:outline-none focus:border-[#2ee661]" />
-                    </div>
-                    <button onClick={() => removeHeroImage(idx)} className="text-red-500 hover:bg-red-50 p-2 rounded-lg mt-5"><Trash2 size={20} /></button>
-                  </div>
-                ))}
-                <button onClick={addHeroImage} className="w-full border-2 border-dashed border-gray-300 text-gray-500 py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:border-[#2ee661] hover:text-[#2ee661] transition-colors">
-                  <Plus size={20} /> Add Hero Image
-                </button>
-              </motion.div>
-            )}
-
-            {activeTab === 'video' && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-                <div>
-                  <h2 className="text-2xl font-black mb-2">Video Banner</h2>
-                  <p className="text-gray-500 mb-6">Update the promotional YouTube video on the home page.</p>
-                </div>
-                <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-                  <label className="text-xs font-bold text-gray-500 uppercase">MP4 Video URL</label>
-                  <input type="text" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 mt-2 focus:outline-none focus:border-[#2ee661]" placeholder="https://www.youtube.com/embed/..." />
-                  
-                  <div className="mt-6 aspect-video rounded-lg overflow-hidden bg-black">
-                    <video src={videoUrl} className="w-full h-full object-cover" autoPlay muted loop playsInline />
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {activeTab === 'accessories' && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-                <div>
-                  <h2 className="text-2xl font-black mb-2">Shop Accessories Section</h2>
-                  <p className="text-gray-500 mb-6">Manage the colored category blocks on the home page.</p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {accessories.map((acc) => (
-                    <div key={acc.id} className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-4 relative">
-                      <button onClick={() => removeAccessory(acc.id)} className="absolute top-2 right-2 text-red-500 hover:bg-red-50 p-1.5 rounded-lg z-20"><Trash2 size={16} /></button>
-                      <div className={`w-full h-24 rounded-lg flex items-center justify-center relative overflow-hidden bg-gradient-to-r ${acc.gradientClass}`}>
-                         <img src={acc.image} className="absolute inset-0 w-full h-full object-cover mix-blend-overlay" />
-                         <span className="relative z-10 text-white font-black drop-shadow-md">{acc.name}</span>
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-gray-500 uppercase">Category Name</label>
-                        <input type="text" value={acc.name} onChange={(e) => updateAccessory(acc.id, 'name', e.target.value)} className="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-sm" />
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-gray-500 uppercase">Image URL</label>
-                        <input type="text" value={acc.image} onChange={(e) => updateAccessory(acc.id, 'image', e.target.value)} className="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-sm" />
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-gray-500 uppercase">Tailwind Gradient Classes</label>
-                        <input type="text" value={acc.gradientClass} onChange={(e) => updateAccessory(acc.id, 'gradientClass', e.target.value)} className="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-sm" placeholder="from-red-500 to-pink-500" />
-                      </div>
-                    </div>
-                  ))}
-                  <button onClick={addAccessory} className="h-full min-h-[250px] border-2 border-dashed border-gray-300 text-gray-500 rounded-xl font-bold flex flex-col items-center justify-center gap-2 hover:border-[#2ee661] hover:text-[#2ee661] transition-colors">
-                    <Plus size={24} /> Add Category
-                  </button>
-                </div>
-              </motion.div>
-            )}
-
-          </div>
-        </div>
+        {/* Page Content */}
+        <main className="flex-1 p-4 lg:p-8 overflow-auto">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.18 }}
+            >
+              {activeTab === 'dashboard' && <AdminDashboard />}
+              {activeTab === 'products' && <AdminProducts onAddItem={handleAddItem} onEditItem={handleEditItem} />}
+              {activeTab === 'add-item' && <AdminAddItem onBack={handleBackFromAddItem} editId={editItemId} />}
+              {activeTab === 'orders' && <AdminOrders />}
+              {activeTab === 'users' && <AdminUsers />}
+              {activeTab === 'home-page' && <AdminHomePage />}
+              {activeTab === 'special-offers' && <AdminSpecialOffers />}
+              {activeTab === 'categories' && <AdminCategories />}
+              {activeTab === 'brands' && <AdminBrands />}
+              {activeTab === 'payments' && <AdminPayments />}
+            </motion.div>
+          </AnimatePresence>
+        </main>
       </div>
     </div>
   );

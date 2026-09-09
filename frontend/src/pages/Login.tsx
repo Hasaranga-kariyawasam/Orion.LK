@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, Zap, AlertCircle, Loader2 } from 'lucide-react';
 import { loginWithEmail, loginWithGoogle } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
@@ -18,10 +18,16 @@ export default function Login() {
 
   const from = (location.state as any)?.from?.pathname || '/';
 
+  const isAdminEmail = (e?: string | null) => {
+    if (!e) return false;
+    const n = e.trim().toLowerCase();
+    return n === 'orian@admin.lk' || n === 'orion@admin.lk';
+  };
+
   // Redirect if already logged in
   if (user) {
-    navigate(from, { replace: true });
-    return null;
+    const dest = isAdminEmail(user.email) && from === '/' ? '/admin' : from;
+    return <Navigate to={dest} replace />;
   }
 
   const getErrorMessage = (code: string) => {
@@ -45,7 +51,8 @@ export default function Login() {
     setLoading(true);
     try {
       await loginWithEmail(email, password);
-      navigate(from, { replace: true });
+      const dest = isAdminEmail(email) && from === '/' ? '/admin' : from;
+      navigate(dest, { replace: true });
     } catch (err: any) {
       setError(getErrorMessage(err.code));
     } finally {
