@@ -4,11 +4,13 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
 import { BRAND_NEW_CATEGORIES, USED_CATEGORIES, MOCK_PRODUCTS } from '../data';
 import { useShop } from '../context/ShopContext';
+import { useAdmin } from '../context/AdminContext';
 import { formatLKR } from '../data';
 import { useAuth } from '../context/AuthContext';
 import { formatAvatarUrl } from '../lib/api';
 
 export default function Header() {
+  const { categories, products } = useAdmin();
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [activeDropdown, setActiveDropdown] = useState<'brandNew' | 'used' | null>(null);
@@ -18,11 +20,23 @@ export default function Header() {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const navigate = useNavigate();
 
-  const searchResults = searchQuery.trim() === ''
-    ? MOCK_PRODUCTS.slice(0, 5)
-    : MOCK_PRODUCTS.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 5);
+  const brandNewCategories = categories.length > 0
+    ? categories.filter(c => c.type === 'brand-new')
+    : BRAND_NEW_CATEGORIES;
 
-  const handleSearchNavigate = (id) => {
+  const usedCategories = categories.length > 0
+    ? categories.filter(c => c.type === 'used')
+    : USED_CATEGORIES;
+
+  const searchResults = searchQuery.trim() === ''
+    ? products.slice(0, 5)
+    : products.filter(p =>
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.brand?.toLowerCase().includes(searchQuery.toLowerCase())
+      ).slice(0, 5);
+
+  const handleSearchNavigate = (id: string) => {
     setShowSearchResults(false);
     setSearchQuery('');
     navigate(`/product/${id}`);
@@ -291,15 +305,20 @@ export default function Header() {
                     className="absolute top-[100%] left-0 w-full bg-white border-t border-gray-100 shadow-2xl z-50 py-10 px-4"
                   >
                     <div className="container mx-auto max-w-7xl grid grid-cols-3 md:grid-cols-5 lg:grid-cols-8 gap-x-4 gap-y-12">
-                      {(activeDropdown === 'brandNew' ? BRAND_NEW_CATEGORIES : USED_CATEGORIES).map((cat, idx) => (
-                        <a key={idx} href="#" className="flex flex-col items-center text-center group cursor-pointer">
+                      {(activeDropdown === 'brandNew' ? brandNewCategories : usedCategories).map((cat: any, idx) => (
+                        <Link
+                          key={cat.id || idx}
+                          to={`/shop?category=${encodeURIComponent(cat.name)}&type=${activeDropdown === 'brandNew' ? 'brand-new' : 'used'}`}
+                          onClick={() => setActiveDropdown(null)}
+                          className="flex flex-col items-center text-center group cursor-pointer"
+                        >
                           <div className="h-16 flex items-center justify-center transform group-hover:-translate-y-1 group-hover:scale-105 transition-all duration-300 mb-3 w-full p-2">
                             <img src={cat.img} alt={cat.name} className="max-w-full max-h-full object-contain" />
                           </div>
-                          <span className="text-[12px] font-bold text-gray-800 group-hover:text-[#2ee661] leading-tight transition-colors">
+                          <span className="text-[12px] font-bold text-gray-800 group-hover:text-[#2ee661] leading-tight transition-colors line-clamp-2">
                             {cat.name} <span className="text-gray-400 font-normal">({cat.count})</span>
                           </span>
-                        </a>
+                        </Link>
                       ))}
                     </div>
                   </motion.div>

@@ -1,41 +1,77 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { MOCK_PRODUCTS, BRAND_NEW_CATEGORIES } from '../data';
 import ProductCard from '../components/ProductCard';
 import ProductCardSkeleton from '../components/ProductCardSkeleton';
-import { useEffect } from 'react';
+import { useAdmin } from '../context/AdminContext';
 import { ChevronRight, Filter, X } from 'lucide-react';
+import { BRAND_NEW_CATEGORIES, USED_CATEGORIES } from '../data';
 
 export default function Shop() {
   const [searchParams, setSearchParams] = useSearchParams();
   const categoryParam = searchParams.get('category');
+  const typeParam = searchParams.get('type'); // 'brand-new' | 'used'
+  const searchParam = searchParams.get('search');
   
+  const { products, categories } = useAdmin();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1500000]);
+  const [selectedCategoryType, setSelectedCategoryType] = useState<'all' | 'brand-new' | 'used'>(
+    typeParam === 'used' ? 'used' : typeParam === 'brand-new' ? 'brand-new' : 'all'
+  );
 
   useEffect(() => {
     setIsLoading(true);
-    const timer = setTimeout(() => setIsLoading(false), 800);
+    const timer = setTimeout(() => setIsLoading(false), 300);
     return () => clearTimeout(timer);
-  }, [categoryParam, searchParams]);
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000000]);
+  }, [categoryParam, searchParams, products]);
 
-  // Extract unique tags and brands for the current category
+  // Combine categories
+  const allCategories = useMemo(() => {
+    if (categories && categories.length > 0) return categories;
+    return [
+      ...BRAND_NEW_CATEGORIES.map((c, i) => ({ id: `bn-${i}`, name: c.name, count: c.count, img: c.img, type: 'brand-new' as const })),
+      ...USED_CATEGORIES.map((c, i) => ({ id: `u-${i}`, name: c.name, count: c.count, img: c.img, type: 'used' as const })),
+    ];
+  }, [categories]);
+
+  // Extract products in category / search filter
   const productsInCategory = useMemo(() => {
-    if (!categoryParam) return MOCK_PRODUCTS;
-    return MOCK_PRODUCTS.filter(p => p.category === categoryParam);
-  }, [categoryParam]);
+    return products.filter(p => {
+      // Category filter
+      if (categoryParam && categoryParam !== 'All' && categoryParam !== 'all') {
+        const catMatch = p.category?.toLowerCase() === categoryParam.toLowerCase();
+        if (!catMatch) return false;
+      }
+      // Type filter (brand new vs used)
+      if (selectedCategoryType === 'used') {
+        if (!p.category?.toLowerCase().includes('used') && p.isNewProduct !== false) return false;
+      } else if (selectedCategoryType === 'brand-new') {
+        if (p.category?.toLowerCase().includes('used')) return false;
+      }
+      // Search keyword filter
+      if (searchParam && searchParam.trim()) {
+        const q = searchParam.toLowerCase().trim();
+        const match = p.name.toLowerCase().includes(q) ||
+          p.brand?.toLowerCase().includes(q) ||
+          p.category?.toLowerCase().includes(q) ||
+          p.description?.toLowerCase().includes(q);
+        if (!match) return false;
+      }
+      return true;
+    });
+  }, [products, categoryParam, selectedCategoryType, searchParam]);
 
   const availableBrands = useMemo(() => {
-    const brands = new Set<string>();
-    productsInCategory.forEach(p => p.brand && brands.add(p.brand));
-    return Array.from(brands);
+    const brandsSet = new Set<string>();
+    productsInCategory.forEach(p => p.brand && brandsSet.add(p.brand));
+    return Array.from(brandsSet);
   }, [productsInCategory]);
 
   const availableTags = useMemo(() => {
-    const tags = new Set<string>();
-    productsInCategory.forEach(p => p.tags?.forEach(t => tags.add(t)));
-    return Array.from(tags);
+    const tagsSet = new Set<string>();
+    productsInCategory.forEach(p => p.tags?.forEach(t => tagsSet.add(t)));
+    return Array.from(tagsSet);
   }, [productsInCategory]);
 
   // Filters state
@@ -74,6 +110,11 @@ export default function Shop() {
     );
   };
 
+  const displayedCategories = useMemo(() => {
+    if (selectedCategoryType === 'all') return allCategories;
+    return allCategories.filter(c => c.type === selectedCategoryType);
+  }, [allCategories, selectedCategoryType]);
+
   return (
     <div className="bg-gray-50 min-h-screen pb-16">
       {/* Breadcrumbs */}
@@ -103,25 +144,68 @@ export default function Shop() {
           </div>
 
           <div className="space-y-8 h-full overflow-y-auto md:overflow-visible pb-20 md:pb-0">
+            {/* Condition Tabs */}
+            <div>
+              <h3 className="text-sm font-black text-gray-900 uppercase tracking-wider mb-3">Item Condition</h3>
+              <div className="flex bg-gray-200 rounded-lg p-1 text-xs font-bold">
+                <button
+                  onClick={() => setSelectedCategoryType('all')}
+                  className={`flex-1 py-1.5 rounded-md transition-colors ${selectedCategoryType === 'all' ? 'bg-white text-black shadow-sm' : 'text-gray-600'}`}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => setSelectedCategoryType('brand-new')}
+                  className={`flex-1 py-1.5 rounded-md transition-colors ${selectedCategoryType === 'brand-new' ? 'bg-white text-black shadow-sm' : 'text-gray-600'}`}
+                >
+                  Brand New
+                </button>
+                <button
+                  onClick={() => setSelectedCategoryType('used')}
+                  className={`flex-1 py-1.5 rounded-md transition-colors ${selectedCategoryType === 'used' ? 'bg-white text-black shadow-sm' : 'text-gray-600'}`}
+                >
+                  Used
+                </button>
+              </div>
+            </div>
+
             {/* Categories */}
             <div>
-              <h3 className="text-sm font-black text-gray-900 uppercase tracking-wider mb-4">Categories</h3>
-              <div className="space-y-2">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-black text-gray-900 uppercase tracking-wider">Categories</h3>
+                <span className="text-xs text-gray-400 font-bold">({displayedCategories.length})</span>
+              </div>
+              <div className="space-y-1 max-h-72 overflow-y-auto pr-1">
                 <button 
-                  onClick={() => setSearchParams({})}
-                  className={`block text-sm w-full text-left ${!categoryParam ? 'font-bold text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
+                  onClick={() => {
+                    const newParams = new URLSearchParams(searchParams);
+                    newParams.delete('category');
+                    setSearchParams(newParams);
+                  }}
+                  className={`block text-xs py-1.5 px-2 rounded-lg w-full text-left transition-colors ${!categoryParam ? 'font-bold bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
                 >
-                  All Products
+                  All Categories ({products.length})
                 </button>
-                {BRAND_NEW_CATEGORIES.slice(0, 8).map(cat => (
-                  <button 
-                    key={cat.name}
-                    onClick={() => setSearchParams({ category: cat.name })}
-                    className={`block text-sm w-full text-left ${categoryParam === cat.name ? 'font-bold text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
-                  >
-                    {cat.name}
-                  </button>
-                ))}
+                {displayedCategories.map(cat => {
+                  const isSelected = categoryParam?.toLowerCase() === cat.name.toLowerCase();
+                  const catCount = products.filter(p => p.category?.toLowerCase() === cat.name.toLowerCase()).length;
+                  return (
+                    <button 
+                      key={cat.id || cat.name}
+                      onClick={() => {
+                        const newParams = new URLSearchParams(searchParams);
+                        newParams.set('category', cat.name);
+                        setSearchParams(newParams);
+                      }}
+                      className={`flex items-center justify-between text-xs py-1.5 px-2 rounded-lg w-full text-left transition-colors ${isSelected ? 'font-bold bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                    >
+                      <span className="truncate mr-2">{cat.name}</span>
+                      <span className={`text-[10px] ${isSelected ? 'text-gray-300' : 'text-gray-400'}`}>
+                        {catCount > 0 ? catCount : cat.count}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -131,15 +215,15 @@ export default function Shop() {
               <input 
                 type="range" 
                 min="0" 
-                max="1000000" 
+                max="1500000" 
                 step="10000"
                 value={priceRange[1]} 
                 onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
-                className="w-full accent-gray-900"
+                className="w-full accent-gray-900 cursor-pointer"
               />
               <div className="flex items-center justify-between mt-2 text-xs font-bold text-gray-500">
-                <span>Rs. 0</span>
-                <span>Rs. {priceRange[1].toLocaleString()}</span>
+                <span>LKR 0</span>
+                <span>LKR {priceRange[1].toLocaleString()}</span>
               </div>
             </div>
 
@@ -147,9 +231,9 @@ export default function Shop() {
             {availableBrands.length > 0 && (
               <div className="pt-6 border-t border-gray-200">
                 <h3 className="text-sm font-black text-gray-900 uppercase tracking-wider mb-4">Brands</h3>
-                <div className="space-y-2">
+                <div className="space-y-2 max-h-48 overflow-y-auto">
                   {availableBrands.map(brand => (
-                    <label key={brand} className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer hover:text-gray-900">
+                    <label key={brand} className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer hover:text-gray-900">
                       <input 
                         type="checkbox" 
                         checked={selectedBrands.includes(brand)}
@@ -191,7 +275,7 @@ export default function Shop() {
         <div className="flex-1">
           <div className="mb-6 flex items-center justify-between">
             <h1 className="text-2xl md:text-3xl font-black text-gray-900 uppercase tracking-tight">
-              {categoryParam || 'All Products'}
+              {categoryParam || (searchParam ? `Search: "${searchParam}"` : 'All Products')}
             </h1>
             <span className="text-sm font-bold text-gray-400">{filteredProducts.length} Results</span>
           </div>
@@ -205,7 +289,7 @@ export default function Shop() {
           ) : filteredProducts.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
               {filteredProducts.map((p, idx) => (
-                <ProductCard key={p.id} product={p} index={idx} />
+                <ProductCard key={p.id || idx} product={p} index={idx} />
               ))}
             </div>
           ) : (
@@ -216,10 +300,10 @@ export default function Shop() {
               <h3 className="text-xl font-black text-gray-900 mb-2 uppercase">No Products Found</h3>
               <p className="text-gray-500">Try adjusting your filters or selecting a different category.</p>
               <button 
-                onClick={() => { setSelectedBrands([]); setSelectedTags([]); setPriceRange([0, 1000000]); }}
+                onClick={() => { setSelectedBrands([]); setSelectedTags([]); setPriceRange([0, 1500000]); setSearchParams({}); }}
                 className="mt-6 bg-gray-900 text-white font-black uppercase text-xs py-2 px-6 rounded-lg hover:bg-gray-800 transition-colors"
               >
-                Clear Filters
+                Clear All Filters
               </button>
             </div>
           )}

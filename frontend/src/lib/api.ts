@@ -207,7 +207,7 @@ export async function getMyOrders(): Promise<ApiOrder[]> {
 }
 
 /**
- * Format avatar URL: if it points to an unauthenticated R2 endpoint,
+ * Format media/avatar URL: if it points to an unauthenticated R2 endpoint,
  * route it through the backend /api/uploads/ proxy endpoint.
  */
 export function formatAvatarUrl(url?: string | null): string | null {
@@ -218,3 +218,209 @@ export function formatAvatarUrl(url?: string | null): string | null {
   }
   return url;
 }
+
+// ---------------- PRODUCTS API ----------------
+
+export async function fetchProducts(params?: {
+  category?: string;
+  search?: string;
+  sort?: string;
+  page?: number;
+  limit?: number | string;
+}): Promise<{ products: any[]; pagination?: any }> {
+  try {
+    const searchParams = new URLSearchParams();
+    if (params?.category) searchParams.append('category', params.category);
+    if (params?.search) searchParams.append('search', params.search);
+    if (params?.sort) searchParams.append('sort', params.sort);
+    if (params?.page) searchParams.append('page', params.page.toString());
+    if (params?.limit) searchParams.append('limit', params.limit.toString());
+
+    const queryString = searchParams.toString();
+    const url = `${API_BASE_URL}/api/products${queryString ? `?${queryString}` : ''}`;
+    const res = await fetch(url);
+    if (!res.ok) return { products: [] };
+    const data = await res.json();
+    return { products: data.products || [], pagination: data.pagination };
+  } catch (err) {
+    console.warn('fetchProducts error:', err);
+    return { products: [] };
+  }
+}
+
+export async function fetchProductById(id: string): Promise<any | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/products/${id}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.product || null;
+  } catch (err) {
+    console.warn('fetchProductById error:', err);
+    return null;
+  }
+}
+
+export async function createProductInDb(productData: any): Promise<any> {
+  const authHeaders = await getAuthHeader();
+  const res = await fetch(`${API_BASE_URL}/api/products`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...authHeaders,
+    },
+    body: JSON.stringify(productData),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to create product');
+  }
+  const data = await res.json();
+  return data.product;
+}
+
+export async function updateProductInDb(id: string, updates: any): Promise<any> {
+  const authHeaders = await getAuthHeader();
+  const res = await fetch(`${API_BASE_URL}/api/products/${id}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...authHeaders,
+    },
+    body: JSON.stringify(updates),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to update product');
+  }
+  const data = await res.json();
+  return data.product;
+}
+
+export async function deleteProductFromDb(id: string): Promise<boolean> {
+  const authHeaders = await getAuthHeader();
+  const res = await fetch(`${API_BASE_URL}/api/products/${id}`, {
+    method: 'DELETE',
+    headers: { ...authHeaders },
+  });
+  return res.ok;
+}
+
+// ---------------- CATEGORIES API ----------------
+
+export async function fetchCategories(type?: string): Promise<any[]> {
+  try {
+    const url = type ? `${API_BASE_URL}/api/categories?type=${type}` : `${API_BASE_URL}/api/categories`;
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.categories || [];
+  } catch (err) {
+    console.warn('fetchCategories error:', err);
+    return [];
+  }
+}
+
+export async function createCategoryInDb(categoryData: any): Promise<any> {
+  const authHeaders = await getAuthHeader();
+  const res = await fetch(`${API_BASE_URL}/api/categories`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...authHeaders,
+    },
+    body: JSON.stringify(categoryData),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to create category');
+  }
+  const data = await res.json();
+  return data.category;
+}
+
+export async function updateCategoryInDb(id: string, updates: any): Promise<any> {
+  const authHeaders = await getAuthHeader();
+  const res = await fetch(`${API_BASE_URL}/api/categories/${id}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...authHeaders,
+    },
+    body: JSON.stringify(updates),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to update category');
+  }
+  const data = await res.json();
+  return data.category;
+}
+
+export async function deleteCategoryFromDb(id: string): Promise<boolean> {
+  const authHeaders = await getAuthHeader();
+  const res = await fetch(`${API_BASE_URL}/api/categories/${id}`, {
+    method: 'DELETE',
+    headers: { ...authHeaders },
+  });
+  return res.ok;
+}
+
+// ---------------- BRANDS API ----------------
+
+export async function fetchBrands(): Promise<any[]> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/brands`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.brands || [];
+  } catch (err) {
+    console.warn('fetchBrands error:', err);
+    return [];
+  }
+}
+
+export async function createBrandInDb(brandData: any): Promise<any> {
+  const authHeaders = await getAuthHeader();
+  const res = await fetch(`${API_BASE_URL}/api/brands`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...authHeaders,
+    },
+    body: JSON.stringify(brandData),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to create brand');
+  }
+  const data = await res.json();
+  return data.brand;
+}
+
+export async function updateBrandInDb(id: string, updates: any): Promise<any> {
+  const authHeaders = await getAuthHeader();
+  const res = await fetch(`${API_BASE_URL}/api/brands/${id}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...authHeaders,
+    },
+    body: JSON.stringify(updates),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to update brand');
+  }
+  const data = await res.json();
+  return data.brand;
+}
+
+export async function deleteBrandFromDb(id: string): Promise<boolean> {
+  const authHeaders = await getAuthHeader();
+  const res = await fetch(`${API_BASE_URL}/api/brands/${id}`, {
+    method: 'DELETE',
+    headers: { ...authHeaders },
+  });
+  return res.ok;
+}
+
