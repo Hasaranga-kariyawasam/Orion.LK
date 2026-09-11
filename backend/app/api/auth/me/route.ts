@@ -41,9 +41,9 @@ export async function GET(req: NextRequest) {
 
 export async function OPTIONS() {
   return new NextResponse(null, {
-    status: 200,
+    status: 204,
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': 'https://orion-lk.vercel.app',
       'Access-Control-Allow-Methods': 'GET, PATCH, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     },
