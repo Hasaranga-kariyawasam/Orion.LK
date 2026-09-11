@@ -1,7 +1,7 @@
 import { Product } from './types';
 
 export const BRAND_NEW_CATEGORIES = [
-  { name: 'Adapters', count: 30, img: 'https://images.unsplash.com/photo-1583394838084-25e1a38481ff?auto=format&fit=crop&q=80&w=150' },
+  { name: 'Adapters', count: 30, img: 'https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&q=80&w=150' },
   { name: 'Cables & Connectors', count: 52, img: 'https://images.unsplash.com/photo-1620803444081-9bba14d33eb4?auto=format&fit=crop&q=80&w=150' },
   { name: 'Computer Casings', count: 45, img: 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&q=80&w=150' },
   { name: 'Coolers', count: 30, img: 'https://images.unsplash.com/photo-1555680202-c86f0e12f086?auto=format&fit=crop&q=80&w=150' },
@@ -33,7 +33,7 @@ export const BRAND_NEW_CATEGORIES = [
 ];
 
 export const USED_CATEGORIES = [
-  { name: 'Other Used Items', count: 1, img: 'https://images.unsplash.com/photo-1583394838084-25e1a38481ff?auto=format&fit=crop&q=80&w=150' },
+  { name: 'Other Used Items', count: 1, img: 'https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&q=80&w=150' },
   { name: 'Used Power Supply', count: 6, img: 'https://images.unsplash.com/photo-1587202372634-32705e3bf49c?auto=format&fit=crop&q=80&w=150' },
   { name: 'Used Monitors', count: 7, img: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&q=80&w=150' },
   { name: 'Used RAM', count: 9, img: 'https://images.unsplash.com/photo-1562976540-1502c2145186?auto=format&fit=crop&q=80&w=150' },

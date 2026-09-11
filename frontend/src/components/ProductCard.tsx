@@ -6,6 +6,8 @@ import { Product } from '../types';
 import { formatLKR } from '../data';
 import { useShop } from '../context/ShopContext';
 
+const FALLBACK_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&q=80&w=600';
+
 const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, index = 0 }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { addToCart, toggleWishlist, isInWishlist, toggleCompare, isInCompare, addToBuild } = useShop();
@@ -76,6 +78,10 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
             src={images[currentImageIndex]} 
             alt={product.name} 
             className="w-full h-full object-contain transition-transform duration-300 group-hover/image:scale-105"
+            onError={(event) => {
+              event.currentTarget.onerror = null;
+              event.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
+            }}
           />
         </Link>
         
