@@ -19,6 +19,16 @@ export async function GET() {
 /**
  * POST /api/brands
  */
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': 'https://orion-lk.vercel.app',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
+}
 export async function POST(req: NextRequest) {
   try {
     await connectDB();
