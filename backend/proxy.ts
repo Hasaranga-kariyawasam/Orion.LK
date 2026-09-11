@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 
 const allowedOrigin = 'https://orion-lk-cn6d.vercel.app/';
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const response = NextResponse.next();
 
   response.headers.set('Access-Control-Allow-Origin', allowedOrigin);
