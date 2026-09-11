@@ -20,6 +20,9 @@ export interface IProduct extends Document {
   hashtags?: string[];
   specifications?: Record<string, string>;
   stock: number;
+  warranty?: string;
+  colors?: string[];
+  descriptionShipping?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -49,9 +52,20 @@ const ProductSchema = new Schema<IProduct>(
     hashtags: [{ type: String }],
     specifications: { type: Map, of: String },
     stock: { type: Number, default: 0 },
+    warranty: { type: String, default: '6 Months' },
+    colors: [{ type: String }],
+    descriptionShipping: { type: String },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
 );
+
+ProductSchema.virtual('isNew').get(function (this: IProduct) {
+  return this.isNewProduct;
+});
 
 ProductSchema.index({ name: 'text', description: 'text', brand: 'text' });
 ProductSchema.index({ category: 1 });

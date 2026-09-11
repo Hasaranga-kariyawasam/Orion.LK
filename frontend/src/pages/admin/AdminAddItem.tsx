@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, Upload, X, Plus, Trash2, Hash, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Upload, X, Plus, Trash2, Hash, ChevronDown, Loader2 } from 'lucide-react';
 import { useAdmin, AdminProductItem } from '../../context/AdminContext';
 import { BRAND_NEW_CATEGORIES, USED_CATEGORIES } from '../../data';
+import { uploadImageToServer } from '../../lib/api';
 
-const WARRANTY_OPTIONS = ['No Warranty', '3 Months', '6 Months', '12 Months', '18 Months', '24 Months', 'Custom'];
+const WARRANTY_OPTIONS = ['No Warranty', '3 Months', '6 Months', '12 Months', '18 Months', '24 Months', '36 Months', 'Lifetime', 'Custom'];
 const COLOR_OPTIONS = ['Black', 'White', 'Silver', 'Grey', 'Red', 'Blue', 'Green', 'Gold', 'Rose Gold', 'Space Grey', 'Navy Blue', 'Orange'];
 const SPEC_TEMPLATES: Record<string, string[]> = {
   'Graphics Cards': ['Graphics Engine', 'Bus Standard', 'OpenGL', 'Video Memory', 'Engine Clock', 'CUDA Core', 'Memory Speed', 'Memory Interface'],
@@ -13,7 +14,7 @@ const SPEC_TEMPLATES: Record<string, string[]> = {
   'Keyboards': ['Switch Type', 'Layout', 'Connectivity', 'Backlight', 'Anti-Ghosting', 'Keycaps Material'],
 };
 
-const ALL_CATEGORIES = [
+const DEFAULT_ALL_CATEGORIES = [
   ...BRAND_NEW_CATEGORIES.map(c => ({ name: c.name, type: 'Brand New' })),
   ...USED_CATEGORIES.map(c => ({ name: c.name, type: 'Used' })),
 ];
@@ -24,21 +25,23 @@ interface AddItemProps {
 }
 
 export default function AdminAddItem({ onBack, editId }: AddItemProps) {
-  const { products, setProducts, categories } = useAdmin();
-  const existingProduct = editId ? products.find(p => p.id === editId) : null;
+  const { products, saveProductToDb, categories, brands } = useAdmin();
+  const existingProduct = editId ? products.find(p => p.id === editId || (p as any)._id === editId) : null;
 
   const [name, setName] = useState(existingProduct?.name || '');
   const [brand, setBrand] = useState(existingProduct?.brand || '');
-  const [categoryType, setCategoryType] = useState<'Brand New' | 'Used'>('Brand New');
+  const [categoryType, setCategoryType] = useState<'Brand New' | 'Used'>(
+    existingProduct?.category?.toLowerCase().includes('used') ? 'Used' : 'Brand New'
+  );
   const [category, setCategory] = useState(existingProduct?.category || '');
   const [newCategory, setNewCategory] = useState('');
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [price, setPrice] = useState(existingProduct?.price?.toString() || '');
   const [originalPrice, setOriginalPrice] = useState(existingProduct?.originalPrice?.toString() || '');
   const [discount, setDiscount] = useState(existingProduct?.discount?.toString() || '');
-  const [stock, setStock] = useState((existingProduct as any)?.stock?.toString() || '0');
+  const [stock, setStock] = useState((existingProduct as any)?.stock?.toString() || '10');
   const [inStock, setInStock] = useState((existingProduct?.status || 'In Stock') === 'In Stock');
-  const [warranty, setWarranty] = useState((existingProduct as any)?.warranty || '6 Months');
+  const [warranty, setWarranty] = useState((existingProduct as any)?.warranty || '12 Months');
   const [customWarranty, setCustomWarranty] = useState('');
   const [selectedColors, setSelectedColors] = useState<string[]>((existingProduct as any)?.colors || []);
   const [customColor, setCustomColor] = useState('');
@@ -52,13 +55,27 @@ export default function AdminAddItem({ onBack, editId }: AddItemProps) {
     existingProduct?.specifications ? Object.entries(existingProduct.specifications).map(([key, value]) => ({ key, value })) : [{ key: '', value: '' }]
   );
   const [images, setImages] = useState<{ url: string; file?: File }[]>(
-    existingProduct?.images?.map(url => ({ url })) || []
+    existingProduct?.images?.map(url => ({ url })) || (existingProduct?.image ? [{ url: existingProduct.image }] : [])
   );
   const [tags, setTags] = useState<string[]>(existingProduct?.tags || []);
   const [tagInput, setTagInput] = useState('');
   const [sku, setSku] = useState(existingProduct?.sku || '');
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const allCategoryList = categories.length > 0
+    ? categories.map(c => ({ name: c.name, type: c.type === 'used' ? 'Used' : 'Brand New' }))
+    : DEFAULT_ALL_CATEGORIES;
+
+  const filteredCategories = allCategoryList.filter(c => c.type === categoryType);
+
+  // Auto-select initial category if none chosen
+  useEffect(() => {
+    if (!category && filteredCategories.length > 0) {
+      setCategory(filteredCategories[0].name);
+    }
+  }, [categoryType, categories]);
 
   // Auto-load spec template when category changes
   useEffect(() => {
@@ -75,10 +92,20 @@ export default function AdminAddItem({ onBack, editId }: AddItemProps) {
     }
   }, [price, originalPrice]);
 
-  const handleImages = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
-    const newImgs = Array.from(e.target.files).map((file: File) => ({ url: URL.createObjectURL(file as Blob), file }));
-    setImages(prev => [...prev, ...newImgs]);
+    const files: File[] = Array.from(e.target.files);
+    setUploadingImage(true);
+    try {
+      for (const file of files) {
+        const uploadedUrl = await uploadImageToServer(file);
+        setImages(prev => [...prev, { url: uploadedUrl }]);
+      }
+    } catch (err: any) {
+      alert('Image upload failed: ' + (err.message || 'Unknown error'));
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const removeImage = (i: number) => setImages(prev => prev.filter((_, idx) => idx !== i));
@@ -106,45 +133,55 @@ export default function AdminAddItem({ onBack, editId }: AddItemProps) {
     }
   };
 
-  const filteredCategories = ALL_CATEGORIES.filter(c => c.type === categoryType);
-
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (!name.trim()) {
+      alert('Please enter a product name');
+      return;
+    }
+    if (!price.trim()) {
+      alert('Please enter a price');
+      return;
+    }
     setSaving(true);
-    const finalCategory = showNewCategory && newCategory ? newCategory : category;
-    const finalWarranty = warranty === 'Custom' ? customWarranty : warranty;
-    const specsObj: Record<string, string> = {};
-    specs.filter(s => s.key && s.value).forEach(s => { specsObj[s.key] = s.value; });
+    try {
+      const finalCategory = showNewCategory && newCategory ? newCategory : category || (filteredCategories[0]?.name || 'General');
+      const finalWarranty = warranty === 'Custom' ? customWarranty : warranty;
+      const specsObj: Record<string, string> = {};
+      specs.filter(s => s.key && s.value).forEach(s => { specsObj[s.key] = s.value; });
 
-    const newProduct: AdminProductItem = {
-      id: editId || Date.now().toString(),
-      name, brand, category: finalCategory,
-      price: parseFloat(price) || 0,
-      originalPrice: originalPrice ? parseFloat(originalPrice) : undefined,
-      discount: discount ? parseInt(discount) : undefined,
-      rating: existingProduct?.rating || 4.5,
-      reviews: existingProduct?.reviews || 0,
-      image: images[0]?.url || '',
-      images: images.map(i => i.url),
-      isNew: !editId,
-      status: inStock ? 'In Stock' : 'Out of Stock',
-      description, shortDescription,
-      sku, tags, hashtags,
-      specifications: specsObj,
-      stock: parseInt(stock) || 0,
-      warranty: finalWarranty,
-      colors: selectedColors,
-      descriptionShipping: shippingDescription,
-    };
+      const newProduct: any = {
+        name: name.trim(),
+        brand: brand.trim() || 'Orion LK',
+        category: finalCategory,
+        price: parseFloat(price) || 0,
+        originalPrice: originalPrice ? parseFloat(originalPrice) : undefined,
+        discount: discount ? parseInt(discount) : undefined,
+        rating: existingProduct?.rating || 4.8,
+        reviews: existingProduct?.reviews || 12,
+        image: images[0]?.url || 'https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&q=80&w=600',
+        images: images.map(i => i.url),
+        isNewProduct: categoryType === 'Brand New',
+        isNew: categoryType === 'Brand New',
+        status: inStock ? 'In Stock' : 'Out of Stock',
+        description,
+        shortDescription,
+        sku: sku || `SKU-${Date.now().toString().slice(-6)}`,
+        tags,
+        hashtags,
+        specifications: specsObj,
+        stock: parseInt(stock) || 0,
+        warranty: finalWarranty,
+        colors: selectedColors,
+        descriptionShipping: shippingDescription,
+      };
 
-    setTimeout(() => {
-      if (editId) {
-        setProducts(products.map(p => p.id === editId ? newProduct : p));
-      } else {
-        setProducts([newProduct, ...products]);
-      }
+      await saveProductToDb(newProduct, editId);
       setSaving(false);
       onBack();
-    }, 600);
+    } catch (err: any) {
+      alert('Error saving product: ' + (err.message || 'Unknown error'));
+      setSaving(false);
+    }
   };
 
   const labelCls = "text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5 block";

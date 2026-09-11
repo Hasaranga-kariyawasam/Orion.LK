@@ -1,7 +1,21 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { MOCK_PRODUCTS, BRAND_NEW_CATEGORIES, USED_CATEGORIES } from '../data';
 import { Product } from '../types';
-import { getAllUsersFromDb } from '../lib/api';
+import {
+  getAllUsersFromDb,
+  fetchProducts,
+  createProductInDb,
+  updateProductInDb,
+  deleteProductFromDb,
+  fetchCategories,
+  createCategoryInDb,
+  updateCategoryInDb,
+  deleteCategoryFromDb,
+  fetchBrands,
+  createBrandInDb,
+  updateBrandInDb,
+  deleteBrandFromDb,
+} from '../lib/api';
 
 export interface Accessory {
   id: string;
@@ -13,6 +27,7 @@ export interface Accessory {
 
 export interface Brand {
   id: string;
+  _id?: string;
   name: string;
   image: string;
   banner?: string;
@@ -45,7 +60,9 @@ export interface AdminUser {
 
 export interface AdminCategory {
   id: string;
+  _id?: string;
   name: string;
+  slug?: string;
   count: number;
   img: string;
   type: 'brand-new' | 'used';
@@ -55,9 +72,9 @@ export interface PaymentOption {
   id: string;
   name: string;
   description: string;
-  icon: string; // emoji or icon name
+  icon: string;
   enabled: boolean;
-  details?: string; // e.g. bank account number
+  details?: string;
 }
 
 export interface SpecialOffer {
@@ -69,6 +86,7 @@ export interface SpecialOffer {
 }
 
 export interface AdminProductItem extends Product {
+  _id?: string;
   stock?: number;
   warranty?: string;
   colors?: string[];
@@ -88,7 +106,7 @@ interface AdminContextType {
   brands: Brand[];
   setBrands: (brands: Brand[]) => void;
   saveSettings: () => void;
-  // Extended
+  // Live items
   products: AdminProductItem[];
   setProducts: (products: AdminProductItem[]) => void;
   orders: AdminOrder[];
@@ -107,7 +125,17 @@ interface AdminContextType {
   setStoreAddress: (addr: string) => void;
   bestSellerIds: string[];
   setBestSellerIds: (ids: string[]) => void;
+  // Async actions connected to MongoDB
+  refreshProducts: () => Promise<void>;
+  refreshCategories: () => Promise<void>;
+  refreshBrands: () => Promise<void>;
   refreshUsers: () => Promise<void>;
+  saveProductToDb: (productData: any, editId?: string) => Promise<AdminProductItem>;
+  deleteProductFromContext: (id: string) => Promise<boolean>;
+  saveCategoryToDb: (catData: any, editId?: string) => Promise<AdminCategory>;
+  deleteCategoryFromContext: (id: string) => Promise<boolean>;
+  saveBrandToDb: (brandData: any, editId?: string) => Promise<Brand>;
+  deleteBrandFromContext: (id: string) => Promise<boolean>;
 }
 
 const DEFAULT_HERO_IMAGES = [
@@ -125,15 +153,6 @@ const DEFAULT_ACCESSORIES: Accessory[] = [
   { id: "4", name: "Keyboards", image: "https://images.unsplash.com/photo-1595225476474-87563907a212?auto=format&fit=crop&q=80&w=300", colorClass: "bg-[#059669]", gradientClass: "from-emerald-600 to-teal-500" }
 ];
 
-const DEFAULT_BRANDS: Brand[] = [
-  { id: "1", name: "ASUS ROG", image: "https://upload.wikimedia.org/wikipedia/commons/d/d1/ROG_Logo.svg", banner: "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&q=80&w=1200", visible: true },
-  { id: "2", name: "MSI", image: "https://upload.wikimedia.org/wikipedia/commons/b/b1/MSI_logo.svg", visible: true },
-  { id: "3", name: "Gigabyte", image: "https://upload.wikimedia.org/wikipedia/commons/2/23/Gigabyte_Technology_logo.svg", visible: true },
-  { id: "4", name: "Corsair", image: "https://upload.wikimedia.org/wikipedia/commons/4/4b/Corsair_Logo.svg", visible: true },
-  { id: "5", name: "Razer", image: "https://upload.wikimedia.org/wikipedia/en/4/40/Razer_snake_logo.svg", visible: true },
-  { id: "6", name: "Logitech", image: "https://upload.wikimedia.org/wikipedia/commons/1/17/Logitech_logo.svg", visible: true }
-];
-
 const DEFAULT_ORDERS: AdminOrder[] = [
   { id: '1', orderNumber: 'ORD-746291', customerName: 'Kasun Perera', customerEmail: 'kasun@gmail.com', date: '2024-03-15', total: 45000, status: 'Processing', items: 2, paymentMethod: 'Bank Transfer', shippingAddress: 'No 12, Colombo 03' },
   { id: '2', orderNumber: 'ORD-892102', customerName: 'Amali Silva', customerEmail: 'amali@gmail.com', date: '2024-03-14', total: 850000, status: 'Delivered', items: 1, paymentMethod: 'Card', shippingAddress: 'No 45, Kandy' },
@@ -144,11 +163,6 @@ const DEFAULT_ORDERS: AdminOrder[] = [
 
 const DEFAULT_USERS: AdminUser[] = [
   { id: 'admin-1', name: 'Super Admin', email: 'orian@admin.lk', joined: '2024-01-01', orders: 0, totalSpent: 0, isAdmin: true },
-];
-
-const DEFAULT_CATEGORIES: AdminCategory[] = [
-  ...BRAND_NEW_CATEGORIES.map((c, i) => ({ id: `bn-${i}`, name: c.name, count: c.count, img: c.img, type: 'brand-new' as const })),
-  ...USED_CATEGORIES.map((c, i) => ({ id: `u-${i}`, name: c.name, count: c.count, img: c.img, type: 'used' as const })),
 ];
 
 const DEFAULT_PAYMENTS: PaymentOption[] = [
@@ -175,17 +189,79 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [heroImages, setHeroImages] = useState<string[]>(() => loadState('admin_heroImages', DEFAULT_HERO_IMAGES));
   const [videoUrl, setVideoUrl] = useState<string>(() => loadState('admin_videoUrl', DEFAULT_VIDEO_URL));
   const [accessories, setAccessories] = useState<Accessory[]>(() => loadState('admin_accessories', DEFAULT_ACCESSORIES));
-  const [brands, setBrands] = useState<Brand[]>(() => loadState('admin_brands', DEFAULT_BRANDS));
+  const [brands, setBrands] = useState<Brand[]>(() => loadState('admin_brands', []));
   const [products, setProducts] = useState<AdminProductItem[]>(() => loadState('admin_products', MOCK_PRODUCTS));
   const [orders, setOrders] = useState<AdminOrder[]>(() => loadState('admin_orders', DEFAULT_ORDERS));
   const [users, setUsers] = useState<AdminUser[]>(() => loadState('admin_users', DEFAULT_USERS));
-  const [categories, setCategories] = useState<AdminCategory[]>(() => loadState('admin_categories', DEFAULT_CATEGORIES));
+  const [categories, setCategories] = useState<AdminCategory[]>(() => loadState('admin_categories', []));
   const [paymentOptions, setPaymentOptions] = useState<PaymentOption[]>(() => loadState('admin_payments', DEFAULT_PAYMENTS));
   const [specialOffers, setSpecialOffers] = useState<SpecialOffer[]>(() => loadState('admin_offers', DEFAULT_SPECIAL_OFFERS));
   const [whatsappNumber, setWhatsappNumber] = useState<string>(() => loadState('admin_whatsapp', '+94 77 123 4567'));
   const [storeAddress, setStoreAddress] = useState<string>(() => loadState('admin_address', 'No. 123, Main Street, Colombo 03, Sri Lanka'));
   const [bestSellerIds, setBestSellerIds] = useState<string[]>(() => loadState('admin_bestsellers', ['1', '2', '3', '4']));
 
+  // 1. Refresh Products from MongoDB
+  const refreshProducts = async () => {
+    try {
+      const res = await fetchProducts({ limit: 1000 });
+      if (res.products && res.products.length > 0) {
+        const mapped = res.products.map(p => ({
+          ...p,
+          id: p._id || p.id,
+          isNew: p.isNewProduct !== undefined ? p.isNewProduct : p.isNew,
+        }));
+        setProducts(mapped);
+        localStorage.setItem('admin_products', JSON.stringify(mapped));
+      }
+    } catch (e) {
+      console.warn('Error refreshing products:', e);
+    }
+  };
+
+  // 2. Refresh Categories from MongoDB
+  const refreshCategories = async () => {
+    try {
+      const cats = await fetchCategories();
+      if (cats && cats.length > 0) {
+        const mapped: AdminCategory[] = cats.map(c => ({
+          id: c._id || c.id,
+          _id: c._id,
+          name: c.name,
+          slug: c.slug,
+          count: c.count || 0,
+          img: c.img || '',
+          type: c.type || 'brand-new',
+        }));
+        setCategories(mapped);
+        localStorage.setItem('admin_categories', JSON.stringify(mapped));
+      }
+    } catch (e) {
+      console.warn('Error refreshing categories:', e);
+    }
+  };
+
+  // 3. Refresh Brands from MongoDB
+  const refreshBrands = async () => {
+    try {
+      const bList = await fetchBrands();
+      if (bList && bList.length > 0) {
+        const mapped: Brand[] = bList.map(b => ({
+          id: b._id || b.id,
+          _id: b._id,
+          name: b.name,
+          image: b.image || '',
+          banner: b.banner || '',
+          visible: b.visible !== false,
+        }));
+        setBrands(mapped);
+        localStorage.setItem('admin_brands', JSON.stringify(mapped));
+      }
+    } catch (e) {
+      console.warn('Error refreshing brands:', e);
+    }
+  };
+
+  // 4. Refresh Users from MongoDB
   const refreshUsers = async () => {
     try {
       const dbUsers = await getAllUsersFromDb();
@@ -206,6 +282,132 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       console.warn('Error refreshing MongoDB users:', e);
     }
   };
+
+  // 5. Save Product to MongoDB
+  const saveProductToDb = async (productData: any, editId?: string): Promise<AdminProductItem> => {
+    let saved: any;
+    if (editId) {
+      saved = await updateProductInDb(editId, productData);
+    } else {
+      saved = await createProductInDb(productData);
+    }
+    const formatted: AdminProductItem = {
+      ...saved,
+      id: saved._id || saved.id || editId,
+      isNew: saved.isNewProduct !== undefined ? saved.isNewProduct : saved.isNew,
+    };
+    setProducts(prev => {
+      const updated = editId ? prev.map(p => p.id === editId ? formatted : p) : [formatted, ...prev];
+      localStorage.setItem('admin_products', JSON.stringify(updated));
+      return updated;
+    });
+    return formatted;
+  };
+
+  // 6. Delete Product from MongoDB
+  const deleteProductFromContext = async (id: string): Promise<boolean> => {
+    try {
+      await deleteProductFromDb(id);
+      setProducts(prev => {
+        const updated = prev.filter(p => p.id !== id && (p as any)._id !== id);
+        localStorage.setItem('admin_products', JSON.stringify(updated));
+        return updated;
+      });
+      return true;
+    } catch (err) {
+      console.error('Failed to delete product:', err);
+      return false;
+    }
+  };
+
+  // 7. Save Category to MongoDB
+  const saveCategoryToDb = async (catData: any, editId?: string): Promise<AdminCategory> => {
+    let saved: any;
+    if (editId) {
+      saved = await updateCategoryInDb(editId, catData);
+    } else {
+      saved = await createCategoryInDb(catData);
+    }
+    const formatted: AdminCategory = {
+      id: saved._id || saved.id || editId,
+      _id: saved._id,
+      name: saved.name,
+      slug: saved.slug,
+      count: saved.count || 0,
+      img: saved.img || '',
+      type: saved.type || 'brand-new',
+    };
+    setCategories(prev => {
+      const updated = editId ? prev.map(c => c.id === editId ? formatted : c) : [...prev, formatted];
+      localStorage.setItem('admin_categories', JSON.stringify(updated));
+      return updated;
+    });
+    return formatted;
+  };
+
+  // 8. Delete Category from MongoDB
+  const deleteCategoryFromContext = async (id: string): Promise<boolean> => {
+    try {
+      await deleteCategoryFromDb(id);
+      setCategories(prev => {
+        const updated = prev.filter(c => c.id !== id && c._id !== id);
+        localStorage.setItem('admin_categories', JSON.stringify(updated));
+        return updated;
+      });
+      return true;
+    } catch (err) {
+      console.error('Failed to delete category:', err);
+      return false;
+    }
+  };
+
+  // 9. Save Brand to MongoDB
+  const saveBrandToDb = async (brandData: any, editId?: string): Promise<Brand> => {
+    let saved: any;
+    if (editId) {
+      saved = await updateBrandInDb(editId, brandData);
+    } else {
+      saved = await createBrandInDb(brandData);
+    }
+    const formatted: Brand = {
+      id: saved._id || saved.id || editId,
+      _id: saved._id,
+      name: saved.name,
+      image: saved.image || '',
+      banner: saved.banner || '',
+      visible: saved.visible !== false,
+    };
+    setBrands(prev => {
+      const updated = editId ? prev.map(b => b.id === editId ? formatted : b) : [...prev, formatted];
+      localStorage.setItem('admin_brands', JSON.stringify(updated));
+      return updated;
+    });
+    return formatted;
+  };
+
+  // 10. Delete Brand from MongoDB
+  const deleteBrandFromContext = async (id: string): Promise<boolean> => {
+    try {
+      await deleteBrandFromDb(id);
+      setBrands(prev => {
+        const updated = prev.filter(b => b.id !== id && b._id !== id);
+        localStorage.setItem('admin_brands', JSON.stringify(updated));
+        return updated;
+      });
+      return true;
+    } catch (err) {
+      console.error('Failed to delete brand:', err);
+      return false;
+    }
+  };
+
+  // Fetch initial data on mount
+  useEffect(() => {
+    refreshProducts();
+    refreshCategories();
+    refreshBrands();
+    refreshUsers();
+  }, []);
 
   const saveSettings = () => {
     localStorage.setItem('admin_heroImages', JSON.stringify(heroImages));
@@ -239,7 +441,16 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       whatsappNumber, setWhatsappNumber,
       storeAddress, setStoreAddress,
       bestSellerIds, setBestSellerIds,
+      refreshProducts,
+      refreshCategories,
+      refreshBrands,
       refreshUsers,
+      saveProductToDb,
+      deleteProductFromContext,
+      saveCategoryToDb,
+      deleteCategoryFromContext,
+      saveBrandToDb,
+      deleteBrandFromContext,
     }}>
       {children}
     </AdminContext.Provider>

@@ -91,12 +91,36 @@ const BRANDS = [
 ];
 
 export default function Home() {
-  const { videoUrl, accessories, brands } = useAdmin();
+  const { videoUrl, accessories, brands, categories, products } = useAdmin();
   const [isMuted, setIsMuted] = useState(true);
   const [videoFailed, setVideoFailed] = useState(false);
   const [showVideoText, setShowVideoText] = useState(true);
+  const [bestSellerCategory, setBestSellerCategory] = useState('Processors');
   const videoRef = useRef<HTMLVideoElement>(null);
+  const categorySliderRef = useRef<HTMLDivElement>(null);
   const youtubeEmbedUrl = getYouTubeEmbedUrl(videoUrl);
+
+  const scrollCategories = (direction: 'left' | 'right') => {
+    if (categorySliderRef.current) {
+      const scrollAmount = direction === 'left' ? -350 : 350;
+      categorySliderRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
+
+  const displayCategories = categories && categories.length > 0 ? categories : CATEGORIES;
+  const clearanceProducts = products.filter(p => (p.discount && p.discount > 0) || p.price < 150000).slice(0, 8);
+  const displayClearance = clearanceProducts.length > 0 ? clearanceProducts : products.slice(0, 8);
+
+  const bestSellerProducts = products.filter(p => {
+    if (bestSellerCategory === 'Coolers') {
+      return p.category === 'Coolers' || p.category === 'Cooling Pads' || p.category === 'Fan Kits';
+    }
+    return p.category === bestSellerCategory;
+  });
+  const displayBestSellers = bestSellerProducts.length > 0 ? bestSellerProducts.slice(0, 4) : products.slice(0, 4);
+
+  const laptopProducts = products.filter(p => p.category === 'Laptops' || p.category.toLowerCase().includes('laptop')).slice(0, 4);
+  const displayLaptops = laptopProducts.length > 0 ? laptopProducts : products.slice(0, 4);
 
   useEffect(() => {
     const hideTextTimer = window.setTimeout(() => setShowVideoText(false), 5000);
@@ -223,26 +247,46 @@ export default function Home() {
 
       {/* 3. Top Categories */}
       <AnimatedSection className="max-w-7xl mx-auto px-4 mt-8 md:mt-10 relative">
-        <h2 className="text-2xl font-black mb-8 text-gray-900 uppercase">Top Categories</h2>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-black text-gray-900 uppercase">Top Categories</h2>
+            <p className="text-xs text-gray-500 font-medium mt-0.5">Explore {displayCategories.length} categories available at Orion LK</p>
+          </div>
+          <Link to="/shop" className="text-xs font-bold text-gray-700 hover:text-black flex items-center gap-1">
+            View All in Shop <ChevronRight size={14} />
+          </Link>
+        </div>
 
-        {/* Added Arrows for sliding */}
-        <button className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full shadow-md z-10 hover:bg-white text-gray-600">
-          <ChevronLeft size={24} />
+        {/* Scroll Arrows */}
+        <button
+          onClick={() => scrollCategories('left')}
+          className="absolute left-2 top-[58%] -translate-y-1/2 bg-white/95 p-2.5 rounded-full shadow-lg z-10 hover:bg-white text-gray-800 border border-gray-200 transition-all hover:scale-105"
+          aria-label="Scroll left"
+        >
+          <ChevronLeft size={22} />
         </button>
 
-        <div className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide justify-between px-8">
-          {CATEGORIES.map((cat, idx) => (
-            <div key={idx} className="flex flex-col items-center gap-3 cursor-pointer group min-w-[100px]">
-              <div className="w-24 h-24 rounded-none bg-white shadow-sm border border-gray-100 overflow-hidden flex items-center justify-center p-3 group-hover:border-black group-hover:shadow-[0_0_20px_rgba(0,0,0,0.3)] transition-all duration-300">
+        <div ref={categorySliderRef} className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide px-6 scroll-smooth">
+          {displayCategories.map((cat, idx) => (
+            <Link
+              key={cat.id || idx}
+              to={`/shop?category=${encodeURIComponent(cat.name)}`}
+              className="flex flex-col items-center gap-2.5 cursor-pointer group min-w-[110px] shrink-0"
+            >
+              <div className="w-24 h-24 rounded-2xl bg-white shadow-sm border border-gray-200/80 overflow-hidden flex items-center justify-center p-3 group-hover:border-black group-hover:shadow-[0_4px_20px_rgba(0,0,0,0.12)] transition-all duration-300">
                 <img src={cat.img} alt={cat.name} className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500" />
               </div>
-              <span className="text-xs font-bold text-center text-gray-800 group-hover:text-black transition-colors leading-tight">{cat.name}</span>
-            </div>
+              <span className="text-xs font-bold text-center text-gray-800 group-hover:text-black transition-colors leading-tight line-clamp-2 max-w-[110px]">{cat.name}</span>
+            </Link>
           ))}
         </div>
 
-        <button className="absolute right-0 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full shadow-md z-10 hover:bg-white text-gray-600">
-          <ChevronRight size={24} />
+        <button
+          onClick={() => scrollCategories('right')}
+          className="absolute right-2 top-[58%] -translate-y-1/2 bg-white/95 p-2.5 rounded-full shadow-lg z-10 hover:bg-white text-gray-800 border border-gray-200 transition-all hover:scale-105"
+          aria-label="Scroll right"
+        >
+          <ChevronRight size={22} />
         </button>
       </AnimatedSection>
 
@@ -278,9 +322,9 @@ export default function Home() {
 
         <div className="relative z-10 mt-12 bg-white rounded-xl p-4 md:p-6 shadow-2xl">
           <div className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide px-2">
-            {MOCK_PRODUCTS.slice(0, 5).map((product, idx) => (
+            {displayClearance.map((product, idx) => (
               <div className="min-w-[220px] w-1/5 flex-shrink-0" key={product.id}>
-                <ProductCard product={{ ...product, isNew: true, discount: product.discount || 35 }} index={idx} />
+                <ProductCard product={product} index={idx} />
               </div>
             ))}
           </div>
@@ -383,14 +427,23 @@ export default function Home() {
       <AnimatedSection className="max-w-7xl mx-auto px-4 mt-12 md:mt-16">
         <h2 className="text-2xl font-black mb-6 text-gray-900 uppercase">Best Sellers</h2>
         <div className="flex gap-4 mb-6 overflow-x-auto scrollbar-hide">
-          <button className="bg-gray-900 text-white px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap">Processors</button>
-          <button className="text-gray-500 hover:text-gray-900 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap">Motherboards</button>
-          <button className="text-gray-500 hover:text-gray-900 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap">RAM</button>
-          <button className="text-gray-500 hover:text-gray-900 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap">Coolers</button>
+          {['Processors', 'Motherboards', 'RAM', 'Coolers'].map(cat => (
+            <button
+              key={cat}
+              onClick={() => setBestSellerCategory(cat)}
+              className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
+                bestSellerCategory === cat
+                  ? 'bg-gray-900 text-white'
+                  : 'text-gray-500 hover:text-gray-900 bg-gray-200/60'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {MOCK_PRODUCTS.slice(0, 4).map((product, idx) => (
-            <ProductCard key={product.id} product={product} index={idx} />
+          {displayBestSellers.map((product, idx) => (
+            <ProductCard key={product.id || idx} product={product} index={idx} />
           ))}
         </div>
       </AnimatedSection>
@@ -399,11 +452,13 @@ export default function Home() {
       <AnimatedSection className="max-w-7xl mx-auto px-4 mt-12 md:mt-16 mb-8 md:mb-12">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-black text-gray-900 uppercase">Browse Laptops</h2>
-          <a href="#" className="text-xs font-bold text-gray-900 flex items-center gap-1 hover:text-black transition-colors">View More <ChevronRight size={14} /></a>
+          <Link to="/shop?category=Laptops" className="text-xs font-bold text-gray-900 flex items-center gap-1 hover:text-black transition-colors">
+            View More <ChevronRight size={14} />
+          </Link>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {MOCK_PRODUCTS.filter(p => p.category === 'Laptops').map((product, idx) => (
-            <ProductCard key={product.id} product={product} index={idx} />
+          {displayLaptops.map((product, idx) => (
+            <ProductCard key={product.id || idx} product={product} index={idx} />
           ))}
           {/* Add a banner card if there are less than 4 laptops */}
           <div className="col-span-1 md:col-span-2 bg-[#091530] rounded-xl overflow-hidden relative group cursor-pointer shadow-sm min-h-[300px]">
@@ -620,17 +675,23 @@ export default function Home() {
       <AnimatedSection className="max-w-7xl mx-auto px-4 mt-10 md:mt-12 mb-8 md:mb-12">
         <h2 className="text-2xl font-black text-center mb-8 text-gray-900">Our Brands</h2>
         <div className="flex flex-wrap justify-center items-center gap-4 md:gap-6">
-          {BRANDS.map((brand, idx) => (
-            <div key={idx} className="bg-white border border-gray-100 h-[80px] w-[120px] md:w-[160px] rounded-xl flex justify-center items-center cursor-pointer shadow-sm group hover:shadow-md transition-all duration-300">
-              <img
-                src={`https://logo.clearbit.com/${brand.domain}`}
-                alt={brand.name}
-                className="max-h-8 max-w-[90px] md:max-w-[110px] object-contain grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  e.currentTarget.parentElement!.innerHTML = `<span class="font-black text-[15px] md:text-xl text-gray-400 group-hover:text-black transition-colors duration-500">${brand.name}</span>`;
-                }}
-              />
+          {(brands && brands.length > 0 ? brands.filter(b => b.visible !== false) : BRANDS).map((brand: any, idx) => (
+            <div key={brand.id || idx} className="bg-white border border-gray-100 h-[80px] w-[120px] md:w-[160px] rounded-xl flex justify-center items-center cursor-pointer shadow-sm group hover:shadow-md transition-all duration-300 p-3">
+              {brand.image ? (
+                <img
+                  src={brand.image}
+                  alt={brand.name}
+                  className="max-h-10 max-w-[90px] md:max-w-[120px] object-contain grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    if (e.currentTarget.parentElement) {
+                      e.currentTarget.parentElement.innerHTML = `<span class="font-black text-[14px] md:text-base text-gray-700 group-hover:text-black transition-colors duration-300">${brand.name}</span>`;
+                    }
+                  }}
+                />
+              ) : (
+                <span className="font-black text-[14px] md:text-base text-gray-700 group-hover:text-black transition-colors duration-300">{brand.name}</span>
+              )}
             </div>
           ))}
         </div>

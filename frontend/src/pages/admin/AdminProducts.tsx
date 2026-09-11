@@ -3,7 +3,7 @@ import { Search, Filter, Trash2, Edit3, Plus, Package, CheckCircle, XCircle, Sta
 import { useAdmin } from '../../context/AdminContext';
 
 export default function AdminProducts({ onAddItem, onEditItem }: { onAddItem: () => void; onEditItem: (id: string) => void }) {
-  const { products, setProducts } = useAdmin();
+  const { products, deleteProductFromContext } = useAdmin();
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
   const [filterStatus, setFilterStatus] = useState('All');
@@ -18,8 +18,10 @@ export default function AdminProducts({ onAddItem, onEditItem }: { onAddItem: ()
     return matchSearch && matchCat && matchStatus;
   });
 
-  const deleteProduct = (id: string) => {
-    if (confirm('Delete this product?')) setProducts(products.filter(p => p.id !== id));
+  const deleteProduct = async (id: string) => {
+    if (confirm('Delete this product permanently from database?')) {
+      await deleteProductFromContext(id);
+    }
   };
 
   const statusColor = (s?: string) => {

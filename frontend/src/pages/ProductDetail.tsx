@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { MOCK_PRODUCTS, formatLKR } from '../data';
 import { useShop } from '../context/ShopContext';
+import { useAdmin } from '../context/AdminContext';
+import { fetchProductById } from '../lib/api';
 import { Heart, ShoppingCart, Check, ShieldCheck, ChevronRight, Home as HomeIcon, Truck, Headset, Scale, Facebook, Twitter, Linkedin, Share2, MapPin, Calendar, Star, Minus, Plus, Bell } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import FAQAccordion from '../components/FAQAccordion';
@@ -11,8 +13,11 @@ import ProductCardSkeleton from '../components/ProductCardSkeleton';
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
-  const product = MOCK_PRODUCTS.find(p => p.id === id) || MOCK_PRODUCTS[0]; // fallback to first product
+  const { products } = useAdmin();
   
+  const [product, setProduct] = useState<any>(() => {
+    return products.find(p => p.id === id || (p as any)._id === id) || products[0] || MOCK_PRODUCTS[0];
+  });
   
   const [activeTab, setActiveTab] = useState<'description' | 'shipping' | 'reviews'>('description');
   const [isLoading, setIsLoading] = useState(true);
@@ -20,6 +25,40 @@ export default function ProductDetail() {
   const [alertEmail, setAlertEmail] = useState('');
   const [alertSuccess, setAlertSuccess] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadProduct = async () => {
+      setIsLoading(true);
+      const found = products.find(p => p.id === id || (p as any)._id === id);
+      if (found) {
+        if (isMounted) {
+          setProduct(found);
+          setIsLoading(false);
+        }
+        return;
+      }
+      if (id) {
+        try {
+          const apiProduct = await fetchProductById(id);
+          if (apiProduct && isMounted) {
+            setProduct({ ...apiProduct, id: apiProduct._id || apiProduct.id });
+            setIsLoading(false);
+            return;
+          }
+        } catch (e) {
+          console.warn('Error loading product from API:', e);
+        }
+      }
+      if (isMounted) {
+        setProduct(products[0] || MOCK_PRODUCTS[0]);
+        setIsLoading(false);
+      }
+    };
+
+    loadProduct();
+    return () => { isMounted = false; };
+  }, [id, products]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -44,11 +83,6 @@ export default function ProductDetail() {
     }
   };
 
-  useEffect(() => {
-    setIsLoading(true);
-    const timer = setTimeout(() => setIsLoading(false), 800);
-    return () => clearTimeout(timer);
-  }, [id]);
   const [quantity, setQuantity] = useState(1);
   
   const { addToCart, toggleWishlist, isInWishlist, toggleCompare, isInCompare } = useShop();
@@ -59,11 +93,11 @@ export default function ProductDetail() {
     window.scrollTo(0, 0);
   }, [id]);
 
-  
+  const relatedProducts = products
+    .filter(p => p.category === product.category && (p.id !== product.id && (p as any)._id !== product.id))
+    .slice(0, 4);
 
-  const relatedProducts = MOCK_PRODUCTS.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
-
-  if (isLoading) {
+  if (isLoading || !product) {
     return <ProductDetailSkeleton />;
   }
 
