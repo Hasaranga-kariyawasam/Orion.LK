@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const allowedOrigin = 'https://orion-lk-cn6d.vercel.app/';
+const allowedOrigin = 'https://orion-lk.vercel.app/';
 
 export function proxy(request: NextRequest) {
   const response = NextResponse.next();
