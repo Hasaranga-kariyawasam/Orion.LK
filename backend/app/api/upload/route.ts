@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { verifyToken } from '@/lib/firebase-admin';
 import { randomUUID } from 'crypto';
-import fs from 'fs';
-import path from 'path';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+
+/** Detect serverless / read-only environments (Vercel, etc.) */
+const IS_SERVERLESS = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,7 +28,10 @@ export async function POST(req: NextRequest) {
     }
 
     if (!ALLOWED_TYPES.includes(file.type)) {
-      return NextResponse.json({ error: 'Invalid file type. Allowed: JPEG, PNG, WebP, GIF' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Invalid file type. Allowed: JPEG, PNG, WebP, GIF' },
+        { status: 400 }
+      );
     }
 
     if (file.size > MAX_SIZE) {
@@ -38,45 +42,59 @@ export async function POST(req: NextRequest) {
     const filename = `${randomUUID()}.${ext}`;
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    // 1. Always save to local public/uploads directory
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
-    const localFilePath = path.join(uploadsDir, filename);
-    fs.writeFileSync(localFilePath, buffer);
-
-    // 2. Also back up to Cloudflare R2 if credentials exist
     const accountId = process.env.R2_ACCOUNT_ID || 'a535fef343d31f2821a8e89d31f7ea88';
     const accessKeyId = process.env.R2_ACCESS_KEY_ID;
     const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
     const bucket = process.env.R2_BUCKET_NAME || 'orion-lk-images';
 
-    if (accessKeyId && secretAccessKey) {
-      try {
-        const R2 = new S3Client({
-          region: 'auto',
-          endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
-          credentials: { accessKeyId, secretAccessKey },
-        });
+    let uploadedToR2 = false;
 
-        const key = `uploads/${filename}`;
-        await R2.send(
-          new PutObjectCommand({
-            Bucket: bucket,
-            Key: key,
-            Body: buffer,
-            ContentType: file.type,
-            ContentLength: file.size,
-          })
-        );
-      } catch (r2Err) {
-        console.warn('R2 backup upload warning:', r2Err);
+    // 1. Upload to Cloudflare R2 (primary storage — works in serverless)
+    if (accessKeyId && secretAccessKey) {
+      const R2 = new S3Client({
+        region: 'auto',
+        endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+        credentials: { accessKeyId, secretAccessKey },
+      });
+
+      await R2.send(
+        new PutObjectCommand({
+          Bucket: bucket,
+          Key: `uploads/${filename}`,
+          Body: buffer,
+          ContentType: file.type,
+          ContentLength: file.size,
+        })
+      );
+      uploadedToR2 = true;
+      console.log(`[upload] Stored to R2: uploads/${filename}`);
+    }
+
+    // 2. Optionally save to local disk (only in non-serverless environments)
+    if (!IS_SERVERLESS) {
+      try {
+        const fs = await import('fs');
+        const path = await import('path');
+        const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+        if (!fs.existsSync(uploadsDir)) {
+          fs.mkdirSync(uploadsDir, { recursive: true });
+        }
+        fs.writeFileSync(path.join(uploadsDir, filename), buffer);
+        console.log(`[upload] Saved locally: public/uploads/${filename}`);
+      } catch (localErr) {
+        console.warn('[upload] Local disk write failed (non-fatal):', localErr);
       }
     }
 
-    // Use explicit BACKEND_URL env var (set this in Vercel), otherwise
-    // reconstruct from forwarded headers (always HTTPS in production).
+    if (!uploadedToR2 && IS_SERVERLESS) {
+      // On serverless, R2 is required — local disk is not available
+      return NextResponse.json(
+        { error: 'Image storage is not configured. Set R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY in Vercel environment variables.' },
+        { status: 500 }
+      );
+    }
+
+    // Build the public URL for the uploaded file
     const backendUrl =
       process.env.BACKEND_URL ||
       (() => {
