@@ -72,23 +72,9 @@ const getYouTubeEmbedUrl = (value: string) => {
 
 const FALLBACK_VIDEO_URL = 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4';
 
-const CATEGORIES = [
-  { name: 'Graphics Cards', img: 'https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&q=80&w=150' },
-  { name: 'Laptops', img: 'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?auto=format&fit=crop&q=80&w=150' },
-  { name: 'Monitors', img: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&q=80&w=150' },
-  { name: 'Storage Devices', img: 'https://images.unsplash.com/photo-1531492746076-161ca9bcad58?auto=format&fit=crop&q=80&w=150' },
-  { name: 'Pre-Owned Laptops', img: 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&q=80&w=150' },
-  { name: 'Gaming Chairs', img: 'https://images.unsplash.com/photo-1598550476439-6847785fcea6?auto=format&fit=crop&q=80&w=150' },
-];
 
-const BRANDS = [
-  { name: 'Apple', domain: 'apple.com' },
-  { name: 'Samsung', domain: 'samsung.com' },
-  { name: 'Haylou', domain: 'haylou.com' },
-  { name: 'DJI', domain: 'dji.com' },
-  { name: 'Baseus', domain: 'baseus.com' },
-  { name: 'Anker', domain: 'anker.com' },
-];
+
+
 
 export default function Home() {
   const { videoUrl, accessories, brands, categories, products } = useAdmin();
@@ -127,10 +113,11 @@ export default function Home() {
     return () => window.clearTimeout(hideTextTimer);
   }, []);
   return (
+    <div> sdfs</div>
     <div className="min-h-screen bg-gray-50 pb-12">
 
       {/* 1. Hero Section */}
-      <AnimatedSection className="max-w-7xl mx-auto px-4 mt-4">
+      <AnimatedSection className="max-w-7xl mx-auto px-4 mt-0 ">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 h-auto md:h-[460px]">
           {/* Main Hero Carousel */}
           <div className="md:col-span-2 relative h-full min-h-[300px]">
@@ -431,11 +418,10 @@ export default function Home() {
             <button
               key={cat}
               onClick={() => setBestSellerCategory(cat)}
-              className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
-                bestSellerCategory === cat
-                  ? 'bg-gray-900 text-white'
-                  : 'text-gray-500 hover:text-gray-900 bg-gray-200/60'
-              }`}
+              className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${bestSellerCategory === cat
+                ? 'bg-gray-900 text-white'
+                : 'text-gray-500 hover:text-gray-900 bg-gray-200/60'
+                }`}
             >
               {cat}
             </button>

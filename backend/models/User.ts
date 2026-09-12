@@ -9,6 +9,12 @@ export interface IAddress {
   isDefault: boolean;
 }
 
+export interface IUserCartItem {
+  productId: string;
+  quantity: number;
+  product?: any;
+}
+
 export interface IUser extends Document {
   uid: string;          // Firebase UID
   name: string;
@@ -17,6 +23,7 @@ export interface IUser extends Document {
   avatar?: string;
   addresses: IAddress[];
   wishlist: string[];   // array of product IDs
+  cart: IUserCartItem[]; // array of cart items
   createdAt: Date;
   updatedAt: Date;
 }
@@ -30,6 +37,15 @@ const AddressSchema = new Schema<IAddress>({
   isDefault: { type: Boolean, default: false },
 });
 
+const CartItemSchema = new Schema<IUserCartItem>(
+  {
+    productId: { type: String, required: true },
+    quantity: { type: Number, required: true, default: 1, min: 1 },
+    product: { type: Schema.Types.Mixed },
+  },
+  { _id: false }
+);
+
 const UserSchema = new Schema<IUser>(
   {
     uid: { type: String, required: true, unique: true, index: true },
@@ -39,6 +55,7 @@ const UserSchema = new Schema<IUser>(
     avatar: { type: String },
     addresses: { type: [AddressSchema], default: [] },
     wishlist: { type: [String], default: [] },
+    cart: { type: [CartItemSchema], default: [] },
   },
   { timestamps: true }
 );

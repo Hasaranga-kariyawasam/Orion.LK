@@ -31,10 +31,10 @@ export default function Header() {
   const searchResults = searchQuery.trim() === ''
     ? products.slice(0, 5)
     : products.filter(p =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.brand?.toLowerCase().includes(searchQuery.toLowerCase())
-      ).slice(0, 5);
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.brand?.toLowerCase().includes(searchQuery.toLowerCase())
+    ).slice(0, 5);
 
   const handleSearchNavigate = (id: string) => {
     setShowSearchResults(false);
@@ -280,15 +280,15 @@ export default function Header() {
                 >
                   USED PRODUCTS <ChevronRight size={14} className={`transition-transform duration-300 ${activeDropdown === 'used' ? '-rotate-90' : 'rotate-90'}`} />
                 </button>
-                <a href="#" className="hover:text-black transition-colors">
+                <a href="/shop" className="hover:text-black transition-colors">
                   ALL PRODUCTS
                 </a>
                 <Link to="/offers" className="text-[#f0364c] hover:text-red-700 transition-colors flex items-center gap-1">
                   <Heart size={14} className="fill-current" /> SPECIAL OFFERS
                 </Link>
-                <a href="#" className="hover:text-black transition-colors">
+                <Link to="/orders" className="hover:text-black transition-colors">
                   TRACK YOUR DELIVERY
-                </a>
+                </Link>
                 <Link to="/build" className="text-[#2ee661] font-black hover:text-[#24c24e] transition-colors flex items-center gap-1">
                   <Package size={14} /> BUILD MY PC
                 </Link>

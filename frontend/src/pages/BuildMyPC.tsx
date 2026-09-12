@@ -33,7 +33,7 @@ export default function BuildMyPC() {
   const { savedBuilds, saveBuild, loadBuild, deleteSavedBuild, setBuildItems } = useShop();
 
   // Find products matching active category
-  const availableProducts = MOCK_PRODUCTS.filter(p => 
+  const availableProducts = MOCK_PRODUCTS.filter(p =>
     activeCategory.keywords.some(kw => p.name.toLowerCase().includes(kw.toLowerCase()) || p.category.toLowerCase().includes(kw.toLowerCase()))
   ).filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
@@ -44,63 +44,63 @@ export default function BuildMyPC() {
 
   const generatePDF = () => {
     const doc = new jsPDF();
-    
+
     // Main Header Background (Dark Gray / Black)
     doc.setFillColor(22, 27, 34); // #161b22
     doc.rect(0, 0, 210, 45, 'F');
-    
+
     // Green Accent Bar at the bottom of the header
     doc.setFillColor(46, 230, 97); // #2ee661
     doc.rect(0, 43, 210, 2, 'F');
-    
+
     // Left Text (Logo)
     doc.setFontSize(26);
     doc.setFont("helvetica", "bold");
-    
+
     // Draw "ORION"
     doc.setTextColor(255, 255, 255); // White
     doc.text("ORION", 15, 24);
-    
+
     // Draw ".lk" in Green
     doc.setTextColor(46, 230, 97); // Green #2ee661
     doc.setFontSize(20);
     // Rough offset calculation for ORION width
     doc.text(".lk", 47, 24);
-    
+
     // Subtitle
     doc.setTextColor(200, 200, 200); // Light Gray
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     doc.text("YOUR TRUSTED PC PARTNER", 15, 32);
-    
+
     // Right Text (White/Gray)
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
     doc.text("ORION COMPUTERS", 195, 14, { align: "right" });
-    
+
     doc.setTextColor(200, 200, 200);
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.text("No 42, Galle Road, Colombo 03, Sri Lanka.", 195, 19, { align: "right" });
     doc.text("www.orion.lk | info@orion.lk", 195, 24, { align: "right" });
     doc.text("+94 11 234 5678 | +94 77 123 4567", 195, 29, { align: "right" });
-    
+
     // Branch Text
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.text("Kandy Branch :", 195, 36, { align: "right" });
-    
+
     doc.setTextColor(200, 200, 200);
     doc.setFont("helvetica", "normal");
     doc.text("No 15, Dalada Vidiya, Kandy, Sri Lanka.", 195, 41, { align: "right" });
-    
+
     // Title & Date
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
     doc.text("Quotation", 14, 60);
     doc.text(`${new Date().toISOString().split('T')[0]}`, 195, 60, { align: "right" });
-    
+
     // Table
     const tableData = buildItems.map(item => {
       const price = item.discount ? item.price : (item.originalPrice || item.price);
@@ -131,7 +131,7 @@ export default function BuildMyPC() {
 
     // @ts-ignore
     const finalY = doc.lastAutoTable.finalY || 65;
-    
+
     // Subtotal row
     doc.setFillColor(243, 244, 246);
     doc.rect(14, finalY, 182, 10, 'F');
@@ -142,7 +142,7 @@ export default function BuildMyPC() {
     doc.setTextColor(0, 0, 0);
     doc.text("Subtotal :", 155, finalY + 6.5, { align: "right" });
     doc.text(`${formatLKR(buildTotal).replace('Rs.', '').trim()}`, 190, finalY + 6.5, { align: "right" });
-    
+
     // Total row (Green Theme)
     doc.setFillColor(46, 230, 97); // #2ee661
     doc.rect(14, finalY + 10, 182, 12, 'F');
@@ -151,7 +151,7 @@ export default function BuildMyPC() {
     doc.setFontSize(10);
     doc.text("Total (Rs.) :", 155, finalY + 18, { align: "right" });
     doc.text(`${formatLKR(buildTotal).replace('Rs.', '').trim()}`, 190, finalY + 18, { align: "right" });
-    
+
     // Footer Note
     doc.setFontSize(9);
     doc.text("* Note", 14, 260);
@@ -160,15 +160,15 @@ export default function BuildMyPC() {
     doc.text("All prices are in Rs", 14, 265);
     doc.text("All prices are subject to change according to product availability.", 14, 270);
     doc.text("Payments must be made to Tulip Computers", 14, 275);
-    
+
     doc.setFont('helvetica', 'italic');
     doc.text("2026 @ Tulip Computers. All Right Reserved.", 195, 275, { align: "right" });
-    
+
     doc.save('PC_Quotation.pdf');
   };
 
   return (
-    <div className="bg-white min-h-screen pb-16 pt-32 font-sans">
+    <div className="bg-white min-h-screen pb-16 pt-6 font-sans">
       <div className="max-w-[1400px] mx-auto px-4 md:px-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
@@ -176,8 +176,9 @@ export default function BuildMyPC() {
             <p className="text-gray-500 text-sm">Your budget. Your choice. A PC built with Premium Orion parts.</p>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => setShowAI(!showAI)} className="bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold py-2 px-4 rounded-lg transition-colors text-sm border border-blue-200">
-              {showAI ? "Hide AI Assistant" : "✨ Use AI Assistant"}
+
+            <button onClick={() => setShowAI(!showAI)} className="bg-[#2ee661] hover:bg-[#24c24e] text-black font-bold py-2 px-4 rounded-lg transition-colors text-sm border border-[#2ee661]">
+              {showAI ? "Hide AI Assistant" : "Use AI Assistant"}
             </button>
             <button onClick={() => setShowSavedBuilds(true)} className="bg-gray-100 text-gray-800 hover:bg-gray-200 font-bold py-2 px-4 rounded-lg transition-colors text-sm border border-gray-200">
               View Saved Builds
@@ -185,75 +186,76 @@ export default function BuildMyPC() {
           </div>
         </div>
 
-        
+
         {/* AI Assistant Banner */}
         {showAI && (
-        <div className="mb-10 bg-[#f4f7fb] rounded-2xl border border-[#e5edf5] p-6 lg:p-8 flex flex-col md:flex-row gap-8">
-          <div className="flex-1 space-y-6">
-            <div>
-              <h2 className="text-sm font-black text-[#00AEEF] uppercase tracking-widest mb-1">TELL US WHAT YOU NEED</h2>
-              <h3 className="text-2xl font-black text-gray-900 mb-2">Suggest a build.</h3>
-              <p className="text-gray-600 text-sm">Type it or use your voice. We’ll find store parts for your budget.</p>
-            </div>
-            
-            <div className="space-y-3">
-              <label className="text-sm font-bold text-gray-800">Describe your budget, purpose and preferred parts</label>
-              <textarea 
-                placeholder="For example: Rs. 500,000 for gaming, AMD, 16GB RAM, 512GB storage, no monitor. You can write in Sinhala or English."
-                className="w-full bg-white border border-gray-200 rounded-xl p-4 text-sm min-h-[120px] focus:outline-none focus:border-[#00AEEF] resize-none shadow-sm"
-              ></textarea>
-            </div>
-            
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-              <div className="flex items-center gap-4">
-                <button className="bg-[#00AEEF] hover:bg-[#0096ce] text-white font-bold py-3 px-8 rounded-xl transition-colors text-sm shadow-lg shadow-[#00AEEF]/20">
-                  Build from
-                </button>
-                <button className="bg-gray-900 hover:bg-black text-white font-bold py-3 px-8 rounded-xl transition-colors text-sm shadow-lg shadow-black/10">
-                  Start a new build
-                </button>
+          <div className="mb-10 bg-[#f4f7fb] rounded-2xl border border-[#e5edf5] p-6 lg:p-8 flex flex-col md:flex-row gap-8">
+            <div className="flex-1 space-y-6">
+              <div>
+                <h2 className="text-sm font-black text-[#00AEEF] uppercase tracking-widest mb-1">TELL US WHAT YOU NEED</h2>
+                <h3 className="text-2xl font-black text-gray-900 mb-2">Suggest a build.</h3>
+                <p className="text-gray-600 text-sm">Type it or use your voice. We’ll find store parts for your budget.</p>
               </div>
 
-              <div className="flex items-center gap-4 border-t md:border-t-0 md:border-l border-gray-200 pt-4 md:pt-0 md:pl-6 w-full md:w-auto">
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-gray-500 uppercase">Voice language</span>
-                  <select className="bg-transparent font-bold text-gray-900 text-sm outline-none cursor-pointer mt-1">
-                    <option>සිංහල</option>
-                    <option>English</option>
-                  </select>
-                </div>
-                <button className="flex items-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-800 font-bold py-3 px-6 rounded-xl transition-colors text-sm shadow-sm ml-auto md:ml-0">
-                  Start speaking
-                </button>
+              <div className="space-y-3">
+                <label className="text-sm font-bold text-gray-800">Describe your budget, purpose and preferred parts</label>
+                <textarea
+                  placeholder="For example: Rs. 500,000 for gaming, AMD, 16GB RAM, 512GB storage, no monitor. You can write in Sinhala or English."
+                  className="w-full bg-white border border-gray-200 rounded-xl p-4 text-sm min-h-[120px] focus:outline-none focus:border-[#00AEEF] resize-none shadow-sm"
+                ></textarea>
               </div>
+
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                  <button className="bg-[#00AEEF] hover:bg-[#0096ce] text-white font-bold py-3 px-8 rounded-xl transition-colors text-sm shadow-lg shadow-[#00AEEF]/20">
+                    Build from
+                  </button>
+                  <button className="bg-gray-900 hover:bg-black text-white font-bold py-3 px-8 rounded-xl transition-colors text-sm shadow-lg shadow-black/10">
+                    Start a new build
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-4 border-t md:border-t-0 md:border-l border-gray-200 pt-4 md:pt-0 md:pl-6 w-full md:w-auto">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold text-gray-500 uppercase">Voice language</span>
+                    <select className="bg-transparent font-bold text-gray-900 text-sm outline-none cursor-pointer mt-1">
+                      <option>සිංහල</option>
+                      <option>English</option>
+                    </select>
+                  </div>
+                  <button className="flex items-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-800 font-bold py-3 px-6 rounded-xl transition-colors text-sm shadow-sm ml-auto md:ml-0">
+                    Start speaking
+                  </button>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 font-medium pt-2">Your current selection stays until a new suggestion is ready. Undo brings it back.</p>
             </div>
-            <p className="text-xs text-gray-500 font-medium pt-2">Your current selection stays until a new suggestion is ready. Undo brings it back.</p>
           </div>
-        </div>
         )}
+
 
         {/* Top Filters */}
         <div className="mb-10">
           <h2 className="text-lg font-bold text-gray-900 mb-4">Set up your build.</h2>
           <div className="flex flex-wrap gap-6 items-center">
             <div className="flex flex-col">
-              <label className="text-xs text-gray-500 mb-1">Your budget</label>
+              <label className="text-black text-gray-500 mb-1">Your budget</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">Rs.</span>
-                <input type="text" defaultValue="400000" className="pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm w-32 focus:outline-none focus:border-red-500" />
+                <input type="text" defaultValue="400000" className="text-black pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-lg w-32 focus:outline-none focus:border-red-500" />
               </div>
             </div>
             <div className="flex flex-col">
-              <label className="text-xs text-gray-500 mb-1">Made for</label>
-              <select className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm w-40 focus:outline-none focus:border-red-500 appearance-none">
+              <label className="text-black text-gray-500 mb-1">Made for</label>
+              <select className="text-black px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm w-40 focus:outline-none focus:border-red-500 appearance-none">
                 <option>Gaming</option>
                 <option>Editing</option>
                 <option>Office</option>
               </select>
             </div>
             <div className="flex flex-col">
-              <label className="text-xs text-gray-500 mb-1">Processor platform</label>
-              <select className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm w-40 focus:outline-none focus:border-red-500 appearance-none">
+              <label className="text-black text-gray-500 mb-1">Processor platform</label>
+              <select className="text-black px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm w-40 focus:outline-none focus:border-red-500 appearance-none">
                 <option>Intel</option>
                 <option>AMD</option>
               </select>
@@ -262,7 +264,7 @@ export default function BuildMyPC() {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 relative">
-          
+
           {/* Left Column: Category Sidebar */}
           <div className="w-full lg:w-64 shrink-0">
             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 px-4">Your components</h3>
@@ -274,14 +276,14 @@ export default function BuildMyPC() {
                   <button
                     key={cat.id}
                     onClick={() => setActiveCategory(cat)}
-                    className={`flex items-center gap-4 py-3 px-4 rounded-xl text-left transition-all relative z-10 ${isActive ? 'bg-red-50/50' : 'hover:bg-gray-50'}`}
+                    className={`flex items-center gap-4 py-3 px-4 rounded-xl text-left transition-all relative z-10 ${isActive ? 'bg-gray-200/80' : 'hover:bg-gray-50'}`}
                   >
-                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 bg-white ${isActive ? 'border-red-500' : isSelected ? 'border-green-500' : 'border-gray-300'}`}>
-                      {isActive && <div className="w-1.5 h-1.5 rounded-full bg-red-500" />}
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 bg-white ${isActive ? 'border-green-500' : isSelected ? 'border-green-500' : 'border-gray-300'}`}>
+                      {isActive && <div className="w-1.5 h-1.5 rounded-full bg-green-500" />}
                       {!isActive && isSelected && <div className="w-1.5 h-1.5 rounded-full bg-green-500" />}
                     </div>
-                    <cat.icon size={18} className={`${isActive ? 'text-red-500' : 'text-gray-400'}`} />
-                    <span className={`text-sm font-medium ${isActive ? 'text-red-600 font-bold' : 'text-gray-700'}`}>{cat.name}</span>
+                    <cat.icon size={18} className={`${isActive ? 'text-green-500' : 'text-gray-400'}`} />
+                    <span className={`text-sm font-medium ${isActive ? 'text-green-600 font-bold' : 'text-gray-700'}`}>{cat.name}</span>
                   </button>
                 );
               })}
@@ -292,18 +294,18 @@ export default function BuildMyPC() {
           <div className="flex-1 min-h-[600px]">
             <h2 className="text-xl font-black mb-1">{activeCategory.name}</h2>
             <p className="text-xs text-gray-500 mb-6">Choose a part to build your PC.</p>
-            
+
             <div className="relative mb-6">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder="Search models, brands or specs..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-white border-b border-gray-200 pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-red-500 transition-colors"
               />
             </div>
-            
+
             <div className="space-y-4">
               {availableProducts.length > 0 ? availableProducts.map(product => {
                 const isSelected = buildItems.some(item => item.id === product.id);
@@ -319,9 +321,9 @@ export default function BuildMyPC() {
                     </div>
                     <div className="shrink-0">
                       {isSelected ? (
-                        <button onClick={() => removeFromBuild(product.id)} className="text-red-500 border border-red-200 bg-red-50 text-xs font-bold px-4 py-2 rounded-lg hover:bg-red-100 transition-colors uppercase tracking-wider">Remove</button>
+                        <button onClick={() => removeFromBuild(product.id)} className="text-green-500 border border-green-200 bg-green-50 text-xs font-bold px-4 py-2 rounded-lg hover:bg-green-100 transition-colors uppercase tracking-wider">Remove</button>
                       ) : (
-                        <button onClick={() => addToBuild(product)} className="text-red-500 border border-red-200 text-xs font-bold px-4 py-2 rounded-lg hover:bg-red-50 transition-colors uppercase tracking-wider flex items-center gap-1"><PlusCircle size={14}/> Choose</button>
+                        <button onClick={() => addToBuild(product)} className="text-green-500 border border-green-200 text-xs font-bold px-4 py-2 rounded-lg hover:bg-green-50 transition-colors uppercase tracking-wider flex items-center gap-1"><PlusCircle size={14} /> Choose</button>
                       )}
                     </div>
                   </div>
@@ -343,10 +345,10 @@ export default function BuildMyPC() {
                   <Download size={18} />
                 </button>
               </div>
-              
+
               {/* Fixed 3D PC Animation */}
               <div className="h-40 mb-6 flex items-center justify-center relative" style={{ perspective: '1000px' }}>
-                <motion.div 
+                <motion.div
                   animate={{ rotateY: [0, 360] }}
                   transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
                   className="w-20 h-32 bg-gradient-to-b from-gray-800 to-gray-900 border border-gray-700 rounded-lg shadow-[0_0_20px_rgba(0,174,239,0.2)] relative"
@@ -380,21 +382,21 @@ export default function BuildMyPC() {
                     <p className="text-xs mt-1">Choose a component from the left.</p>
                   </div>
                 )}
-                
+
                 <div className="pt-4 border-t border-gray-100 mt-auto">
                   <div className="flex justify-between items-end mb-6">
                     <span className="text-sm font-bold text-gray-500 uppercase tracking-wider">Total</span>
                     <span className="text-2xl font-black text-gray-900">{formatLKR(buildTotal)}</span>
                   </div>
                   <div className="flex gap-2">
-                    <button 
+                    <button
                       onClick={handleAddAllToCart}
                       disabled={buildItems.length === 0}
-                      className="flex-1 bg-[#f87171] hover:bg-red-500 text-white font-bold py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-red-500/20"
+                      className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-green-500/20"
                     >
                       <ShoppingCart size={18} /> Cart
                     </button>
-                    <button 
+                    <button
                       onClick={() => {
                         const name = prompt("Enter a name for this build:", "My Custom PC");
                         if (name) {
@@ -437,7 +439,7 @@ export default function BuildMyPC() {
                         <p className="font-black text-[#2ee661]">{formatLKR(build.total)}</p>
                       </div>
                       <div className="flex gap-2">
-                        <button 
+                        <button
                           onClick={() => {
                             loadBuild(build.id);
                             setShowSavedBuilds(false);
@@ -446,9 +448,9 @@ export default function BuildMyPC() {
                         >
                           Load & Edit
                         </button>
-                        <button 
+                        <button
                           onClick={() => {
-                            if(confirm("Are you sure you want to delete this saved build?")) {
+                            if (confirm("Are you sure you want to delete this saved build?")) {
                               deleteSavedBuild(build.id);
                             }
                           }}

@@ -489,3 +489,49 @@ export async function getOrderByNumber(orderNumber: string): Promise<ApiOrder | 
     return null;
   }
 }
+
+// ---------------- CART API ----------------
+
+export interface ApiCartItem {
+  productId: string;
+  quantity: number;
+  product?: any;
+}
+
+/**
+ * Fetch the current user's saved cart items from MongoDB.
+ */
+export async function getCartFromDb(): Promise<ApiCartItem[]> {
+  try {
+    const authHeaders = await getAuthHeader();
+    if (!authHeaders.Authorization) return [];
+    const res = await fetch(`${API_BASE_URL}/api/cart`, {
+      method: 'GET',
+      headers: { ...authHeaders },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.cart ?? [];
+  } catch (err) {
+    console.warn('getCartFromDb error:', err);
+    return [];
+  }
+}
+
+/**
+ * Save (replace) the user's cart in MongoDB.
+ */
+export async function saveCartToDb(cart: ApiCartItem[]): Promise<void> {
+  try {
+    const authHeaders = await getAuthHeader();
+    if (!authHeaders.Authorization) return;
+    await fetch(`${API_BASE_URL}/api/cart`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      body: JSON.stringify({ cart }),
+    });
+  } catch (err) {
+    console.warn('saveCartToDb error:', err);
+  }
+}
+

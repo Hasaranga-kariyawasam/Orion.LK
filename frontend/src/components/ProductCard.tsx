@@ -25,12 +25,12 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{ duration: 0.5, delay: Math.min(index * 0.1, 0.5) }}
-      className="group bg-white rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col h-full relative p-4"
+      className="group bg-white rounded-xl overflow-hidden hover:shadow-sm transition-all duration-300 flex flex-col h-fit relative p-4"
     >
 
       {/* Top badges & Icons */}
-      <div className="mb-2 relative z-10">
-        <div className="flex flex-col gap-1 items-start absolute left-2 top-2 z-20">
+      <div className=" relative z-10">
+        <div className="flex flex-col gap-1 items-start absolute left-1 top-2 z-20 ">
           {product.discount && (
             <span className="bg-[#fc2d3f] text-white text-[11px] font-black px-2 py-1 rounded inline-block tracking-wider uppercase shadow-sm">
               -{product.discount}%
@@ -52,9 +52,20 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
         {/* Always visible Wishlist Button */}
 
 
-        <div className="flex flex-col gap-2 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 p-1.5 rounded-lg shadow-sm border border-gray-100 absolute right-2 top-14 z-20">
+        {/* Always visible Cart Button */}
+        <div className="flex flex-col gap-2 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 p-1.5 rounded-lg shadow-sm border border-gray-100 absolute right-2 top-2 z-20">
+          {/* add wishlist button in side this dev */}
+          <button
+            onClick={(e) => { e.preventDefault(); toggleWishlist(product); }}
+            className={`transition-colors p-1.5 rounded-lg  ${inWishlist ? 'text-[#fc2d3f] bg-white/90 hover:bg-white shadow-sm' : 'bg-transparent hover:bg-gray-100'}`}
+            title={inWishlist ? "Remove from Wishlist" : "Add to Wishlist"}
+          >
+            <Heart size={18} strokeWidth={1.5} fill={inWishlist ? "#fc2d3f" : "#b3b3b3ff"} />
+          </button>
+
+
           <button onClick={(e) => { e.preventDefault(); addToCart(product); }} className="hover:text-black transition-colors p-1" title="Add to Cart"><ShoppingCart size={18} strokeWidth={1.5} /></button>
-          <button className="hover:text-black transition-colors p-1" title="Quick View"><Search size={18} strokeWidth={1.5} /></button>
+
           <button onClick={(e) => { e.preventDefault(); toggleCompare(product); }} className={`transition-colors p-1 ${inCompare ? 'text-[#2ee661]' : 'hover:text-black'}`} title="Compare"><Shuffle size={18} strokeWidth={1.5} /></button>
           <button onClick={(e) => { e.preventDefault(); addToBuild(product); }} className="hover:text-black transition-colors p-1 text-[#2ee661]" title="Add to My Build"><Wrench size={18} strokeWidth={1.5} /></button>
         </div>
@@ -62,7 +73,7 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
 
       {/* Image Gallery (Scrub to switch) */}
       <div
-        className="relative aspect-[4/3] w-full flex items-center justify-center overflow-hidden mb-4 group/image mt-8"
+        className="relative aspect-[4/4] w-full flex items-center justify-center overflow-hidden mb-4 group/image mt-0"
         onMouseMove={(e) => {
           if (images.length <= 1) return;
           const { left, width } = e.currentTarget.getBoundingClientRect();
@@ -104,26 +115,25 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
         </Link>
 
         {/* Rating */}
-        <div className="flex items-center gap-0.5 mb-2.5">
+        <div className="flex items-center gap-0.5 mb-1.5">
           {[...Array(5)].map((_, i) => (
             <Star key={i} size={11} className={i < Math.floor(product.rating || 5) ? 'fill-yellow-400 text-yellow-400' : 'fill-gray-200 text-gray-200'} />
           ))}
         </div>
 
-        <div className="flex items-center justify-between mb-4 mt-2">
-          <div className="flex flex-col gap-0.5">
+        <div className="flex items-center justify-between mb-2 mt-1">
+          <div className="flex  gap-1.5">
             {product.originalPrice && (
-              <span className="text-xs text-gray-500 line-through font-bold">
-                {formatLKR(product.originalPrice)}
+              <span className="text-[20px] font-black text-[#222222ff] tracking-tight leading-none">
+                {formatLKR(product.price)}
               </span>
             )}
-            <span className="text-[20px] font-black text-[#1cd75b] tracking-tight leading-none">
-              {formatLKR(product.price)}
+
+            <span className="text-xs text-gray-500 line-through font-bold">
+              {formatLKR(product.originalPrice)}
             </span>
           </div>
-          <span className="bg-[#1cd75b] text-black text-[10px] font-black px-2.5 py-1.5 rounded-md uppercase tracking-wider shadow-sm">
-            IN STOCK
-          </span>
+
         </div>
 
         {/* Installments */}
@@ -142,10 +152,14 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
           </div>
         </div>
 
+
+
+
+
         {/* Action Buttons */}
         <div className="flex items-center gap-2 mt-auto">
           <button
-            onClick={(e) => { e.preventDefault(); /* Buy now logic or redirect */ }}
+            onClick={(e) => { e.preventDefault(); addToCart(product); }}
             className="flex-1 bg-black text-white font-black uppercase tracking-wider text-sm py-2.5 rounded-xl hover:bg-gray-900 transition-colors duration-300"
           >
             Buy Now

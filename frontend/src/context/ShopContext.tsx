@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { Product } from '../types';
-import { getWishlist, saveWishlist } from '../lib/api';
+import { getWishlist, saveWishlist, getCartFromDb, saveCartToDb } from '../lib/api';
 import { auth } from '../lib/firebase';
 
 export interface Notification {
@@ -56,6 +56,7 @@ interface ShopContextType {
   deleteSavedBuild: (id: string) => void;
   setBuildItems: (items: Product[]) => void;
   wishlistSyncing: boolean;
+  cartSyncing: boolean;
 }
 
 const ShopContext = createContext<ShopContextType | undefined>(undefined);
@@ -94,10 +95,17 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const wishlistRef = useRef(wishlist);
   wishlistRef.current = wishlist;
 
-  // When the user logs in: load wishlist from DB and merge with local state
+  // ── Cart DB sync ──────────────────────────────────────────────────────────
+  const [cartSyncing, setCartSyncing] = useState(false);
+  const cartRef = useRef(cart);
+  cartRef.current = cart;
+
+  // When the user logs in: load cart and wishlist from DB and merge with local state
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
       if (!firebaseUser) return;
+
+      // 1. Sync Wishlist
       try {
         setWishlistSyncing(true);
         const dbIds = await getWishlist();
@@ -110,10 +118,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           // Merge: DB is source of truth for IDs; keep full Product objects from local
           setWishlist(prev => {
             const localIds = new Set(prev.map(p => p.id));
-            // Keep products already in local state that are in the DB list
             const merged = prev.filter(p => dbIds.includes(p.id));
-            // IDs in DB but not locally we can't reconstruct without product data — they'll show when products load
-            // Store the missing IDs so they can be matched against product catalogue
             const missingIds = dbIds.filter(id => !localIds.has(id));
             if (missingIds.length > 0) {
               localStorage.setItem('wishlist-pending-ids', JSON.stringify(missingIds));
@@ -126,17 +131,45 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } finally {
         setWishlistSyncing(false);
       }
+
+      // 2. Sync Cart
+      try {
+        setCartSyncing(true);
+        const dbCart = await getCartFromDb();
+        if (dbCart && dbCart.length > 0) {
+          setCart(prev => {
+            const merged = [...prev];
+            for (const item of dbCart) {
+              const idx = merged.findIndex(i => i.product.id === item.productId || (i.product as any)._id === item.productId);
+              if (idx >= 0) {
+                merged[idx] = {
+                  ...merged[idx],
+                  quantity: Math.max(merged[idx].quantity, item.quantity)
+                };
+              } else if (item.product) {
+                merged.push({
+                  product: { ...item.product, id: item.product.id || item.product._id || item.productId },
+                  quantity: item.quantity
+                });
+              }
+            }
+            return merged;
+          });
+        } else if (cartRef.current.length > 0) {
+          // First login or DB empty: push local cart to DB
+          await saveCartToDb(cartRef.current.map(i => ({
+            productId: i.product.id,
+            quantity: i.quantity,
+            product: i.product
+          })));
+        }
+      } catch (e) {
+        console.warn('Cart DB sync error:', e);
+      } finally {
+        setCartSyncing(false);
+      }
     });
     return unsubscribe;
-  }, []);
-
-  // When product catalogue loads, try to restore any pending wishlist product IDs
-  useEffect(() => {
-    const pendingRaw = localStorage.getItem('wishlist-pending-ids');
-    if (!pendingRaw) return;
-    // This runs whenever wishlist changes; pendingIds will be matched against locally-known products
-    // The Drawers/ProductCard already hold Product objects, so we rely on AdminContext products
-    // For now, just clear pending — full product objects will be added via toggleWishlist from UI
   }, []);
 
   // Save wishlist IDs to localStorage whenever it changes
@@ -155,13 +188,28 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => { if (dbSaveTimerRef.current) clearTimeout(dbSaveTimerRef.current); };
   }, [wishlist]);
 
+  // Save cart to DB (debounced 800ms, non-blocking) whenever it changes
+  const dbCartSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!auth.currentUser) return;
+    if (dbCartSaveTimerRef.current) clearTimeout(dbCartSaveTimerRef.current);
+    dbCartSaveTimerRef.current = setTimeout(() => {
+      saveCartToDb(cartRef.current.map(i => ({
+        productId: i.product.id,
+        quantity: i.quantity,
+        product: i.product
+      })));
+    }, 800);
+    return () => { if (dbCartSaveTimerRef.current) clearTimeout(dbCartSaveTimerRef.current); };
+  }, [cart]);
+
   // ── Persistence (localStorage) ─────────────────────────────────────────
   useEffect(() => { localStorage.setItem('cart', JSON.stringify(cart)); }, [cart]);
   useEffect(() => { localStorage.setItem('compareList', JSON.stringify(compareList)); }, [compareList]);
   useEffect(() => { localStorage.setItem('buildItems', JSON.stringify(buildItems)); }, [buildItems]);
   useEffect(() => { localStorage.setItem('savedBuilds', JSON.stringify(savedBuilds)); }, [savedBuilds]);
 
-  // ── Cart ───────────────────────────────────────────────────────────────
+  // ── Cart Operations ───────────────────────────────────────────────────
   const addToCart = (product: Product) => {
     setCart(prev => {
       const existing = prev.find(item => item.product.id === product.id);
@@ -238,9 +286,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const addToBuild = (product: Product) => {
     setBuildItems(prev => {
-      if (prev.some(item => item.id === product.id)) return prev;
-      addNotification('Added to Build', `${product.name} has been added to your PC build.`);
-      return [...prev, product];
+      const filtered = prev.filter(item => item.category !== product.category);
+      return [...filtered, product];
     });
   };
 
@@ -264,7 +311,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       buildItems, notifications, buildTotal,
       addToBuild, removeFromBuild, addNotification, markNotificationsRead,
       savedBuilds, saveBuild, loadBuild, deleteSavedBuild, setBuildItems,
-      wishlistSyncing,
+      wishlistSyncing, cartSyncing,
     }}>
       {children}
     </ShopContext.Provider>
