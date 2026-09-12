@@ -13,21 +13,21 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
   const { addToCart, toggleWishlist, isInWishlist, toggleCompare, isInCompare, addToBuild } = useShop();
   const inWishlist = isInWishlist(product.id);
   const inCompare = isInCompare(product.id);
-  
+
   const kokoInstallment = product.price / 3;
   const payzyInstallment = product.price / 4;
-  
+
   const images = product.images && product.images.length > 0 ? product.images : [product.image];
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{ duration: 0.5, delay: Math.min(index * 0.1, 0.5) }}
       className="group bg-white rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col h-full relative p-4"
     >
-      
+
       {/* Top badges & Icons */}
       <div className="mb-2 relative z-10">
         <div className="flex flex-col gap-1 items-start absolute left-2 top-2 z-20">
@@ -47,8 +47,8 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
             </span>
           )}
         </div>
-        
-        
+
+
         {/* Always visible Wishlist Button */}
 
 
@@ -61,7 +61,7 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
       </div>
 
       {/* Image Gallery (Scrub to switch) */}
-      <div 
+      <div
         className="relative aspect-[4/3] w-full flex items-center justify-center overflow-hidden mb-4 group/image mt-8"
         onMouseMove={(e) => {
           if (images.length <= 1) return;
@@ -74,9 +74,9 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
         onMouseLeave={() => setCurrentImageIndex(0)}
       >
         <Link to={`/product/${product.id}`} className="w-full h-full block">
-          <img 
-            src={images[currentImageIndex]} 
-            alt={product.name} 
+          <img
+            src={images[currentImageIndex]}
+            alt={product.name}
             className="w-full h-full object-contain transition-transform duration-300 group-hover/image:scale-105"
             onError={(event) => {
               event.currentTarget.onerror = null;
@@ -84,7 +84,7 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
             }}
           />
         </Link>
-        
+
         {/* Dots */}
         {images.length > 1 && (
           <div className="absolute bottom-1 left-0 right-0 flex justify-center gap-1.5 opacity-0 group-hover/image:opacity-100 transition-opacity">
@@ -144,13 +144,13 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2 mt-auto">
-          <button 
+          <button
             onClick={(e) => { e.preventDefault(); /* Buy now logic or redirect */ }}
             className="flex-1 bg-black text-white font-black uppercase tracking-wider text-sm py-2.5 rounded-xl hover:bg-gray-900 transition-colors duration-300"
           >
             Buy Now
           </button>
-          <button 
+          <button
             onClick={(e) => { e.preventDefault(); addToCart(product); }}
             className="w-11 h-11 bg-black rounded-xl flex items-center justify-center text-white hover:bg-gray-900 transition-colors duration-300 shrink-0 group/cartbtn"
           >
