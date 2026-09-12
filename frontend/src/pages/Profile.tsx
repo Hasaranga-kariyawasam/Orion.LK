@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  User, Package, MapPin, Settings, LogOut, ChevronRight, 
+import {
+  User, Package, MapPin, Settings, LogOut, ChevronRight,
   ShoppingBag, Edit2, CheckCircle2, Clock, Heart, Camera,
   Loader2, Plus, Trash2, AlertCircle, Save, Check
 } from 'lucide-react';
@@ -15,7 +15,7 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'orders' | 'addresses' | 'settings'>('dashboard');
   const [orders, setOrders] = useState<ApiOrder[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
-  
+
   // Settings Form States
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -236,7 +236,7 @@ export default function Profile() {
                       </span>
                     )}
                   </div>
-                  <button 
+                  <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploadingAvatar}
                     title="Upload Profile Picture"
@@ -244,12 +244,12 @@ export default function Profile() {
                   >
                     <Camera size={14} />
                   </button>
-                  <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    onChange={handleAvatarSelect} 
-                    accept="image/*" 
-                    className="hidden" 
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleAvatarSelect}
+                    accept="image/*"
+                    className="hidden"
                   />
                 </div>
 
@@ -263,14 +263,14 @@ export default function Profile() {
               </div>
 
               <div className="flex items-center gap-3">
-                <button 
+                <button
                   onClick={() => fileInputRef.current?.click()}
                   className="flex items-center gap-2 text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-800 px-3.5 py-2 rounded-xl transition-colors"
                 >
                   <Camera size={14} /> Change Photo
                 </button>
-                <button 
-                  onClick={() => setActiveTab('settings')} 
+                <button
+                  onClick={() => setActiveTab('settings')}
                   className="flex items-center gap-2 text-xs font-bold bg-black text-white hover:bg-gray-800 px-4 py-2 rounded-xl transition-colors"
                 >
                   <Edit2 size={14} /> Edit Profile
@@ -280,8 +280,8 @@ export default function Profile() {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div 
-                className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center hover:border-black transition-colors cursor-pointer" 
+              <div
+                className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center hover:border-black transition-colors cursor-pointer"
                 onClick={() => setActiveTab('orders')}
               >
                 <div className="w-12 h-12 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-3">
@@ -293,8 +293,8 @@ export default function Profile() {
                 <p className="text-sm text-gray-500">View purchase history</p>
               </div>
 
-              <div 
-                className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center hover:border-black transition-colors cursor-pointer" 
+              <div
+                className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center hover:border-black transition-colors cursor-pointer"
                 onClick={() => setActiveTab('addresses')}
               >
                 <div className="w-12 h-12 bg-green-50 text-[#1cd75b] rounded-full flex items-center justify-center mb-3">
@@ -306,8 +306,8 @@ export default function Profile() {
                 <p className="text-sm text-gray-500">Shipping destinations</p>
               </div>
 
-              <div 
-                className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center hover:border-black transition-colors cursor-pointer" 
+              <div
+                className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center hover:border-black transition-colors cursor-pointer"
                 onClick={() => navigate('/shop')}
               >
                 <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-3">
@@ -373,7 +373,7 @@ export default function Profile() {
         return (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight mb-6">My Orders</h2>
-            
+
             {ordersLoading ? (
               <div className="bg-white p-12 rounded-2xl border border-gray-100 flex justify-center">
                 <Loader2 className="animate-spin text-[#1cd75b]" size={32} />
@@ -395,7 +395,7 @@ export default function Profile() {
                   <div>Items</div>
                   <div className="text-right">Total</div>
                 </div>
-                
+
                 <div className="divide-y divide-gray-100">
                   {orders.map((order) => (
                     <div key={order.orderNumber || order.id || order._id} className="flex flex-col md:grid md:grid-cols-5 gap-4 p-4 md:p-6 items-start md:items-center hover:bg-gray-50 transition-colors">
@@ -432,7 +432,7 @@ export default function Profile() {
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight">Saved Addresses</h2>
-              <button 
+              <button
                 onClick={() => setShowAddAddress(!showAddAddress)}
                 className="bg-black text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-gray-900 transition-colors flex items-center gap-1.5"
               >
@@ -448,8 +448,8 @@ export default function Profile() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Address Label</label>
-                      <select 
-                        value={newAddrLabel} 
+                      <select
+                        value={newAddrLabel}
                         onChange={e => setNewAddrLabel(e.target.value)}
                         className="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:bg-white outline-none"
                       >
@@ -460,57 +460,57 @@ export default function Profile() {
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Street Address *</label>
-                      <input 
-                        type="text" 
-                        required 
-                        placeholder="123 Galle Road" 
-                        value={newAddrStreet} 
+                      <input
+                        type="text"
+                        required
+                        placeholder="123 Galle Road"
+                        value={newAddrStreet}
                         onChange={e => setNewAddrStreet(e.target.value)}
                         className="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:bg-white outline-none"
                       />
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-gray-700 uppercase mb-1">City *</label>
-                      <input 
-                        type="text" 
-                        required 
-                        placeholder="Colombo 03" 
-                        value={newAddrCity} 
+                      <input
+                        type="text"
+                        required
+                        placeholder="Colombo 03"
+                        value={newAddrCity}
                         onChange={e => setNewAddrCity(e.target.value)}
                         className="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:bg-white outline-none"
                       />
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Province</label>
-                      <input 
-                        type="text" 
-                        placeholder="Western Province" 
-                        value={newAddrProvince} 
+                      <input
+                        type="text"
+                        placeholder="Western Province"
+                        value={newAddrProvince}
                         onChange={e => setNewAddrProvince(e.target.value)}
                         className="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:bg-white outline-none"
                       />
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Postal Code</label>
-                      <input 
-                        type="text" 
-                        placeholder="00300" 
-                        value={newAddrPostal} 
+                      <input
+                        type="text"
+                        placeholder="00300"
+                        value={newAddrPostal}
                         onChange={e => setNewAddrPostal(e.target.value)}
                         className="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:bg-white outline-none"
                       />
                     </div>
                   </div>
                   <div className="flex justify-end gap-3 pt-2">
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={() => setShowAddAddress(false)}
                       className="px-4 py-2 text-xs font-bold text-gray-600 hover:text-black"
                     >
                       Cancel
                     </button>
-                    <button 
-                      type="submit" 
+                    <button
+                      type="submit"
                       disabled={addrSaving}
                       className="px-5 py-2 bg-[#1cd75b] text-black text-xs font-black uppercase tracking-wider rounded-xl hover:bg-[#18c251] transition-colors flex items-center gap-1.5"
                     >
@@ -521,7 +521,7 @@ export default function Profile() {
                 </form>
               </div>
             )}
-            
+
             {addresses.length === 0 ? (
               <div className="bg-white p-10 rounded-2xl border border-gray-100 text-center">
                 <MapPin size={40} className="mx-auto text-gray-300 mb-2" />
@@ -540,12 +540,12 @@ export default function Profile() {
                     <h3 className="font-black text-gray-900 text-lg mb-1">{addr.label}</h3>
                     <p className="text-sm text-gray-900 font-bold mb-3">{displayName} • {mongoUser?.phone || 'No phone'}</p>
                     <p className="text-sm text-gray-600 leading-relaxed">
-                      {addr.street}<br/>
-                      {addr.city}{addr.province ? `, ${addr.province}` : ''}<br/>
+                      {addr.street}<br />
+                      {addr.city}{addr.province ? `, ${addr.province}` : ''}<br />
                       {addr.postalCode}
                     </p>
                     <div className="flex gap-4 mt-6 pt-4 border-t border-gray-100">
-                      <button 
+                      <button
                         onClick={() => handleDeleteAddress(idx)}
                         className="text-xs font-bold text-red-500 hover:text-red-700 flex items-center gap-1"
                       >
@@ -563,12 +563,12 @@ export default function Profile() {
         return (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight mb-6">Account Settings</h2>
-            
+
             {/* Personal Information Form */}
             <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 max-w-2xl">
               <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-6">
                 <h3 className="text-lg font-black text-gray-900">Personal Information</h3>
-                
+
                 {/* Avatar change in settings */}
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-full bg-gray-100 overflow-hidden border border-gray-200 shrink-0">
@@ -606,49 +606,49 @@ export default function Profile() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
                     <label className="block text-xs font-bold text-gray-700 uppercase mb-2">First Name</label>
-                    <input 
-                      type="text" 
-                      value={firstName} 
+                    <input
+                      type="text"
+                      value={firstName}
                       onChange={e => setFirstName(e.target.value)}
-                      className="w-full p-3 rounded-xl border border-gray-200 focus:border-[#1cd75b] focus:ring-1 focus:ring-[#1cd75b] outline-none transition-all bg-gray-50 focus:bg-white text-gray-900 text-sm" 
+                      className="w-full p-3 rounded-xl border border-gray-200 focus:border-[#1cd75b] focus:ring-1 focus:ring-[#1cd75b] outline-none transition-all bg-gray-50 focus:bg-white text-gray-900 text-sm"
                     />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Last Name</label>
-                    <input 
-                      type="text" 
-                      value={lastName} 
+                    <input
+                      type="text"
+                      value={lastName}
                       onChange={e => setLastName(e.target.value)}
-                      className="w-full p-3 rounded-xl border border-gray-200 focus:border-[#1cd75b] focus:ring-1 focus:ring-[#1cd75b] outline-none transition-all bg-gray-50 focus:bg-white text-gray-900 text-sm" 
+                      className="w-full p-3 rounded-xl border border-gray-200 focus:border-[#1cd75b] focus:ring-1 focus:ring-[#1cd75b] outline-none transition-all bg-gray-50 focus:bg-white text-gray-900 text-sm"
                     />
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Email Address</label>
-                  <input 
-                    type="email" 
-                    value={userEmail} 
+                  <input
+                    type="email"
+                    value={userEmail}
                     disabled
-                    className="w-full p-3 rounded-xl border border-gray-200 bg-gray-100 text-gray-500 cursor-not-allowed text-sm" 
+                    className="w-full p-3 rounded-xl border border-gray-200 bg-gray-100 text-gray-500 cursor-not-allowed text-sm"
                   />
                   <p className="text-[11px] text-gray-400 mt-1">Managed via Firebase Authentication.</p>
                 </div>
-                
+
                 <div>
                   <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Phone Number</label>
-                  <input 
-                    type="tel" 
-                    placeholder="077 123 4567" 
-                    value={phone} 
+                  <input
+                    type="tel"
+                    placeholder="077 123 4567"
+                    value={phone}
                     onChange={e => setPhone(e.target.value)}
-                    className="w-full p-3 rounded-xl border border-gray-200 focus:border-[#1cd75b] focus:ring-1 focus:ring-[#1cd75b] outline-none transition-all bg-gray-50 focus:bg-white text-gray-900 text-sm" 
+                    className="w-full p-3 rounded-xl border border-gray-200 focus:border-[#1cd75b] focus:ring-1 focus:ring-[#1cd75b] outline-none transition-all bg-gray-50 focus:bg-white text-gray-900 text-sm"
                   />
                 </div>
 
                 <div className="pt-4 border-t border-gray-100 flex justify-end">
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     disabled={isSaving}
                     className="bg-[#1cd75b] text-black font-black uppercase tracking-wider py-3 px-8 rounded-xl hover:bg-[#18c251] transition-colors shadow-lg flex items-center gap-2 text-xs disabled:opacity-50"
                   >
@@ -660,7 +660,7 @@ export default function Profile() {
 
               {/* Password Section */}
               <h3 className="text-lg font-black text-gray-900 mb-6 border-b border-gray-100 pb-4 mt-12 pt-4">Change Password</h3>
-              
+
               {pwSuccess && (
                 <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs rounded-xl flex items-center gap-2">
                   <Check size={16} /> Password updated successfully!
@@ -677,31 +677,31 @@ export default function Profile() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-gray-700 uppercase mb-2">New Password</label>
-                    <input 
-                      type="password" 
-                      placeholder="••••••••" 
+                    <input
+                      type="password"
+                      placeholder="••••••••"
                       value={newPassword}
                       onChange={e => setNewPassword(e.target.value)}
                       required
-                      className="w-full p-3 rounded-xl border border-gray-200 focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-all bg-gray-50 focus:bg-white text-gray-900 text-sm" 
+                      className="w-full p-3 rounded-xl border border-gray-200 focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-all bg-gray-50 focus:bg-white text-gray-900 text-sm"
                     />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Confirm New Password</label>
-                    <input 
-                      type="password" 
-                      placeholder="••••••••" 
+                    <input
+                      type="password"
+                      placeholder="••••••••"
                       value={confirmPassword}
                       onChange={e => setConfirmPassword(e.target.value)}
                       required
-                      className="w-full p-3 rounded-xl border border-gray-200 focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-all bg-gray-50 focus:bg-white text-gray-900 text-sm" 
+                      className="w-full p-3 rounded-xl border border-gray-200 focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-all bg-gray-50 focus:bg-white text-gray-900 text-sm"
                     />
                   </div>
                 </div>
 
                 <div className="pt-4 border-t border-gray-100 flex justify-end">
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     disabled={pwSaving}
                     className="bg-black text-white font-black uppercase tracking-wider py-3 px-8 rounded-xl hover:bg-gray-800 transition-colors text-xs flex items-center gap-2 disabled:opacity-50"
                   >
@@ -728,36 +728,36 @@ export default function Profile() {
 
       <div className="max-w-7xl mx-auto px-4 mt-8">
         <div className="flex flex-col md:flex-row gap-8">
-          
+
           {/* Sidebar */}
           <div className="w-full md:w-64 shrink-0">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden sticky top-32">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden  top-32">
               <nav className="flex flex-col">
-                <button 
+                <button
                   onClick={() => setActiveTab('dashboard')}
                   className={`flex items-center gap-3 p-4 text-left transition-colors border-l-4 ${activeTab === 'dashboard' ? 'border-gray-900 bg-gray-50 text-gray-900 font-bold' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium'}`}
                 >
                   <User size={18} /> Dashboard
                 </button>
-                <button 
+                <button
                   onClick={() => setActiveTab('orders')}
                   className={`flex items-center gap-3 p-4 text-left transition-colors border-l-4 border-t border-t-gray-100 ${activeTab === 'orders' ? 'border-l-gray-900 bg-gray-50 text-gray-900 font-bold' : 'border-l-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium'}`}
                 >
                   <ShoppingBag size={18} /> My Orders
                 </button>
-                <button 
+                <button
                   onClick={() => setActiveTab('addresses')}
                   className={`flex items-center gap-3 p-4 text-left transition-colors border-l-4 border-t border-t-gray-100 ${activeTab === 'addresses' ? 'border-l-gray-900 bg-gray-50 text-gray-900 font-bold' : 'border-l-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium'}`}
                 >
                   <MapPin size={18} /> Saved Addresses
                 </button>
-                <button 
+                <button
                   onClick={() => setActiveTab('settings')}
                   className={`flex items-center gap-3 p-4 text-left transition-colors border-l-4 border-t border-t-gray-100 ${activeTab === 'settings' ? 'border-l-gray-900 bg-gray-50 text-gray-900 font-bold' : 'border-l-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium'}`}
                 >
                   <Settings size={18} /> Account Settings
                 </button>
-                <button 
+                <button
                   onClick={handleLogout}
                   className="flex items-center gap-3 p-4 text-left transition-colors border-l-4 border-t border-t-gray-100 border-l-transparent text-red-500 hover:bg-red-50 font-bold"
                 >

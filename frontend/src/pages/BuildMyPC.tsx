@@ -338,7 +338,7 @@ export default function BuildMyPC() {
 
           {/* Right Column: Build Summary */}
           <div className="w-full lg:w-80 shrink-0">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 sticky top-36">
+            <div className="bg-white rounded-2xl border border-gray-100  p-6  top-36">
               <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
                 <h3 className="text-lg font-black text-gray-900">The build, so far.</h3>
                 <button onClick={generatePDF} className="text-gray-400 hover:text-red-500 transition-colors" title="Download PDF">

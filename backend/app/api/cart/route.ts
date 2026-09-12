@@ -13,7 +13,20 @@ export async function GET(req: NextRequest) {
     const decoded = await verifyToken(authHeader);
 
     await connectDB();
-    const user = await User.findOne({ uid: decoded.uid }).select('cart');
+    let user = await User.findOne({ uid: decoded.uid }).select('cart');
+
+    if (!user && decoded.email) {
+      user = await User.create({
+        uid: decoded.uid,
+        name: decoded.name || decoded.email.split('@')[0] || 'Customer',
+        email: decoded.email,
+        avatar: decoded.picture || '',
+        addresses: [],
+        wishlist: [],
+        cart: [],
+      });
+    }
+
     return NextResponse.json({ cart: user?.cart ?? [] });
   } catch (err: any) {
     console.error('[GET /api/cart]', err);
@@ -43,7 +56,17 @@ export async function POST(req: NextRequest) {
     await connectDB();
     await User.findOneAndUpdate(
       { uid: decoded.uid },
-      { $set: { cart } },
+      {
+        $set: { cart },
+        $setOnInsert: {
+          uid: decoded.uid,
+          email: decoded.email || '',
+          name: decoded.name || decoded.email?.split('@')[0] || 'Customer',
+          avatar: decoded.picture || '',
+          addresses: [],
+          wishlist: [],
+        },
+      },
       { upsert: true }
     );
 

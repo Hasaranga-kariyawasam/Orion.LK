@@ -4,7 +4,11 @@ const ALLOWED_ORIGIN = 'https://orion-lk.vercel.app';
 
 export function middleware(req: NextRequest) {
   const origin = req.headers.get('origin') || '';
-  const isAllowed = origin === ALLOWED_ORIGIN || origin === 'http://localhost:3000';
+  const isAllowed =
+    origin === ALLOWED_ORIGIN ||
+    origin === 'http://localhost:5173' ||
+    origin === 'http://localhost:3000' ||
+    origin.endsWith('.vercel.app');
 
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {

@@ -194,7 +194,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (!auth.currentUser) return;
     if (dbCartSaveTimerRef.current) clearTimeout(dbCartSaveTimerRef.current);
     dbCartSaveTimerRef.current = setTimeout(() => {
-      saveCartToDb(cartRef.current.map(i => ({
+      saveCartToDb(cart.map(i => ({
         productId: i.product.id,
         quantity: i.quantity,
         product: i.product
@@ -235,7 +235,13 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     ));
   };
 
-  const clearCart = () => setCart([]);
+  const clearCart = () => {
+    setCart([]);
+    if (auth.currentUser) {
+      if (dbCartSaveTimerRef.current) clearTimeout(dbCartSaveTimerRef.current);
+      saveCartToDb([]);
+    }
+  };
 
   // ── Wishlist ───────────────────────────────────────────────────────────
   const toggleWishlist = (product: Product) => {
