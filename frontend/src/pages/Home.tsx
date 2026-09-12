@@ -135,7 +135,10 @@ export default function Home() {
     return () => window.clearTimeout(hideTextTimer);
   }, []);
   return (
-    <div className="min-h-screen bg-gray-50 pb-12">
+    //add littel bit space on top
+    <>
+      <div className="h-10 w-full bg-white"></div>
+      <div className="min-h-screen bg-gray-50 pb-12">
 
         {/* 1. Hero Section */}
         <AnimatedSection className="max-w-7xl mx-auto px-4 mt-0 ">
@@ -297,64 +300,6 @@ export default function Home() {
           </div>
         </AnimatedSection>
 
-        {/* 4. Clearance Sale */}
-        <AnimatedSection className="max-w-7xl mx-auto px-4 mt-10 md:mt-14 relative bg-[#030816] rounded-2xl p-8 pt-12 overflow-hidden shadow-xl">
-          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1598550476439-6847785fcea6?auto=format&fit=crop&q=80&w=1200')] opacity-20 bg-cover bg-center"></div>
-          <div className="absolute inset-0 bg-gradient-to-r from-[#030816] to-transparent"></div>
-          <div className="relative z-10 mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-            <div>
-              <h2 className="text-3xl font-black text-[#2ee661] uppercase tracking-wider mb-2 drop-shadow-md">Clearance Sale</h2>
-              <h3 className="text-4xl font-black text-white uppercase tracking-wider mb-4 drop-shadow-lg">Up to 50% Off</h3>
-              <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6">Trusted by Pros. Made for Winners.</p>
-
-              <div className="flex gap-4">
-                <div className="bg-gray-900 text-white p-3 rounded-lg flex flex-col items-center min-w-[60px] shadow-lg border border-gray-700">
-                  <span className="text-2xl font-black">22</span>
-                  <span className="text-[10px] uppercase font-bold">Days</span>
-                </div>
-                <div className="bg-gray-900 text-white p-3 rounded-lg flex flex-col items-center min-w-[60px] shadow-lg border border-gray-700">
-                  <span className="text-2xl font-black">01</span>
-                  <span className="text-[10px] uppercase font-bold">Hours</span>
-                </div>
-                <div className="bg-gray-900 text-white p-3 rounded-lg flex flex-col items-center min-w-[60px] shadow-lg border border-gray-700">
-                  <span className="text-2xl font-black">20</span>
-                  <span className="text-[10px] uppercase font-bold">Mins</span>
-                </div>
-              </div>
-            </div>
-            <Link to="/offers" className="bg-[#f0364c] text-white px-8 py-3 rounded-xl font-bold uppercase tracking-wider hover:bg-red-700 transition-colors whitespace-nowrap shadow-lg flex items-center gap-2">
-              View All Offers <ChevronRight size={20} />
-            </Link>
-          </div>
-
-          <div className="relative z-10 mt-12 bg-white rounded-xl p-4 md:p-6 shadow-2xl">
-            {/* Scroll Left Arrow */}
-            <button
-              onClick={() => scrollClearance('left')}
-              className="absolute left-2 md:-left-4 top-1/2 -translate-y-1/2 bg-white/95 p-2.5 md:p-3 rounded-full shadow-xl z-20 hover:bg-white text-gray-800 border border-gray-200 transition-all hover:scale-110 active:scale-95 flex items-center justify-center cursor-pointer"
-              aria-label="Scroll clearance items left"
-            >
-              <ChevronLeft size={22} className="text-gray-800" />
-            </button>
-
-            {/* Scroll Right Arrow */}
-            <button
-              onClick={() => scrollClearance('right')}
-              className="absolute right-2 md:-right-4 top-1/2 -translate-y-1/2 bg-white/95 p-2.5 md:p-3 rounded-full shadow-xl z-20 hover:bg-white text-gray-800 border border-gray-200 transition-all hover:scale-110 active:scale-95 flex items-center justify-center cursor-pointer"
-              aria-label="Scroll clearance items right"
-            >
-              <ChevronRight size={22} className="text-gray-800" />
-            </button>
-
-            <div ref={clearanceSliderRef} className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide px-4 scroll-smooth">
-              {displayClearance.map((product, idx) => (
-                <div className="min-w-[220px] w-1/5 flex-shrink-0" key={product.id}>
-                  <ProductCard product={product} index={idx} />
-                </div>
-              ))}
-            </div>
-          </div>
-        </AnimatedSection>
 
         {/* 5. Hardware Spotlight */}
         <AnimatedSection className="max-w-7xl mx-auto px-0 mt-12 md:mt-16">
@@ -528,10 +473,10 @@ export default function Home() {
         </AnimatedSection>
 
         {/* 4. Clearance Sale */}
-        <AnimatedSection className="max-w-7xl mx-auto px-4 mt-10 md:mt-14 relative bg-[#030816] rounded-2xl p-8 pt-12 overflow-hidden ">
+        <AnimatedSection className="max-w-7xl mx-auto px-4 mt-10 md:mt-14 relative bg-[#030816] rounded-2xl p-8 pt-12 overflow-hidden shadow-xl">
           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1598550476439-6847785fcea6?auto=format&fit=crop&q=80&w=1200')] opacity-20 bg-cover bg-center"></div>
           <div className="absolute inset-0 bg-gradient-to-r from-[#030816] to-transparent"></div>
-          <div className="relative z-10 mb-8 flex flex-col md:flex-row justify-between items-start md:items-end pr-2">
+          <div className="relative z-10 mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
             <div>
               <h2 className="text-3xl font-black text-[#2ee661] uppercase tracking-wider mb-2 drop-shadow-md">Clearance Sale</h2>
               <h3 className="text-4xl font-black text-white uppercase tracking-wider mb-4 drop-shadow-lg">Up to 50% Off</h3>
@@ -557,9 +502,26 @@ export default function Home() {
             </Link>
           </div>
 
+          <div className="relative z-10 mt-12 bg-gray rounded-xl p-4 md:p-6 shadow-2xl">
+            {/* Scroll Left Arrow */}
+            <button
+              onClick={() => scrollClearance('left')}
+              className="absolute left-2 md:-left-4 top-1/2 -translate-y-1/2 bg-white/95 p-2.5 md:p-3 rounded-full shadow-xl z-20 hover:bg-white text-gray-800 border border-gray-200 transition-all hover:scale-110 active:scale-95 flex items-center justify-center cursor-pointer"
+              aria-label="Scroll clearance items left"
+            >
+              <ChevronLeft size={22} className="text-gray-800" />
+            </button>
 
-          <div className="relative z-10 mt-12 bg-gray-900 rounded-xl p-2 md:p-6 shadow-2xl">
-            <div className="flex overflow-x-auto gap-3 pb-4 px-0 scrollbar-hide">
+            {/* Scroll Right Arrow */}
+            <button
+              onClick={() => scrollClearance('right')}
+              className="absolute right-2 md:-right-4 top-1/2 -translate-y-1/2 bg-white/95 p-2.5 md:p-3 rounded-full shadow-xl z-20 hover:bg-white text-gray-800 border border-gray-200 transition-all hover:scale-110 active:scale-95 flex items-center justify-center cursor-pointer"
+              aria-label="Scroll clearance items right"
+            >
+              <ChevronRight size={22} className="text-gray-800" />
+            </button>
+
+            <div ref={clearanceSliderRef} className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide px-4 scroll-smooth">
               {displayClearance.map((product, idx) => (
                 <div className="min-w-[220px] w-1/5 flex-shrink-0" key={product.id}>
                   <ProductCard product={product} index={idx} />
@@ -568,8 +530,9 @@ export default function Home() {
             </div>
           </div>
         </AnimatedSection>
+
         {/* Promotional Banners Grid */}
-        <AnimatedSection className="max-w-7xl mx-auto px-4 mt-12 md:mt-16 mb-12">
+        <AnimatedSection className="max-w-7xl mx-auto px-1 mt-12 md:mt-16 mb-12">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <TiltCard className="col-span-1 rounded-xl overflow-hidden cursor-pointer shadow-sm relative h-48 md:h-64 group bg-[#0e1628]">
               <img src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&q=80&w=800" alt="Island Wide Delivery" className="absolute inset-0 w-full h-full object-cover opacity-50 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" />
@@ -758,5 +721,6 @@ export default function Home() {
         </AnimatedSection>
 
       </div>
+    </>
   );
 }
