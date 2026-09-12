@@ -75,9 +75,16 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const host = req.headers.get('host') || 'localhost:5000';
-    const protocol = req.headers.get('x-forwarded-proto') || 'http';
-    const finalUrl = `${protocol}://${host}/api/uploads/${filename}`;
+    // Use explicit BACKEND_URL env var (set this in Vercel), otherwise
+    // reconstruct from forwarded headers (always HTTPS in production).
+    const backendUrl =
+      process.env.BACKEND_URL ||
+      (() => {
+        const proto = req.headers.get('x-forwarded-proto') || 'https';
+        const host = req.headers.get('x-forwarded-host') || req.headers.get('host') || '';
+        return `${proto}://${host}`;
+      })();
+    const finalUrl = `${backendUrl}/api/uploads/${filename}`;
 
     return NextResponse.json(
       { url: finalUrl },
