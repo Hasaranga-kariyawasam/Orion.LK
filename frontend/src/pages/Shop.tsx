@@ -6,6 +6,8 @@ import { useAdmin } from '../context/AdminContext';
 import { ChevronRight, Filter, X, SlidersHorizontal, ChevronDown, Search } from 'lucide-react';
 import { BRAND_NEW_CATEGORIES, USED_CATEGORIES } from '../data';
 
+const ITEMS_PER_PAGE = 16;
+
 export default function Shop() {
   const [searchParams, setSearchParams] = useSearchParams();
   const categoryParam = searchParams.get('category');
@@ -20,6 +22,7 @@ export default function Shop() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState('default');
   const [showSortMenu, setShowSortMenu] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [selectedCategoryType, setSelectedCategoryType] = useState<'all' | 'brand-new' | 'used'>(
     typeParam === 'used' ? 'used' : typeParam === 'brand-new' ? 'brand-new' : 'all'
   );
@@ -29,6 +32,11 @@ export default function Shop() {
     const timer = setTimeout(() => setIsLoading(false), 300);
     return () => clearTimeout(timer);
   }, [categoryParam, searchParams, products]);
+
+  // Reset page to 1 whenever filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [categoryParam, selectedCategoryType, selectedBrands, selectedTags, priceRange, searchParam, sortBy]);
 
   const allCategories = useMemo(() => {
     if (categories && categories.length > 0) return categories;
@@ -95,6 +103,18 @@ export default function Shop() {
     }
     return list;
   }, [productsInCategory, priceRange, selectedBrands, selectedTags, sortBy]);
+
+  // Pagination calculation
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE) || 1;
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredProducts.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredProducts, currentPage]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const toggleBrand = (brand: string) =>
     setSelectedBrands(prev => prev.includes(brand) ? prev.filter(b => b !== brand) : [...prev, brand]);
@@ -286,23 +306,23 @@ export default function Shop() {
         </div>
       </div>
 
-      {/* ── Horizontal Category Scroll Bar ── */}
+      {/* ── Horizontal Category Scroll Bar (No Emojis) ── */}
       <div className="border-b border-gray-200 bg-white/95 backdrop-blur-md sticky top-0 z-20 shadow-xs">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-2.5">
-            {/* Condition pills */}
+            {/* Condition pills - clean text without emojis */}
             <div className="flex gap-1 shrink-0 mr-2">
               {(['all', 'brand-new', 'used'] as const).map(type => (
                 <button
                   key={type}
                   onClick={() => setSelectedCategoryType(type)}
-                  className={`text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full whitespace-nowrap transition-all border ${
+                  className={`text-[10px] font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full whitespace-nowrap transition-all border ${
                     selectedCategoryType === type
                       ? 'bg-black text-white border-black shadow-sm'
                       : 'text-gray-600 border-gray-200 hover:border-gray-400 hover:text-black bg-gray-100'
                   }`}
                 >
-                  {type === 'brand-new' ? '🆕 New' : type === 'all' ? '⚡ All' : '♻️ Used'}
+                  {type === 'brand-new' ? 'New' : type === 'all' ? 'All' : 'Used'}
                 </button>
               ))}
             </div>
@@ -313,7 +333,7 @@ export default function Shop() {
             {/* All Categories button */}
             <button
               onClick={() => { const p = new URLSearchParams(searchParams); p.delete('category'); setSearchParams(p); }}
-              className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full whitespace-nowrap transition-all border shrink-0 ${
+              className={`text-[10px] font-bold uppercase tracking-wider px-3.5 py-1.5 rounded-full whitespace-nowrap transition-all border shrink-0 ${
                 !categoryParam
                   ? 'bg-black text-white border-black font-black shadow-sm'
                   : 'text-gray-700 border-gray-200 hover:border-gray-400 hover:text-black bg-white hover:bg-gray-50'
@@ -329,7 +349,7 @@ export default function Shop() {
                 <button
                   key={cat.id || cat.name}
                   onClick={() => { const p = new URLSearchParams(searchParams); p.set('category', cat.name); setSearchParams(p); }}
-                  className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full whitespace-nowrap transition-all border shrink-0 ${
+                  className={`text-[10px] font-bold uppercase tracking-wider px-3.5 py-1.5 rounded-full whitespace-nowrap transition-all border shrink-0 ${
                     isSelected
                       ? 'bg-black text-white border-black font-black shadow-sm'
                       : 'text-gray-700 border-gray-200 hover:border-gray-400 hover:text-black bg-white hover:bg-gray-50'
@@ -385,7 +405,7 @@ export default function Shop() {
           </div>
         )}
 
-        {/* ── Product Grid ── */}
+        {/* ── Product Grid Area ── */}
         <div className="flex-1 min-w-0">
 
           {/* Toolbar */}
@@ -442,62 +462,68 @@ export default function Shop() {
             </div>
           </div>
 
-          {/* Active filter chips */}
-          {activeFilterCount > 0 && (
-            <div className="flex flex-wrap items-center gap-2 mb-4">
-              {categoryParam && (
-                <span className="flex items-center gap-1.5 bg-red-50 border border-red-200 text-[#ea364c] text-[10px] font-bold px-3 py-1.5 rounded-full shadow-xs">
-                  {categoryParam}
-                  <button onClick={() => { const p = new URLSearchParams(searchParams); p.delete('category'); setSearchParams(p); }}>
-                    <X size={10} />
-                  </button>
-                </span>
-              )}
-              {selectedCategoryType !== 'all' && (
-                <span className="flex items-center gap-1.5 bg-red-50 border border-red-200 text-[#ea364c] text-[10px] font-bold px-3 py-1.5 rounded-full capitalize shadow-xs">
-                  {selectedCategoryType}
-                  <button onClick={() => setSelectedCategoryType('all')}><X size={10} /></button>
-                </span>
-              )}
-              {selectedBrands.map(b => (
-                <span key={b} className="flex items-center gap-1.5 bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-bold px-3 py-1.5 rounded-full shadow-xs">
-                  {b}
-                  <button onClick={() => toggleBrand(b)}><X size={10} /></button>
-                </span>
-              ))}
-              {selectedTags.map(t => (
-                <span key={t} className="flex items-center gap-1.5 bg-purple-50 border border-purple-200 text-purple-700 text-[10px] font-bold px-3 py-1.5 rounded-full shadow-xs">
-                  {t}
-                  <button onClick={() => toggleTag(t)}><X size={10} /></button>
-                </span>
-              ))}
-              {priceRange[1] < 1500000 && (
-                <span className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold px-3 py-1.5 rounded-full shadow-xs">
-                  ≤ LKR {priceRange[1].toLocaleString()}
-                  <button onClick={() => setPriceRange([0, 1500000])}><X size={10} /></button>
-                </span>
-              )}
-              <button onClick={clearAll} className="text-[10px] font-bold text-gray-500 hover:text-black underline underline-offset-2 transition-colors">
-                Clear all
-              </button>
-            </div>
-          )}
-
           {/* Grid */}
           {isLoading ? (
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {[...Array(8)].map((_, i) => <ProductCardSkeleton key={i} />)}
             </div>
-          ) : filteredProducts.length > 0 ? (
+          ) : paginatedProducts.length > 0 ? (
             <>
               <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {filteredProducts.map((p, idx) => (
+                {paginatedProducts.map((p, idx) => (
                   <ProductCard key={p.id || idx} product={p} index={idx} />
                 ))}
               </div>
-              <p className="text-center text-xs text-gray-500 mt-8">
-                Showing all {filteredProducts.length} result{filteredProducts.length !== 1 ? 's' : ''}
-              </p>
+
+              {/* ── Page-wise Pagination ── */}
+              {totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-10 pt-6 border-t border-gray-200">
+                  <p className="text-xs text-gray-500 font-medium">
+                    Showing <span className="font-bold text-gray-900">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> to <span className="font-bold text-gray-900">{Math.min(currentPage * ITEMS_PER_PAGE, filteredProducts.length)}</span> of <span className="font-bold text-gray-900">{filteredProducts.length}</span> products
+                  </p>
+                  
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="px-3.5 py-2 text-xs font-bold rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs"
+                    >
+                      Previous
+                    </button>
+
+                    {/* Page Numbers with smart ellipsis */}
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(page => page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1)
+                      .map((page, idx, arr) => {
+                        const prev = arr[idx - 1];
+                        const hasGap = prev && page - prev > 1;
+                        return (
+                          <React.Fragment key={page}>
+                            {hasGap && <span className="px-1 text-gray-400 text-xs">...</span>}
+                            <button
+                              onClick={() => handlePageChange(page)}
+                              className={`w-9 h-9 text-xs font-black rounded-xl transition-all ${
+                                currentPage === page
+                                  ? 'bg-black text-white shadow-sm'
+                                  : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          </React.Fragment>
+                        );
+                      })}
+
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="px-3.5 py-2 text-xs font-bold rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
             </>
           ) : (
             <div className="bg-white border border-gray-200 rounded-2xl p-16 flex flex-col items-center justify-center text-center shadow-sm">
