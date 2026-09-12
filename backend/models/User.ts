@@ -16,6 +16,7 @@ export interface IUser extends Document {
   phone?: string;
   avatar?: string;
   addresses: IAddress[];
+  wishlist: string[];   // array of product IDs
   createdAt: Date;
   updatedAt: Date;
 }
@@ -37,6 +38,7 @@ const UserSchema = new Schema<IUser>(
     phone: { type: String },
     avatar: { type: String },
     addresses: { type: [AddressSchema], default: [] },
+    wishlist: { type: [String], default: [] },
   },
   { timestamps: true }
 );

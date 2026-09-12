@@ -427,3 +427,65 @@ export async function deleteBrandFromDb(id: string): Promise<boolean> {
   return res.ok;
 }
 
+// ---------------- WISHLIST API ----------------
+
+/**
+ * Fetch the current user's wishlist product IDs from MongoDB.
+ */
+export async function getWishlist(): Promise<string[]> {
+  try {
+    const authHeaders = await getAuthHeader();
+    if (!authHeaders.Authorization) return [];
+    const res = await fetch(`${API_BASE_URL}/api/wishlist`, {
+      method: 'GET',
+      headers: { ...authHeaders },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.productIds ?? [];
+  } catch (err) {
+    console.warn('getWishlist error:', err);
+    return [];
+  }
+}
+
+/**
+ * Save (replace) the user's wishlist product IDs in MongoDB.
+ */
+export async function saveWishlist(productIds: string[]): Promise<void> {
+  try {
+    const authHeaders = await getAuthHeader();
+    if (!authHeaders.Authorization) return;
+    await fetch(`${API_BASE_URL}/api/wishlist`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      body: JSON.stringify({ productIds }),
+    });
+  } catch (err) {
+    console.warn('saveWishlist error:', err);
+  }
+}
+
+// ---------------- ORDER TRACKING API ----------------
+
+/**
+ * Fetch a single order by its order number for the tracking page.
+ * Reuses the existing /api/orders endpoint and filters client-side.
+ */
+export async function getOrderByNumber(orderNumber: string): Promise<ApiOrder | null> {
+  try {
+    const authHeaders = await getAuthHeader();
+    if (!authHeaders.Authorization) return null;
+    const res = await fetch(`${API_BASE_URL}/api/orders`, {
+      method: 'GET',
+      headers: { ...authHeaders },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const orders: ApiOrder[] = data.orders ?? [];
+    return orders.find(o => o.orderNumber === orderNumber) ?? null;
+  } catch (err) {
+    console.warn('getOrderByNumber error:', err);
+    return null;
+  }
+}

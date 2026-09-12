@@ -16,6 +16,7 @@ import Admin from './pages/Admin';
 import Shop from './pages/Shop';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Wishlist from './pages/Wishlist';
 import Drawers from './components/Drawers';
 import AIAssistant from './components/AIAssistant';
 import CompareModal from './components/CompareModal';
@@ -63,6 +64,7 @@ export default function App() {
                       <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
                       <Route path="/offers" element={<SpecialOffers />} />
                       <Route path="/build" element={<BuildMyPC />} />
+                      <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
                     </Routes>
                   </main>
                   <Footer />
