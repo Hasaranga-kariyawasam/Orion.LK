@@ -89,17 +89,16 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gray-950 px-4 py-8">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-[#0D1117] px-4 py-8">
       {/* Animated background blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full bg-purple-600/20 blur-[120px] animate-pulse" />
-        <div className="absolute -bottom-40 -right-40 w-[500px] h-[500px] rounded-full bg-blue-600/20 blur-[120px] animate-pulse delay-1000" />
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[400px] h-[400px] rounded-full bg-cyan-600/10 blur-[100px]" />
+        <div className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full bg-[#2ee661]/10 blur-[120px] animate-pulse" />
+        <div className="absolute -bottom-40 -right-40 w-[500px] h-[500px] rounded-full bg-[#2ee661]/5 blur-[120px] animate-pulse delay-1000" />
       </div>
 
       {/* Grid overlay */}
       <div
-        className="absolute inset-0 opacity-[0.03]"
+        className="absolute inset-0 opacity-[0.02]"
         style={{
           backgroundImage: `linear-gradient(rgba(255,255,255,.3) 1px, transparent 1px),
                             linear-gradient(90deg, rgba(255,255,255,.3) 1px, transparent 1px)`,
@@ -111,27 +110,27 @@ export default function Register() {
         {/* Logo / Brand */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:shadow-blue-500/50 transition-all duration-300">
-              <Zap size={20} className="text-white" />
+            <div className="w-10 h-10 rounded-xl bg-[#2ee661]/10 border border-[#2ee661]/20 flex items-center justify-center group-hover:bg-[#2ee661]/20 transition-all duration-300">
+              <Zap size={20} className="text-[#2ee661]" />
             </div>
             <span className="text-2xl font-bold text-white tracking-tight">
-              Orion<span className="text-blue-400">.LK</span>
+              Orion<span className="text-[#2ee661]">.LK</span>
             </span>
           </Link>
-          <p className="text-gray-400 mt-3 text-sm">Create your account to get started</p>
+          <p className="text-[#8B949E] mt-3 text-sm">Create your account to get started</p>
         </div>
 
         {/* Card */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl shadow-black/40">
+        <div className="bg-[#161B22] border border-[#30363D] rounded-2xl p-8 shadow-2xl shadow-black/40">
           {/* Google Sign Up */}
           <button
             id="google-signup-btn"
             onClick={handleGoogleRegister}
             disabled={googleLoading || loading}
-            className="w-full flex items-center justify-center gap-3 bg-white/10 hover:bg-white/15 border border-white/10 hover:border-white/20 text-white rounded-xl py-3 px-4 font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed mb-6"
+            className="w-full flex items-center justify-center gap-3 bg-[#0D1117] hover:bg-[#30363D]/50 border border-[#30363D] hover:border-[#8B949E]/30 text-white rounded-xl py-3 px-4 font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed mb-6"
           >
             {googleLoading ? (
-              <Loader2 size={18} className="animate-spin" />
+              <Loader2 size={18} className="animate-spin text-[#2ee661]" />
             ) : (
               <svg width="18" height="18" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -145,14 +144,14 @@ export default function Register() {
 
           {/* Divider */}
           <div className="flex items-center gap-3 mb-6">
-            <div className="flex-1 h-px bg-white/10" />
-            <span className="text-xs text-gray-500 font-medium">or register with email</span>
-            <div className="flex-1 h-px bg-white/10" />
+            <div className="flex-1 h-px bg-[#30363D]" />
+            <span className="text-xs text-[#8B949E] font-medium">or register with email</span>
+            <div className="flex-1 h-px bg-[#30363D]" />
           </div>
 
           {/* Error */}
           {error && (
-            <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl p-3 mb-5 text-sm">
+            <div className="flex items-center gap-2 bg-[#f0364c]/10 border border-[#f0364c]/20 text-[#f0364c] rounded-xl p-3 mb-5 text-sm">
               <AlertCircle size={16} className="flex-shrink-0" />
               <span>{error}</span>
             </div>
@@ -162,9 +161,9 @@ export default function Register() {
           <form onSubmit={handleRegister} className="space-y-4">
             {/* Name */}
             <div className="space-y-1.5">
-              <label htmlFor="register-name" className="text-sm font-medium text-gray-300">Full Name</label>
+              <label htmlFor="register-name" className="text-sm font-medium text-white">Full Name</label>
               <div className="relative">
-                <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
+                <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8B949E]" />
                 <input
                   id="register-name"
                   type="text"
@@ -172,16 +171,16 @@ export default function Register() {
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Hasaranga Kariyawasam"
                   required
-                  className="w-full bg-white/5 border border-white/10 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 rounded-xl py-3 pl-10 pr-4 text-white placeholder-gray-600 text-sm outline-none transition-all duration-200"
+                  className="w-full bg-[#0D1117] border border-[#30363D] focus:border-[#2ee661] focus:ring-1 focus:ring-[#2ee661] rounded-xl py-3 pl-10 pr-4 text-white placeholder-[#8B949E] text-sm outline-none transition-all duration-200"
                 />
               </div>
             </div>
 
             {/* Email */}
             <div className="space-y-1.5">
-              <label htmlFor="register-email" className="text-sm font-medium text-gray-300">Email</label>
+              <label htmlFor="register-email" className="text-sm font-medium text-white">Email</label>
               <div className="relative">
-                <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
+                <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8B949E]" />
                 <input
                   id="register-email"
                   type="email"
@@ -189,16 +188,16 @@ export default function Register() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   required
-                  className="w-full bg-white/5 border border-white/10 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 rounded-xl py-3 pl-10 pr-4 text-white placeholder-gray-600 text-sm outline-none transition-all duration-200"
+                  className="w-full bg-[#0D1117] border border-[#30363D] focus:border-[#2ee661] focus:ring-1 focus:ring-[#2ee661] rounded-xl py-3 pl-10 pr-4 text-white placeholder-[#8B949E] text-sm outline-none transition-all duration-200"
                 />
               </div>
             </div>
 
             {/* Password */}
             <div className="space-y-1.5">
-              <label htmlFor="register-password" className="text-sm font-medium text-gray-300">Password</label>
+              <label htmlFor="register-password" className="text-sm font-medium text-white">Password</label>
               <div className="relative">
-                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
+                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8B949E]" />
                 <input
                   id="register-password"
                   type={showPassword ? 'text' : 'password'}
@@ -206,12 +205,12 @@ export default function Register() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className="w-full bg-white/5 border border-white/10 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 rounded-xl py-3 pl-10 pr-11 text-white placeholder-gray-600 text-sm outline-none transition-all duration-200"
+                  className="w-full bg-[#0D1117] border border-[#30363D] focus:border-[#2ee661] focus:ring-1 focus:ring-[#2ee661] rounded-xl py-3 pl-10 pr-11 text-white placeholder-[#8B949E] text-sm outline-none transition-all duration-200"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#8B949E] hover:text-white transition-colors"
                   tabIndex={-1}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -225,13 +224,13 @@ export default function Register() {
                       <div
                         key={i}
                         className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-                          i <= strength.level ? strength.color : 'bg-white/10'
+                          i <= strength.level ? strength.color : 'bg-[#30363D]'
                         }`}
                       />
                     ))}
                   </div>
-                  <p className="text-xs text-gray-500">
-                    Strength: <span className={`font-medium ${strength.level <= 1 ? 'text-red-400' : strength.level === 2 ? 'text-yellow-400' : strength.level === 3 ? 'text-blue-400' : 'text-green-400'}`}>{strength.label}</span>
+                  <p className="text-xs text-[#8B949E]">
+                    Strength: <span className={`font-medium ${strength.level <= 1 ? 'text-[#f0364c]' : strength.level === 2 ? 'text-yellow-500' : strength.level === 3 ? 'text-blue-500' : 'text-[#2ee661]'}`}>{strength.label}</span>
                   </p>
                 </div>
               )}
@@ -239,9 +238,9 @@ export default function Register() {
 
             {/* Confirm Password */}
             <div className="space-y-1.5">
-              <label htmlFor="register-confirm" className="text-sm font-medium text-gray-300">Confirm Password</label>
+              <label htmlFor="register-confirm" className="text-sm font-medium text-white">Confirm Password</label>
               <div className="relative">
-                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
+                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8B949E]" />
                 <input
                   id="register-confirm"
                   type={showConfirm ? 'text' : 'password'}
@@ -249,24 +248,24 @@ export default function Register() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className={`w-full bg-white/5 border focus:ring-2 rounded-xl py-3 pl-10 pr-11 text-white placeholder-gray-600 text-sm outline-none transition-all duration-200 ${
+                  className={`w-full bg-[#0D1117] border focus:ring-1 rounded-xl py-3 pl-10 pr-11 text-white placeholder-[#8B949E] text-sm outline-none transition-all duration-200 ${
                     confirmPassword && password !== confirmPassword
-                      ? 'border-red-500/50 focus:border-red-500/50 focus:ring-red-500/20'
+                      ? 'border-[#f0364c] focus:border-[#f0364c] focus:ring-[#f0364c]'
                       : confirmPassword && password === confirmPassword
-                      ? 'border-green-500/50 focus:border-green-500/50 focus:ring-green-500/20'
-                      : 'border-white/10 focus:border-blue-500/50 focus:ring-blue-500/20'
+                      ? 'border-[#2ee661] focus:border-[#2ee661] focus:ring-[#2ee661]'
+                      : 'border-[#30363D] focus:border-[#2ee661] focus:ring-[#2ee661]'
                   }`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirm(!showConfirm)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#8B949E] hover:text-white transition-colors"
                   tabIndex={-1}
                 >
                   {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
                 {confirmPassword && password === confirmPassword && (
-                  <CheckCircle size={16} className="absolute right-9 top-1/2 -translate-y-1/2 text-green-400 mr-2" />
+                  <CheckCircle size={16} className="absolute right-9 top-1/2 -translate-y-1/2 text-[#2ee661] mr-2" />
                 )}
               </div>
             </div>
@@ -276,7 +275,7 @@ export default function Register() {
               id="register-submit-btn"
               type="submit"
               disabled={loading || googleLoading}
-              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-xl py-3 px-4 font-semibold text-sm transition-all duration-200 shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 disabled:opacity-50 disabled:cursor-not-allowed mt-2 flex items-center justify-center gap-2"
+              className="w-full bg-[#2ee661] hover:bg-[#24c24e] text-black rounded-xl py-3 px-4 font-bold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed mt-2 flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
@@ -290,9 +289,9 @@ export default function Register() {
           </form>
 
           {/* Login link */}
-          <p className="text-center text-sm text-gray-500 mt-6">
+          <p className="text-center text-sm text-[#8B949E] mt-6">
             Already have an account?{' '}
-            <Link to="/login" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
+            <Link to="/login" className="text-[#2ee661] hover:text-[#24c24e] font-bold transition-colors">
               Sign in
             </Link>
           </p>

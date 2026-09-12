@@ -1,0 +1,10 @@
+{
+  "name": "orion-lk",
+  "private": true,
+  "workspaces": ["backend", "frontend"],
+  "scripts": {
+    "dev": "npm run build --workspace=frontend && mkdir -p backend/public && cp -R frontend/dist/* backend/public/ && npm run dev --workspace=backend",
+    "build": "npm run build --workspace=frontend && mkdir -p backend/public && cp -R frontend/dist/* backend/public/ && npm run build --workspace=backend",
+    "start": "npm run start --workspace=backend"
+  }
+}

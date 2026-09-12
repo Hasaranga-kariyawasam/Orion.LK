@@ -1,4 +1,5 @@
 import { initializeApp, getApps } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -9,22 +10,24 @@ import {
   updateProfile,
   updatePassword,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   User,
 } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+  apiKey: 'AIzaSyBQ5y801oqhnR21RcKuBJv3_WtpqDPo5DU',
+  authDomain: 'drivelink-58aa1.firebaseapp.com',
+  projectId: 'drivelink-58aa1',
+  storageBucket: 'drivelink-58aa1.firebasestorage.app',
+  messagingSenderId: '1063810547437',
+  appId: '1:1063810547437:web:e06af33d5815b4a1b416e4',
+  measurementId: 'G-EY2JDTEVT9',
 };
 
 // Prevent re-initialization in HMR
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 export const auth = getAuth(app);
+export const db = getFirestore(app);
 
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
@@ -41,6 +44,8 @@ export const registerWithEmail = async (name: string, email: string, password: s
 };
 
 export const loginWithGoogle = () => signInWithPopup(auth, googleProvider);
+
+export const resetPassword = (email: string) => sendPasswordResetEmail(auth, email);
 
 export const logout = () => signOut(auth);
 

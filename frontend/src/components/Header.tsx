@@ -18,7 +18,28 @@ export default function Header() {
   const [showBanner, setShowBanner] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const stored = localStorage.getItem('recentSearches');
+    if (stored) {
+      try {
+        setRecentSearches(JSON.parse(stored));
+      } catch (e) {}
+    }
+  }, []);
+
+  const saveRecentSearch = (query: string) => {
+    if (!query.trim()) return;
+    const trimmed = query.trim();
+    setRecentSearches(prev => {
+      const filtered = prev.filter(q => q.toLowerCase() !== trimmed.toLowerCase());
+      const newSearches = [trimmed, ...filtered].slice(0, 5);
+      localStorage.setItem('recentSearches', JSON.stringify(newSearches));
+      return newSearches;
+    });
+  };
 
   const brandNewCategories = categories.length > 0
     ? categories.filter(c => c.type === 'brand-new')
@@ -36,7 +57,8 @@ export default function Header() {
         p.brand?.toLowerCase().includes(searchQuery.toLowerCase())
       ).slice(0, 5);
 
-  const handleSearchNavigate = (id: string) => {
+  const handleSearchNavigate = (id: string, productName: string) => {
+    saveRecentSearch(productName);
     setShowSearchResults(false);
     setSearchQuery('');
     navigate(`/product/${id}`);
@@ -96,11 +118,29 @@ export default function Header() {
                 setSearchQuery(e.target.value);
                 setShowSearchResults(true);
               }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && searchQuery.trim() !== '') {
+                  saveRecentSearch(searchQuery);
+                  setShowSearchResults(false);
+                  navigate(`/shop?search=${encodeURIComponent(searchQuery)}`);
+                  setSearchQuery('');
+                }
+              }}
               onFocus={() => setShowSearchResults(true)}
               onBlur={() => setTimeout(() => setShowSearchResults(false), 200)}
               className="w-full bg-[#0D1117] text-white placeholder-[#8B949E] border border-[#30363D] rounded-full py-2.5 pl-6 pr-14 focus:outline-none focus:border-[#2ee661] focus:bg-[#0D1117]/80 transition-all shadow-inner"
             />
-            <button className="absolute right-0 top-0 h-full w-12 bg-[#2ee661] text-black flex items-center justify-center rounded-r-full hover:bg-[#24c24e] transition-colors">
+            <button 
+              onClick={() => {
+                if (searchQuery.trim() !== '') {
+                  saveRecentSearch(searchQuery);
+                  setShowSearchResults(false);
+                  navigate(`/shop?search=${encodeURIComponent(searchQuery)}`);
+                  setSearchQuery('');
+                }
+              }}
+              className="absolute right-0 top-0 h-full w-12 bg-[#2ee661] text-black flex items-center justify-center rounded-r-full hover:bg-[#24c24e] transition-colors"
+            >
               <Search size={18} strokeWidth={2.5} />
             </button>
 
@@ -113,36 +153,71 @@ export default function Header() {
                   exit={{ opacity: 0, y: 10 }}
                   className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[100]"
                 >
-                  <div className="p-3 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                      {searchQuery.trim() === '' ? 'Trending Products' : 'Search Results'}
-                    </span>
-                  </div>
-                  <div className="max-h-96 overflow-y-auto">
-                    {searchResults.length > 0 ? (
-                      searchResults.map(product => (
-                        <div
-                          key={product.id}
-                          onClick={() => handleSearchNavigate(product.id)}
-                          className="flex items-center gap-4 p-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0"
-                        >
-                          <div className="w-12 h-12 rounded-lg bg-gray-100 shrink-0 overflow-hidden">
-                            <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="text-sm font-bold text-gray-900 truncate">{product.name}</h4>
-                            <p className="text-xs text-gray-500 mt-0.5">{product.category}</p>
-                          </div>
-                          <div className="text-right shrink-0">
-                            <span className="text-sm font-black text-[#1cd75b]">{formatLKR(product.price)}</span>
-                          </div>
+                  <div className="max-h-[400px] overflow-y-auto">
+                    {/* Recent Searches */}
+                    {searchQuery.trim() === '' && recentSearches.length > 0 && (
+                      <div className="border-b border-gray-100">
+                        <div className="p-3 bg-gray-50 flex justify-between items-center">
+                          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Recent Searches</span>
+                          <button 
+                            onMouseDown={(e) => {
+                              e.preventDefault(); // Prevent blur
+                              setRecentSearches([]);
+                              localStorage.removeItem('recentSearches');
+                            }}
+                            className="text-[10px] font-bold text-gray-400 hover:text-red-500 uppercase tracking-wider"
+                          >
+                            Clear
+                          </button>
                         </div>
-                      ))
-                    ) : (
-                      <div className="p-6 text-center text-gray-500 text-sm">
-                        No products found matching "{searchQuery}"
+                        {recentSearches.map((term, idx) => (
+                          <div 
+                            key={`recent-${idx}`}
+                            onMouseDown={(e) => {
+                              e.preventDefault(); // Prevent blur
+                              setSearchQuery(term);
+                            }}
+                            className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0"
+                          >
+                            <Search size={14} className="text-gray-400" />
+                            <span className="text-sm font-medium text-gray-700">{term}</span>
+                          </div>
+                        ))}
                       </div>
                     )}
+
+                    <div className="p-3 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        {searchQuery.trim() === '' ? 'Trending Products' : 'Search Results'}
+                      </span>
+                    </div>
+                    <div>
+                      {searchResults.length > 0 ? (
+                        searchResults.map(product => (
+                          <div
+                            key={product.id}
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => handleSearchNavigate(product.id, product.name)}
+                            className="flex items-center gap-4 p-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0"
+                          >
+                            <div className="w-12 h-12 rounded-lg bg-gray-100 shrink-0 overflow-hidden">
+                              <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-sm font-bold text-gray-900 truncate">{product.name}</h4>
+                              <p className="text-xs text-gray-500 mt-0.5">{product.category}</p>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <span className="text-sm font-black text-[#1cd75b]">{formatLKR(product.price)}</span>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-6 text-center text-gray-500 text-sm">
+                          No products found matching "{searchQuery}"
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </motion.div>
               )}

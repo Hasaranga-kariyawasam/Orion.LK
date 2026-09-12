@@ -1,6 +1,23 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: '/api/:path*',
+          destination: '/api/:path*',
+        }
+      ],
+      fallback: [
+        {
+          source: '/:path*',
+          destination: '/index.html',
+        },
+      ]
+    };
+  },
   async headers() {
     return [
       {

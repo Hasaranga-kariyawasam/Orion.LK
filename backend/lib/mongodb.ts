@@ -1,40 +1,20 @@
 import mongoose from 'mongoose';
 
-const MONGO_URI = process.env.MONGO_URI!;
+mongoose.set('bufferCommands', false); // CRITICAL: fail fast, don't hang
 
-if (!MONGO_URI) {
-  throw new Error('Please define the MONGO_URI environment variable in .env.local');
-}
-
-/**
- * Global is used here to maintain a cached connection across hot reloads
- * in development. This prevents connections growing exponentially during API
- * Route usage.
- */
-declare global {
-  // eslint-disable-next-line no-var
-  var mongoose: { conn: typeof import('mongoose') | null; promise: Promise<typeof import('mongoose')> | null };
-}
-
-let cached = global.mongoose;
-
-if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
-}
+let isConnected = false;
 
 async function connectDB() {
-  if (cached.conn) {
-    return cached.conn;
+  if (isConnected) return;
+  try {
+    const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost/mock';
+    await mongoose.connect(MONGO_URI).catch(err => {
+      console.warn('[AI Studio] MongoDB not connected — some features may not work');
+    });
+    isConnected = true;
+  } catch (e) {
+    console.warn('[AI Studio] MongoDB not connected — some features may not work');
   }
-
-  if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGO_URI, {
-      bufferCommands: false,
-    }).then((mongoose) => mongoose);
-  }
-
-  cached.conn = await cached.promise;
-  return cached.conn;
 }
 
 export default connectDB;
