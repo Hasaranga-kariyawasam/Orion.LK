@@ -255,16 +255,16 @@ export default function Header() {
             {/* Cart Pill Button matching custom design */}
             <button
               onClick={() => setIsCartOpen(true)}
-              className="h-10 pl-1.5 pr-4 rounded-full bg-[#f0364c] hover:bg-[#d9293e] transition-all duration-200 flex items-center gap-2.5 relative ml-2 shadow-sm hover:shadow-md cursor-pointer group"
+              className="h-10 pl-1.5 pr-4 rounded-full bg-[#2ee661] hover:bg-[#2ee661]/80 transition-all duration-200 flex items-center gap-2.5 relative ml-2 shadow-sm hover:shadow-md cursor-pointer group"
               aria-label="Shopping Cart"
             >
               <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center shadow-sm shrink-0 group-hover:scale-105 transition-transform">
                 <ShoppingCart size={15} strokeWidth={2.2} className="text-gray-900 ml-[-1px]" />
               </div>
-              <span className="font-black text-[13px] md:text-sm text-white tracking-tight whitespace-nowrap">
+              <span className="font-black text-[13px] md:text-sm text-black tracking-tight whitespace-nowrap">
                 LKR {cartTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
-              <span className="absolute -top-1.5 -right-1.5 bg-white text-[#f0364c] text-[10px] font-black min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center shadow-[0_2px_6px_rgba(0,0,0,0.15)] border border-gray-100/80">
+              <span className="absolute -top-1.5 -right-1.5 bg-white text-black text-[10px] font-black min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center shadow-[0_2px_6px_rgba(0,0,0,0.15)] border border-gray-100/80">
                 {cart.reduce((a, b) => a + b.quantity, 0)}
               </span>
             </button>
