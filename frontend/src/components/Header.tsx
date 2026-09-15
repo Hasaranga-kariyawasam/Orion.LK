@@ -252,12 +252,21 @@ export default function Header() {
               <span className="absolute -top-2 -right-2 bg-[#2ee661] border-none text-black text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">{wishlist.length}</span>
             </button>
 
-            <button onClick={() => setIsCartOpen(true)} className="h-10 px-4 rounded-full bg-[#2ee661] text-black flex items-center gap-2 hover:bg-[#24c24e] transition-colors relative ml-2">
-              <div className="bg-transparent text-black">
-                <ShoppingCart size={20} strokeWidth={2.5} />
+            {/* Cart Pill Button matching custom design */}
+            <button
+              onClick={() => setIsCartOpen(true)}
+              className="h-10 pl-1.5 pr-4 rounded-full bg-[#f0364c] hover:bg-[#d9293e] transition-all duration-200 flex items-center gap-2.5 relative ml-2 shadow-sm hover:shadow-md cursor-pointer group"
+              aria-label="Shopping Cart"
+            >
+              <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center shadow-sm shrink-0 group-hover:scale-105 transition-transform">
+                <ShoppingCart size={15} strokeWidth={2.2} className="text-gray-900 ml-[-1px]" />
               </div>
-              <span className="font-bold text-sm pr-1 whitespace-nowrap">{formatLKR(cartTotal)}</span>
-              <span className="absolute -top-2 -right-2 bg-white text-[#2ee661] text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-sm">{cart.reduce((a, b) => a + b.quantity, 0)}</span>
+              <span className="font-black text-[13px] md:text-sm text-white tracking-tight whitespace-nowrap">
+                LKR {cartTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+              <span className="absolute -top-1.5 -right-1.5 bg-white text-[#f0364c] text-[10px] font-black min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center shadow-[0_2px_6px_rgba(0,0,0,0.15)] border border-gray-100/80">
+                {cart.reduce((a, b) => a + b.quantity, 0)}
+              </span>
             </button>
           </div>
         </div>
@@ -358,17 +367,21 @@ export default function Header() {
             <Store size={22} strokeWidth={2} />
             <span className="text-[10px] font-bold">Shop</span>
           </button>
-          <button className="flex flex-col items-center gap-1 text-gray-500 hover:text-[#2ee661] transition-colors relative">
+          <button onClick={() => setIsWishlistOpen(true)} className="flex flex-col items-center gap-1 text-gray-500 hover:text-[#2ee661] transition-colors relative">
             <div className="relative">
-              <Heart size={22} strokeWidth={2} />
-              <span className="absolute -top-1 -right-2 bg-[#2ee661] text-black text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">0</span>
+              <Heart size={22} strokeWidth={2} className={wishlist.length > 0 ? "fill-[#2ee661] text-[#2ee661]" : ""} />
+              <span className="absolute -top-1 -right-2 bg-[#2ee661] text-black text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">
+                {wishlist.length}
+              </span>
             </div>
             <span className="text-[10px] font-bold">Wishlist</span>
           </button>
-          <button className="flex flex-col items-center gap-1 text-gray-500 hover:text-[#2ee661] transition-colors relative">
+          <button onClick={() => setIsCartOpen(true)} className="flex flex-col items-center gap-1 text-gray-500 hover:text-[#f0364c] transition-colors relative">
             <div className="relative">
               <ShoppingCart size={22} strokeWidth={2} />
-              <span className="absolute -top-1 -right-2 bg-[#2ee661] text-black text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">0</span>
+              <span className="absolute -top-1 -right-2 bg-[#f0364c] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+                {cart.reduce((a, b) => a + b.quantity, 0)}
+              </span>
             </div>
             <span className="text-[10px] font-bold">Cart</span>
           </button>
