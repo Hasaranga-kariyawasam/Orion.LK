@@ -122,7 +122,7 @@ export default function Admin() {
     return (
       <div className="min-h-screen bg-[#0d1117] flex items-center justify-center font-sans text-white">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 rounded-full border-4 border-[#2ee661] border-t-transparent animate-spin" />
+          <div className="w-12 h-12 rounded-full border-4 border-[#2ee661] border-t-transparent" />
           <p className="text-gray-400 text-sm font-medium">Verifying administrator credentials...</p>
         </div>
       </div>

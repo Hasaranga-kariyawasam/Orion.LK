@@ -1,5 +1,7 @@
 import { Product } from './types';
 
+export const BRAND_LOGO_URL = 'https://pub-22e8ac07fb25460d9a84e460b0be0476.r2.dev/uploads/Tital_pic/ChatGPT%20Image%20Sep%2015%2C%202026%2C%2011_07_33%20AM.png';
+
 export const BRAND_NEW_CATEGORIES = [
   { name: 'Adapters', count: 30, img: 'https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&q=80&w=150' },
   { name: 'Cables & Connectors', count: 52, img: 'https://images.unsplash.com/photo-1620803444081-9bba14d33eb4?auto=format&fit=crop&q=80&w=150' },
