@@ -88,7 +88,7 @@ export default function Checkout() {
           <h1 className="text-2xl md:text-3xl font-black text-gray-900 uppercase tracking-tight">Checkout</h1>
           
           <div className="flex items-center gap-2 text-sm font-bold">
-            <span className="text-red-500">Shipping</span>
+            <span className="text-[#12b94b]">Shipping</span>
             <ChevronRight size={16} className="text-gray-300" />
             <span className="text-gray-400">Payment</span>
             <ChevronRight size={16} className="text-gray-300" />
@@ -108,7 +108,7 @@ export default function Checkout() {
           <div className="lg:col-span-8 space-y-6">
             <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-full bg-red-100 text-red-500 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-full bg-[#1cd75b]/10 text-[#12b94b] flex items-center justify-center">
                   <Truck size={20} />
                 </div>
                 <h2 className="text-xl font-black text-gray-900 uppercase">Shipping Details</h2>
@@ -173,38 +173,38 @@ export default function Checkout() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
                     <label className="block text-xs font-bold text-gray-700 uppercase mb-2">First Name *</label>
-                    <input required type="text" name="firstName" value={formData.firstName} onChange={handleChange} className="w-full p-3 rounded-xl border border-gray-200 focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-all bg-gray-50 focus:bg-white text-gray-900" placeholder="First Name" />
+                    <input required type="text" name="firstName" value={formData.firstName} onChange={handleChange} className="w-full p-3 rounded-xl border border-gray-200 focus:border-[#1cd75b] focus:ring-1 focus:ring-[#1cd75b] outline-none transition-all bg-gray-50 focus:bg-white text-gray-900" placeholder="First Name" />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Last Name *</label>
-                    <input required type="text" name="lastName" value={formData.lastName} onChange={handleChange} className="w-full p-3 rounded-xl border border-gray-200 focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-all bg-gray-50 focus:bg-white text-gray-900" placeholder="Last Name" />
+                    <input required type="text" name="lastName" value={formData.lastName} onChange={handleChange} className="w-full p-3 rounded-xl border border-gray-200 focus:border-[#1cd75b] focus:ring-1 focus:ring-[#1cd75b] outline-none transition-all bg-gray-50 focus:bg-white text-gray-900" placeholder="Last Name" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
                     <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Email Address *</label>
-                    <input required type="email" name="email" value={formData.email} onChange={handleChange} className="w-full p-3 rounded-xl border border-gray-200 focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-all bg-gray-50 focus:bg-white text-gray-900" placeholder="you@example.com" />
+                    <input required type="email" name="email" value={formData.email} onChange={handleChange} className="w-full p-3 rounded-xl border border-gray-200 focus:border-[#1cd75b] focus:ring-1 focus:ring-[#1cd75b] outline-none transition-all bg-gray-50 focus:bg-white text-gray-900" placeholder="you@example.com" />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Phone Number *</label>
-                    <input required type="tel" name="phone" value={formData.phone} onChange={handleChange} className="w-full p-3 rounded-xl border border-gray-200 focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-all bg-gray-50 focus:bg-white text-gray-900" placeholder="07X XXX XXXX" />
+                    <input required type="tel" name="phone" value={formData.phone} onChange={handleChange} className="w-full p-3 rounded-xl border border-gray-200 focus:border-[#1cd75b] focus:ring-1 focus:ring-[#1cd75b] outline-none transition-all bg-gray-50 focus:bg-white text-gray-900" placeholder="07X XXX XXXX" />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Street Address *</label>
-                  <input required type="text" name="address" value={formData.address} onChange={handleChange} className="w-full p-3 rounded-xl border border-gray-200 focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-all bg-gray-50 focus:bg-white text-gray-900" placeholder="House number and street name" />
+                  <input required type="text" name="address" value={formData.address} onChange={handleChange} className="w-full p-3 rounded-xl border border-gray-200 focus:border-[#1cd75b] focus:ring-1 focus:ring-[#1cd75b] outline-none transition-all bg-gray-50 focus:bg-white text-gray-900" placeholder="House number and street name" />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                   <div>
                     <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Town / City *</label>
-                    <input required type="text" name="city" value={formData.city} onChange={handleChange} className="w-full p-3 rounded-xl border border-gray-200 focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-all bg-gray-50 focus:bg-white text-gray-900" placeholder="City" />
+                    <input required type="text" name="city" value={formData.city} onChange={handleChange} className="w-full p-3 rounded-xl border border-gray-200 focus:border-[#1cd75b] focus:ring-1 focus:ring-[#1cd75b] outline-none transition-all bg-gray-50 focus:bg-white text-gray-900" placeholder="City" />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-gray-700 uppercase mb-2">District *</label>
-                    <select required name="district" value={formData.district} onChange={handleChange} className="w-full p-3 rounded-xl border border-gray-200 focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-all bg-gray-50 focus:bg-white text-gray-900">
+                    <select required name="district" value={formData.district} onChange={handleChange} className="w-full p-3 rounded-xl border border-gray-200 focus:border-[#1cd75b] focus:ring-1 focus:ring-[#1cd75b] outline-none transition-all bg-gray-50 focus:bg-white text-gray-900">
                       <option value="">Select District</option>
                       <option value="Colombo">Colombo</option>
                       <option value="Gampaha">Gampaha</option>
@@ -215,7 +215,7 @@ export default function Checkout() {
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Postcode / ZIP</label>
-                    <input type="text" name="zip" value={formData.zip} onChange={handleChange} className="w-full p-3 rounded-xl border border-gray-200 focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-all bg-gray-50 focus:bg-white text-gray-900" placeholder="Postal Code" />
+                    <input type="text" name="zip" value={formData.zip} onChange={handleChange} className="w-full p-3 rounded-xl border border-gray-200 focus:border-[#1cd75b] focus:ring-1 focus:ring-[#1cd75b] outline-none transition-all bg-gray-50 focus:bg-white text-gray-900" placeholder="Postal Code" />
                   </div>
                 </div>
               </form>
@@ -256,7 +256,7 @@ export default function Checkout() {
               <div className="border-t border-gray-100 pt-4 mb-5">
                 <div className="flex justify-between items-center">
                   <span className="text-base font-black text-gray-900 uppercase">Total</span>
-                  <span className="text-2xl font-black text-red-600">{formatLKR(cartTotal)}</span>
+                  <span className="text-2xl font-black text-[#12b94b]">{formatLKR(cartTotal)}</span>
                 </div>
               </div>
 

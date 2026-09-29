@@ -13,11 +13,11 @@ import { useAuth } from '../context/AuthContext';
 type OrderFilter = 'All' | 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
 
 const STATUS_CONFIG: Record<string, { gradient: string; text: string; border: string; bg: string; icon: React.ReactNode }> = {
-  Delivered:  { gradient: 'from-emerald-500 to-green-600', text: 'text-emerald-400', border: 'border-emerald-500/30', bg: 'bg-emerald-500/10', icon: <CheckCircle2 size={12} /> },
-  Processing: { gradient: 'from-blue-500 to-indigo-600',   text: 'text-blue-400',    border: 'border-blue-500/30',    bg: 'bg-blue-500/10',    icon: <Settings size={12} /> },
-  Pending:    { gradient: 'from-amber-500 to-orange-500',  text: 'text-amber-400',   border: 'border-amber-500/30',   bg: 'bg-amber-500/10',   icon: <Clock size={12} /> },
-  Shipped:    { gradient: 'from-purple-500 to-violet-600', text: 'text-purple-400',  border: 'border-purple-500/30',  bg: 'bg-purple-500/10',  icon: <Truck size={12} /> },
-  Cancelled:  { gradient: 'from-red-500 to-rose-600',      text: 'text-red-400',     border: 'border-red-500/30',     bg: 'bg-red-500/10',     icon: <XCircle size={12} /> },
+  Delivered:  { gradient: 'from-[#1cd75b] to-[#0ca83d]', text: 'text-emerald-700', border: 'border-emerald-200', bg: 'bg-emerald-50', icon: <CheckCircle2 size={12} /> },
+  Processing: { gradient: 'from-sky-400 to-blue-500', text: 'text-blue-700', border: 'border-blue-200', bg: 'bg-blue-50', icon: <Settings size={12} /> },
+  Pending:    { gradient: 'from-amber-400 to-orange-500', text: 'text-amber-700', border: 'border-amber-200', bg: 'bg-amber-50', icon: <Clock size={12} /> },
+  Shipped:   { gradient: 'from-cyan-400 to-teal-500', text: 'text-teal-700', border: 'border-teal-200', bg: 'bg-teal-50', icon: <Truck size={12} /> },
+  Cancelled:  { gradient: 'from-red-400 to-rose-500', text: 'text-red-700', border: 'border-red-200', bg: 'bg-red-50', icon: <XCircle size={12} /> },
 };
 
 const STATUS_SEQUENCE = ['Pending', 'Processing', 'Shipped', 'Delivered'];
@@ -84,21 +84,21 @@ export default function Orders() {
   }, {} as Record<string, number>);
 
   return (
-    <div className="bg-[#0D1117] min-h-screen pb-20">
+    <div className="bg-gray-50 min-h-screen pb-20">
 
       {/* Header */}
-      <div className="border-b border-white/5 bg-white/[0.02]">
+      <div className="border-b border-gray-200 bg-white">
         <div className="max-w-5xl mx-auto px-4 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <h1 className="text-xl md:text-2xl font-black text-white uppercase tracking-tight flex items-center gap-3">
-            <Package size={22} className="text-[#ea364c]" />
+          <h1 className="text-xl md:text-2xl font-black text-gray-900 uppercase tracking-tight flex items-center gap-3">
+            <Package size={22} className="text-[#1cd75b]" />
             My Orders
           </h1>
           <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
-            <Link to="/" className="hover:text-white transition-colors">Home</Link>
-            <ChevronRight size={12} className="text-gray-700" />
-            <Link to="/profile" className="hover:text-white transition-colors">Profile</Link>
-            <ChevronRight size={12} className="text-gray-700" />
-            <span className="text-[#ea364c]">Orders</span>
+            <Link to="/" className="hover:text-black transition-colors">Home</Link>
+            <ChevronRight size={12} className="text-gray-300" />
+            <Link to="/profile" className="hover:text-black transition-colors">Profile</Link>
+            <ChevronRight size={12} className="text-gray-300" />
+            <span className="text-[#12b94b]">Orders</span>
           </div>
         </div>
       </div>
@@ -114,7 +114,7 @@ export default function Orders() {
                 <button
                   key={s}
                   onClick={() => setActiveFilter(s)}
-                  className={`bg-white/[0.02] border rounded-xl p-3 text-left hover:bg-white/[0.04] transition-all ${activeFilter === s ? `${cfg.border} ${cfg.bg}` : 'border-white/6'}`}
+                  className={`bg-white border rounded-xl p-3 text-left hover:border-gray-300 transition-all ${activeFilter === s ? `${cfg.border} ${cfg.bg}` : 'border-gray-200'}`}
                 >
                   <p className={`text-lg font-black ${cfg.text}`}>{counts[s]}</p>
                   <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{s}</p>
@@ -136,15 +136,15 @@ export default function Orders() {
                 className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider whitespace-nowrap transition-all border flex items-center gap-1.5 ${
                   isActive
                     ? f === 'All'
-                      ? 'bg-white text-gray-900 border-white'
+                      ? 'bg-gray-900 text-white border-gray-900'
                       : `${cfg.bg} ${cfg.text} ${cfg.border}`
-                    : 'bg-white/[0.03] text-gray-500 border-white/8 hover:text-white hover:border-white/20'
+                    : 'bg-white text-gray-500 border-gray-200 hover:text-gray-900 hover:border-gray-300'
                 }`}
               >
                 {f !== 'All' && cfg.icon}
                 {f}
                 {counts[f] > 0 && (
-                  <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${isActive && f !== 'All' ? `${cfg.bg} ${cfg.text}` : 'bg-white/8 text-gray-500'}`}>
+                  <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${isActive && f !== 'All' ? `${cfg.bg} ${cfg.text}` : 'bg-gray-100 text-gray-500'}`}>
                     {counts[f]}
                   </span>
                 )}
@@ -156,16 +156,16 @@ export default function Orders() {
         {/* Orders list */}
         <div className="space-y-4">
           {loading ? (
-            <div className="bg-white/[0.02] border border-white/6 rounded-2xl p-14 flex flex-col items-center">
-              <Loader2 size={32} className="animate-spin text-[#ea364c] mb-3" />
+            <div className="bg-white border border-gray-200 rounded-2xl p-14 flex flex-col items-center shadow-sm">
+              <Loader2 size={32} className="animate-spin text-[#1cd75b] mb-3" />
               <p className="text-sm font-bold text-gray-500">Loading your orders…</p>
             </div>
           ) : filteredOrders.length === 0 ? (
-            <div className="bg-white/[0.02] border border-white/6 rounded-2xl p-14 flex flex-col items-center text-center">
-              <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/8 flex items-center justify-center mb-4">
-                <Package size={28} className="text-gray-600" />
+            <div className="bg-white border border-gray-200 rounded-2xl p-14 flex flex-col items-center text-center shadow-sm">
+              <div className="w-16 h-16 rounded-2xl bg-gray-50 border border-gray-200 flex items-center justify-center mb-4">
+                <Package size={28} className="text-gray-400" />
               </div>
-              <h3 className="text-base font-black text-white mb-1.5 uppercase">No {activeFilter !== 'All' ? activeFilter : ''} orders</h3>
+              <h3 className="text-base font-black text-gray-900 mb-1.5 uppercase">No {activeFilter !== 'All' ? activeFilter : ''} orders</h3>
               <p className="text-sm text-gray-500 max-w-xs mb-6">
                 {activeFilter === 'All'
                   ? "You haven't placed any orders yet. Browse our catalog!"
@@ -173,7 +173,7 @@ export default function Orders() {
               </p>
               <Link
                 to="/shop"
-                className="bg-[#ea364c] text-white font-black text-xs uppercase tracking-wider py-2.5 px-6 rounded-xl hover:bg-[#c42d3f] transition-colors shadow-lg shadow-[#ea364c]/25 flex items-center gap-2"
+                className="bg-[#1cd75b] text-black font-black text-xs uppercase tracking-wider py-2.5 px-6 rounded-xl hover:bg-[#18c251] transition-colors shadow-lg shadow-green-500/20 flex items-center gap-2"
               >
                 <ShoppingBag size={14} /> Browse Catalog
               </Link>
@@ -190,15 +190,15 @@ export default function Orders() {
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.06 }}
-                  className="bg-white/[0.02] border border-white/6 rounded-2xl overflow-hidden hover:border-white/12 transition-all group"
+                  className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-gray-300 transition-all group shadow-sm"
                 >
                   <div className="flex flex-col sm:flex-row">
                     {/* Product image */}
-                    <div className="w-full sm:w-28 h-28 bg-white/3 shrink-0 flex items-center justify-center overflow-hidden">
+                    <div className="w-full sm:w-28 h-28 bg-gray-50 shrink-0 flex items-center justify-center overflow-hidden">
                       {firstItem?.image ? (
                         <img src={firstItem.image} alt={firstItem.name} className="w-full h-full object-cover" />
                       ) : (
-                        <Package size={28} className="text-gray-700" />
+                        <Package size={28} className="text-gray-300" />
                       )}
                     </div>
 
@@ -207,7 +207,7 @@ export default function Orders() {
                       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mb-3">
                         <div>
                           <div className="flex items-center gap-2 mb-1">
-                            <h3 className="text-sm font-black text-white font-mono">{order.orderNumber}</h3>
+                            <h3 className="text-sm font-black text-gray-900 font-mono">{order.orderNumber}</h3>
                             <span className={`inline-flex items-center gap-1 text-[9px] font-black px-2 py-0.5 rounded-full border uppercase tracking-wider ${cfg.text} ${cfg.bg} ${cfg.border}`}>
                               {cfg.icon} {order.status}
                             </span>
@@ -216,7 +216,7 @@ export default function Orders() {
                             {new Date(order.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                           </p>
                         </div>
-                        <p className="text-base font-black text-white shrink-0">{formatLKR(order.total)}</p>
+                        <p className="text-base font-black text-gray-900 shrink-0">{formatLKR(order.total)}</p>
                       </div>
 
                       {/* Items summary */}
@@ -243,7 +243,7 @@ export default function Orders() {
                       {/* Progress bar (not for cancelled) */}
                       {order.status !== 'Cancelled' && (
                         <div className="mb-3">
-                          <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                            <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
                             <div
                               className={`h-full rounded-full bg-gradient-to-r ${cfg.gradient} transition-all duration-700`}
                               style={{ width: `${progress}%` }}
@@ -253,7 +253,7 @@ export default function Orders() {
                             {STATUS_SEQUENCE.map((s, i) => (
                               <span
                                 key={s}
-                                className={`text-[8px] font-bold uppercase ${i < STATUS_SEQUENCE.indexOf(order.status) + 1 ? cfg.text : 'text-gray-700'}`}
+                                  className={`text-[8px] font-bold uppercase ${i < STATUS_SEQUENCE.indexOf(order.status) + 1 ? cfg.text : 'text-gray-300'}`}
                               >
                                 {s}
                               </span>
