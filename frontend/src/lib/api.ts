@@ -26,6 +26,13 @@ export interface MongoAddress {
   isDefault: boolean;
 }
 
+export interface IPointsHistoryItem {
+  amount: number;
+  type: 'earned' | 'redeemed' | 'bonus' | 'refund';
+  description: string;
+  date: string;
+}
+
 export interface MongoUser {
   _id?: string;
   id?: string;
@@ -35,6 +42,8 @@ export interface MongoUser {
   phone?: string;
   avatar?: string;
   addresses?: MongoAddress[];
+  points?: number;
+  pointsHistory?: IPointsHistoryItem[];
   createdAt?: string;
   orders?: number;
   totalSpent?: number;
@@ -49,6 +58,12 @@ export interface OrderItem {
   quantity: number;
 }
 
+export interface ITrackingUpdate {
+  status: string;
+  message: string;
+  timestamp: string;
+}
+
 export interface ApiOrder {
   _id?: string;
   id?: string;
@@ -57,6 +72,9 @@ export interface ApiOrder {
   items: OrderItem[];
   subtotal: number;
   shipping: number;
+  pointsUsed?: number;
+  pointsDiscount?: number;
+  pointsEarned?: number;
   total: number;
   status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
   shippingAddress: {
@@ -68,7 +86,13 @@ export interface ApiOrder {
     phone: string;
   };
   paymentMethod: string;
+  notes?: string;
+  trackingUpdates?: ITrackingUpdate[];
+  customerName?: string;
+  customerEmail?: string;
+  customerPhone?: string;
   createdAt: string;
+  updatedAt?: string;
 }
 
 /**
@@ -466,11 +490,136 @@ export async function saveWishlist(productIds: string[]): Promise<void> {
   }
 }
 
-// ---------------- ORDER TRACKING API ----------------
+// ---------------- ORDER MANAGEMENT & TRACKING API ----------------
 
 /**
- * Fetch a single order by its order number for the tracking page.
- * Reuses the existing /api/orders endpoint and filters client-side.
+ * Create a new order in MongoDB (with points redemption & earnings)
+ */
+export async function createOrderInDb(orderData: {
+  items: OrderItem[];
+  subtotal: number;
+  shipping: number;
+  pointsUsed?: number;
+  pointsDiscount?: number;
+  total: number;
+  shippingAddress: {
+    name: string;
+    street: string;
+    city: string;
+    province: string;
+    postalCode: string;
+    phone: string;
+  };
+  paymentMethod: string;
+  notes?: string;
+}): Promise<ApiOrder> {
+  const authHeaders = await getAuthHeader();
+  const res = await fetch(`${API_BASE_URL}/api/orders`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...authHeaders,
+    },
+    body: JSON.stringify(orderData),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to place order');
+  }
+
+  const data = await res.json();
+  return data.order;
+}
+
+/**
+ * Fetch all orders for Admin Console from MongoDB
+ */
+export async function getAllOrdersFromDb(): Promise<ApiOrder[]> {
+  try {
+    const authHeaders = await getAuthHeader();
+    if (!authHeaders.Authorization) return [];
+    const res = await fetch(`${API_BASE_URL}/api/orders?admin=true`, {
+      method: 'GET',
+      headers: { ...authHeaders },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.orders ?? [];
+  } catch (err) {
+    console.warn('getAllOrdersFromDb error:', err);
+    return [];
+  }
+}
+
+/**
+ * Update order status (Admin or Customer Cancel)
+ */
+export async function updateOrderStatusInDb(id: string, status: string, note?: string): Promise<ApiOrder> {
+  const authHeaders = await getAuthHeader();
+  const res = await fetch(`${API_BASE_URL}/api/orders/${id}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...authHeaders,
+    },
+    body: JSON.stringify({ status, note }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to update order status');
+  }
+
+  const data = await res.json();
+  return data.order;
+}
+
+/**
+ * Delete order (Admin only)
+ */
+export async function deleteOrderFromDb(id: string): Promise<boolean> {
+  try {
+    const authHeaders = await getAuthHeader();
+    const res = await fetch(`${API_BASE_URL}/api/orders/${id}`, {
+      method: 'DELETE',
+      headers: { ...authHeaders },
+    });
+    return res.ok;
+  } catch (err) {
+    console.warn('deleteOrderFromDb error:', err);
+    return false;
+  }
+}
+
+/**
+ * Cancel user's own pending order
+ */
+export async function cancelMyOrder(id: string): Promise<ApiOrder> {
+  return updateOrderStatusInDb(id, 'Cancelled', 'Cancelled by customer.');
+}
+
+/**
+ * Track order by order number (public lookup with live status & tracking updates)
+ */
+export async function trackOrderByNumber(orderNumber: string): Promise<ApiOrder | null> {
+  try {
+    const cleanNumber = orderNumber.trim().toUpperCase();
+    const res = await fetch(`${API_BASE_URL}/api/orders/track?orderNumber=${encodeURIComponent(cleanNumber)}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.order) return data.order;
+    }
+  } catch (err) {
+    console.warn('Public trackOrderByNumber error:', err);
+  }
+
+  // Fallback to getOrderByNumber via authenticated /api/orders
+  return getOrderByNumber(orderNumber);
+}
+
+/**
+ * Fetch a single order by its order number from user's orders.
  */
 export async function getOrderByNumber(orderNumber: string): Promise<ApiOrder | null> {
   try {
@@ -483,7 +632,8 @@ export async function getOrderByNumber(orderNumber: string): Promise<ApiOrder | 
     if (!res.ok) return null;
     const data = await res.json();
     const orders: ApiOrder[] = data.orders ?? [];
-    return orders.find(o => o.orderNumber === orderNumber) ?? null;
+    const cleanNumber = orderNumber.trim().toUpperCase();
+    return orders.find(o => o.orderNumber?.toUpperCase() === cleanNumber) ?? null;
   } catch (err) {
     console.warn('getOrderByNumber error:', err);
     return null;

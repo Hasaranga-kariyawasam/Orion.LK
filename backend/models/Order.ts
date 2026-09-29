@@ -8,12 +8,21 @@ export interface IOrderItem {
   quantity: number;
 }
 
+export interface ITrackingEvent {
+  status: string;
+  message: string;
+  timestamp: Date;
+}
+
 export interface IOrder extends Document {
   userId: string;         // Firebase UID
   orderNumber: string;
   items: IOrderItem[];
   subtotal: number;
   shipping: number;
+  pointsUsed?: number;
+  pointsDiscount?: number;
+  pointsEarned?: number;
   total: number;
   status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
   shippingAddress: {
@@ -26,6 +35,7 @@ export interface IOrder extends Document {
   };
   paymentMethod: string;
   notes?: string;
+  trackingUpdates?: ITrackingEvent[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -38,6 +48,15 @@ const OrderItemSchema = new Schema<IOrderItem>({
   quantity: { type: Number, required: true, min: 1 },
 });
 
+const TrackingEventSchema = new Schema<ITrackingEvent>(
+  {
+    status: { type: String, required: true },
+    message: { type: String, required: true },
+    timestamp: { type: Date, default: Date.now },
+  },
+  { _id: false }
+);
+
 const OrderSchema = new Schema<IOrder>(
   {
     userId: { type: String, required: true, index: true },
@@ -45,6 +64,9 @@ const OrderSchema = new Schema<IOrder>(
     items: { type: [OrderItemSchema], required: true },
     subtotal: { type: Number, required: true },
     shipping: { type: Number, default: 0 },
+    pointsUsed: { type: Number, default: 0 },
+    pointsDiscount: { type: Number, default: 0 },
+    pointsEarned: { type: Number, default: 0 },
     total: { type: Number, required: true },
     status: {
       type: String,
@@ -61,6 +83,7 @@ const OrderSchema = new Schema<IOrder>(
     },
     paymentMethod: { type: String, required: true },
     notes: { type: String },
+    trackingUpdates: { type: [TrackingEventSchema], default: [] },
   },
   { timestamps: true }
 );

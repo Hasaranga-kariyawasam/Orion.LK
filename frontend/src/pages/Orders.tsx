@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Package, ChevronRight, CheckCircle2, Clock, Truck,
-  CreditCard, Filter, Loader2, XCircle, Settings,
-  ShoppingBag, Heart, ArrowRight,
+  Filter, Loader2, XCircle, Settings,
+  ShoppingBag, Heart, ArrowRight, Sparkles, AlertCircle
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { formatLKR } from '../data';
-import { getMyOrders, ApiOrder } from '../lib/api';
+import { getMyOrders, cancelMyOrder, ApiOrder } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 
 type OrderFilter = 'All' | 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
@@ -33,8 +33,9 @@ export default function Orders() {
   const [activeFilter, setActiveFilter] = useState<OrderFilter>('All');
   const [orders, setOrders] = useState<ApiOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
 
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
@@ -53,6 +54,25 @@ export default function Orders() {
     };
     fetch();
   }, [user]);
+
+  const handleCancelOrder = async (orderId: string, orderNumber: string, pointsUsed: number = 0) => {
+    const confirmMsg = pointsUsed > 0
+      ? `Are you sure you want to cancel order ${orderNumber}? The ${pointsUsed} reward points you redeemed will be automatically refunded to your account.`
+      : `Are you sure you want to cancel order ${orderNumber}?`;
+
+    if (!window.confirm(confirmMsg)) return;
+
+    setCancellingId(orderId);
+    try {
+      await cancelMyOrder(orderId);
+      setOrders(prev => prev.map(o => (o.id === orderId || o._id === orderId || o.orderNumber === orderNumber) ? { ...o, status: 'Cancelled' } : o));
+      await refreshProfile();
+    } catch (err: any) {
+      alert(err.message || 'Failed to cancel order.');
+    } finally {
+      setCancellingId(null);
+    }
+  };
 
   const filteredOrders = activeFilter === 'All'
     ? orders
@@ -200,11 +220,25 @@ export default function Orders() {
                       </div>
 
                       {/* Items summary */}
-                      <p className="text-xs text-gray-500 mb-3 truncate">
+                      <p className="text-xs text-gray-500 mb-2 truncate">
                         {firstItem?.name}
                         {order.items?.length > 1 && <span className="text-gray-600"> +{order.items.length - 1} more</span>}
                         <span className="text-gray-600"> · {order.items?.length} item{order.items?.length !== 1 ? 's' : ''}</span>
                       </p>
+
+                      {/* Points badges */}
+                      <div className="flex items-center gap-2 flex-wrap mb-3">
+                        {order.pointsUsed !== undefined && order.pointsUsed > 0 && (
+                          <span className="inline-flex items-center gap-1 text-[9px] font-black px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase tracking-wider">
+                            <Sparkles size={10} /> {order.pointsUsed} Pts Redeemed (-{formatLKR(order.pointsDiscount || order.pointsUsed)})
+                          </span>
+                        )}
+                        {order.pointsEarned !== undefined && order.pointsEarned > 0 && (
+                          <span className="inline-flex items-center gap-1 text-[9px] font-black px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase tracking-wider">
+                            +{order.pointsEarned} Pts Earned
+                          </span>
+                        )}
+                      </div>
 
                       {/* Progress bar (not for cancelled) */}
                       {order.status !== 'Cancelled' && (
@@ -229,13 +263,28 @@ export default function Orders() {
                       )}
 
                       {/* Actions */}
-                      <div className="flex gap-2 flex-wrap">
+                      <div className="flex gap-2 flex-wrap items-center">
                         <button
                           onClick={() => navigate(`/track?id=${order.orderNumber}`)}
-                          className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider py-2 px-4 rounded-lg transition-all ${cfg.bg} ${cfg.text} ${cfg.border} border hover:brightness-110`}
+                          className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider py-2 px-4 rounded-lg transition-all ${cfg.bg} ${cfg.text} ${cfg.border} border hover:brightness-110 cursor-pointer`}
                         >
                           <Truck size={12} /> Track Order <ArrowRight size={10} />
                         </button>
+
+                        {order.status === 'Pending' && (
+                          <button
+                            onClick={() => handleCancelOrder(order.id || order._id || order.orderNumber, order.orderNumber, order.pointsUsed)}
+                            disabled={cancellingId === (order.id || order._id || order.orderNumber)}
+                            className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider py-2 px-3 rounded-lg transition-all bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 disabled:opacity-50 cursor-pointer"
+                          >
+                            {cancellingId === (order.id || order._id || order.orderNumber) ? (
+                              <Loader2 size={11} className="animate-spin" />
+                            ) : (
+                              <XCircle size={11} />
+                            )}
+                            Cancel Order
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>

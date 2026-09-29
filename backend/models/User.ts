@@ -15,6 +15,13 @@ export interface IUserCartItem {
   product?: any;
 }
 
+export interface IPointsTransaction {
+  amount: number;
+  type: 'earned' | 'redeemed' | 'bonus' | 'refund';
+  description: string;
+  date: Date;
+}
+
 export interface IUser extends Document {
   uid: string;          // Firebase UID
   name: string;
@@ -24,6 +31,8 @@ export interface IUser extends Document {
   addresses: IAddress[];
   wishlist: string[];   // array of product IDs
   cart: IUserCartItem[]; // array of cart items
+  points: number;       // loyalty points balance
+  pointsHistory: IPointsTransaction[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -46,6 +55,16 @@ const CartItemSchema = new Schema<IUserCartItem>(
   { _id: false }
 );
 
+const PointsTransactionSchema = new Schema<IPointsTransaction>(
+  {
+    amount: { type: Number, required: true },
+    type: { type: String, enum: ['earned', 'redeemed', 'bonus', 'refund'], required: true },
+    description: { type: String, required: true },
+    date: { type: Date, default: Date.now },
+  },
+  { _id: false }
+);
+
 const UserSchema = new Schema<IUser>(
   {
     uid: { type: String, required: true, unique: true, index: true },
@@ -56,6 +75,18 @@ const UserSchema = new Schema<IUser>(
     addresses: { type: [AddressSchema], default: [] },
     wishlist: { type: [String], default: [] },
     cart: { type: [CartItemSchema], default: [] },
+    points: { type: Number, default: 100, min: 0 },
+    pointsHistory: {
+      type: [PointsTransactionSchema],
+      default: () => [
+        {
+          amount: 100,
+          type: 'bonus',
+          description: 'Welcome Bonus: 100 Orion Reward Points!',
+          date: new Date(),
+        },
+      ],
+    },
   },
   { timestamps: true }
 );

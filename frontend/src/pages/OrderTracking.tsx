@@ -6,7 +6,7 @@ import {
   XCircle, ArrowRight,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { getOrderByNumber, ApiOrder } from '../lib/api';
+import { trackOrderByNumber, ApiOrder } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { formatLKR } from '../data';
 
@@ -55,7 +55,7 @@ export default function OrderTracking() {
     if (!id.trim()) { setError('Please enter a valid Order ID'); return; }
     if (!silent) { setIsTracking(true); setOrder(null); setError(''); }
     try {
-      const found = await getOrderByNumber(id.trim().toUpperCase());
+      const found = await trackOrderByNumber(id.trim().toUpperCase());
       if (found) {
         setOrder(found);
         setError('');
@@ -70,10 +70,13 @@ export default function OrderTracking() {
     }
   }, []);
 
-  // Auto-track when coming from Orders page
+  // Auto-track when query ID is present in URL
   useEffect(() => {
-    if (queryId && user) fetchOrder(queryId);
-  }, [queryId, user, fetchOrder]);
+    if (queryId) {
+      setOrderId(queryId);
+      fetchOrder(queryId);
+    }
+  }, [queryId, fetchOrder]);
 
   // Auto-refresh every 30s for active orders
   useEffect(() => {
@@ -154,9 +157,8 @@ export default function OrderTracking() {
             )}
 
             {!user && (
-              <p className="text-amber-400/80 text-xs mt-3 flex items-center gap-2">
-                <AlertCircle size={13} />
-                <span>You must be <Link to="/login" className="underline">signed in</Link> to track your orders.</span>
+              <p className="text-gray-500 text-xs mt-3">
+                Tracking as a guest? Enter the Order ID from your confirmation receipt above.
               </p>
             )}
           </div>
@@ -239,6 +241,11 @@ export default function OrderTracking() {
                   <div className="sm:text-right">
                     <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">Order Total</p>
                     <p className="text-xl font-black text-white">{formatLKR(order.total)}</p>
+                    {order.pointsDiscount !== undefined && order.pointsDiscount > 0 && (
+                      <p className="text-[10px] text-amber-400 font-bold mt-0.5">
+                        ⭐ Points Discount: -{formatLKR(order.pointsDiscount)}
+                      </p>
+                    )}
                     <p className="text-[10px] text-gray-500 mt-1">{order.paymentMethod}</p>
                   </div>
                 </div>
@@ -309,6 +316,26 @@ export default function OrderTracking() {
                       })}
                     </div>
                   </div>
+
+                  {/* Live Tracking Activity Updates */}
+                  {order.trackingUpdates && order.trackingUpdates.length > 0 && (
+                    <div className="mt-8 pt-6 border-t border-white/6">
+                      <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-3">Activity Log</p>
+                      <div className="space-y-2">
+                        {order.trackingUpdates.map((update, uIdx) => (
+                          <div key={uIdx} className="p-3 bg-white/[0.02] border border-white/5 rounded-xl flex items-start justify-between gap-3 text-xs">
+                            <div>
+                              <span className="font-bold text-white text-[11px] uppercase">{update.status}:</span>
+                              <span className="text-gray-400 text-xs ml-1.5">{update.message}</span>
+                            </div>
+                            <span className="text-[10px] text-gray-600 shrink-0">
+                              {new Date(update.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-6 text-center">

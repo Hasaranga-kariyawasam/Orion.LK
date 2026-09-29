@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Heart, Search, Menu, User, Phone, Globe, ChevronRight, Shuffle, Watch, Headphones, Square, Keyboard, HardDrive, Headset, BatteryCharging, Smartphone, Speaker, Cable, Car, Camera, Monitor, MoreHorizontal, Home, LayoutGrid, RefreshCw, Wind, Store, MapPin, Package, Bell, LogOut, Settings } from 'lucide-react';
+import { ShoppingCart, Heart, Search, Menu, User, Phone, Globe, ChevronRight, Shuffle, Watch, Headphones, Square, Keyboard, HardDrive, Headset, BatteryCharging, Smartphone, Speaker, Cable, Car, Camera, Monitor, MoreHorizontal, Home, LayoutGrid, RefreshCw, Wind, Store, MapPin, Package, Bell, LogOut, Settings, Coins, Truck } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
 import { BRAND_NEW_CATEGORIES, USED_CATEGORIES, MOCK_PRODUCTS, BRAND_LOGO_URL } from '../data';
@@ -191,6 +191,18 @@ export default function Header() {
               </AnimatePresence>
             </div>
 
+            {/* User Points Badge for Logged In Users */}
+            {user && (
+              <Link
+                to="/profile"
+                title="Orion Reward Points"
+                className="hidden sm:flex items-center gap-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 px-3 py-1.5 rounded-full text-xs font-black transition-all"
+              >
+                <Coins size={14} className="text-amber-400" />
+                <span>{mongoUser?.points !== undefined ? mongoUser.points : 100} Pts</span>
+              </Link>
+            )}
+
             <div className="relative group" onMouseEnter={() => setShowProfileDropdown(true)} onMouseLeave={() => setShowProfileDropdown(false)}>
               {user ? (
                 <button className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center overflow-hidden hover:border-[#2ee661] transition-colors">
@@ -212,11 +224,16 @@ export default function Header() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
-                    className="absolute top-full right-0 mt-2 w-52 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[100]"
+                    className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[100]"
                   >
-                    <div className="p-3 bg-gray-50 border-b border-gray-100">
-                      <p className="text-sm font-bold text-gray-900 truncate">{user.displayName || 'User'}</p>
-                      <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                    <div className="p-3 bg-gradient-to-r from-gray-50 to-amber-50/60 border-b border-gray-100 flex items-center justify-between">
+                      <div className="min-w-0 pr-2">
+                        <p className="text-sm font-bold text-gray-900 truncate">{user.displayName || 'User'}</p>
+                        <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                      </div>
+                      <span className="text-[11px] font-black text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full shrink-0">
+                        {mongoUser?.points !== undefined ? mongoUser.points : 100} Pts
+                      </span>
                     </div>
                     <div className="py-2">
                       <Link to="/profile" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-600 hover:text-black hover:bg-gray-50 transition-colors">
@@ -225,12 +242,15 @@ export default function Header() {
                       <Link to="/orders" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-600 hover:text-black hover:bg-gray-50 transition-colors">
                         <Package size={16} /> My Orders
                       </Link>
+                      <Link to="/track" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-600 hover:text-black hover:bg-gray-50 transition-colors">
+                        <Truck size={16} /> Track Order
+                      </Link>
                       <Link to="/admin" className="flex items-center gap-3 px-4 py-2 text-sm text-[#2ee661] font-bold hover:bg-[#2ee661]/10 transition-colors">
                         <Settings size={16} /> Admin Dashboard
                       </Link>
                     </div>
                     <div className="py-2 border-t border-gray-100">
-                      <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors text-left font-bold">
+                      <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors text-left font-bold cursor-pointer">
                         <LogOut size={16} /> Sign Out
                       </button>
                     </div>

@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
+import { useAuth } from '../context/AuthContext';
 import { formatLKR } from '../data';
-import { ChevronRight, ArrowLeft, ShieldCheck, Truck, CreditCard } from 'lucide-react';
+import { ChevronRight, ArrowLeft, ShieldCheck, Truck, Sparkles, MapPin } from 'lucide-react';
 
 export default function Checkout() {
   const { cart, cartTotal } = useShop();
+  const { user, mongoUser } = useAuth();
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
@@ -19,17 +21,43 @@ export default function Checkout() {
     zip: ''
   });
 
-  const loadSavedAddress = () => {
-    setFormData({
-      firstName: 'Hass',
-      lastName: 'K',
-      email: 'hass.kariyawasam@gmail.com',
-      phone: '0771234567',
-      address: '123 Tech Park, Galle Road',
-      city: 'Colombo 03',
-      district: 'Colombo',
-      zip: '00300'
-    });
+  // Pre-fill user details from profile or existing session
+  useEffect(() => {
+    const saved = sessionStorage.getItem('checkout_shipping_address');
+    if (saved) {
+      try {
+        setFormData(JSON.parse(saved));
+        return;
+      } catch (e) {}
+    }
+
+    if (mongoUser || user) {
+      const fullName = mongoUser?.name || user?.displayName || '';
+      const parts = fullName.trim().split(' ');
+      const defaultAddr = mongoUser?.addresses?.find(a => a.isDefault) || mongoUser?.addresses?.[0];
+
+      setFormData(prev => ({
+        ...prev,
+        firstName: prev.firstName || parts[0] || '',
+        lastName: prev.lastName || parts.slice(1).join(' ') || '',
+        email: prev.email || mongoUser?.email || user?.email || '',
+        phone: prev.phone || mongoUser?.phone || '',
+        address: defaultAddr?.street || prev.address,
+        city: defaultAddr?.city || prev.city,
+        district: defaultAddr?.province || prev.district || 'Colombo',
+        zip: defaultAddr?.postalCode || prev.zip,
+      }));
+    }
+  }, [mongoUser, user]);
+
+  const selectAddress = (addr: any) => {
+    setFormData(prev => ({
+      ...prev,
+      address: addr.street,
+      city: addr.city,
+      district: addr.province || 'Colombo',
+      zip: addr.postalCode || '',
+    }));
   };
 
   // Redirect if cart is empty
@@ -46,7 +74,7 @@ export default function Checkout() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Normally you'd save shipping data to context/state here, then navigate
+    sessionStorage.setItem('checkout_shipping_address', JSON.stringify(formData));
     navigate('/payment');
   };
 
@@ -87,20 +115,58 @@ export default function Checkout() {
               </div>
               
               <div className="mb-8">
-                <h3 className="text-sm font-bold text-gray-700 uppercase mb-3">Saved Addresses</h3>
-                <div 
-                  onClick={loadSavedAddress}
-                  className="p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-[#1cd75b] hover:bg-[#1cd75b]/5 transition-colors group"
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="font-bold text-gray-900 group-hover:text-[#1cd75b] transition-colors">Home</h4>
-                      <p className="text-sm text-gray-500 mt-1">Hass K • 0771234567</p>
-                      <p className="text-sm text-gray-500">123 Tech Park, Galle Road, Colombo 03, Colombo</p>
-                    </div>
-                    <span className="text-xs font-bold text-[#1cd75b] opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-wider">Use This</span>
-                  </div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-bold text-gray-700 uppercase">Saved Addresses</h3>
+                  {mongoUser?.addresses && mongoUser.addresses.length > 0 && (
+                    <span className="text-xs text-gray-400">{mongoUser.addresses.length} available</span>
+                  )}
                 </div>
+
+                {mongoUser?.addresses && mongoUser.addresses.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {mongoUser.addresses.map((addr, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => selectAddress(addr)}
+                        className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                          formData.address === addr.street
+                            ? 'border-[#1cd75b] bg-[#1cd75b]/5'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <MapPin size={13} className="text-[#1cd75b]" />
+                              <h4 className="font-bold text-gray-900 text-xs uppercase">{addr.label}</h4>
+                            </div>
+                            <p className="text-xs text-gray-600 font-medium mt-1">{addr.street}</p>
+                            <p className="text-[11px] text-gray-400">{addr.city}, {addr.province}</p>
+                          </div>
+                          {formData.address === addr.street && (
+                            <span className="text-[10px] font-black text-[#1cd75b] uppercase tracking-wider bg-[#1cd75b]/10 px-2 py-0.5 rounded-full">
+                              Selected
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div 
+                    onClick={() => selectAddress({ street: '123 Tech Park, Galle Road', city: 'Colombo 03', province: 'Colombo', postalCode: '00300' })}
+                    className="p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-[#1cd75b] hover:bg-[#1cd75b]/5 transition-colors group"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-bold text-gray-900 group-hover:text-[#1cd75b] transition-colors">Home</h4>
+                        <p className="text-sm text-gray-500 mt-1">{formData.firstName || 'Customer'} • {formData.phone || '0771234567'}</p>
+                        <p className="text-sm text-gray-500">123 Tech Park, Galle Road, Colombo 03, Colombo</p>
+                      </div>
+                      <span className="text-xs font-bold text-[#1cd75b] opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-wider">Use This</span>
+                    </div>
+                  </div>
+                )}
               </div>
               
               <form id="checkout-form" onSubmit={handleSubmit} className="space-y-5">
@@ -187,10 +253,23 @@ export default function Checkout() {
                 </div>
               </div>
 
-              <div className="border-t border-gray-100 pt-4 mb-6">
+              <div className="border-t border-gray-100 pt-4 mb-5">
                 <div className="flex justify-between items-center">
                   <span className="text-base font-black text-gray-900 uppercase">Total</span>
                   <span className="text-2xl font-black text-red-600">{formatLKR(cartTotal)}</span>
+                </div>
+              </div>
+
+              {/* Loyalty Reward Points Preview */}
+              <div className="bg-amber-50 border border-amber-200/80 rounded-xl p-3 mb-5 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-600 flex items-center justify-center shrink-0">
+                  <Sparkles size={16} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-amber-900 uppercase tracking-wide">Orion Rewards</p>
+                  <p className="text-[11px] text-amber-700">
+                    Earn <span className="font-black text-amber-900">+{Math.floor(cartTotal / 100)} Points</span> on this purchase!
+                  </p>
                 </div>
               </div>
 

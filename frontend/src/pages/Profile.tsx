@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   User, Package, MapPin, Settings, LogOut, ChevronRight,
   ShoppingBag, Edit2, CheckCircle2, Clock, Heart, Camera,
-  Loader2, Plus, Trash2, AlertCircle, Save, Check
+  Loader2, Plus, Trash2, AlertCircle, Save, Check, Coins, Sparkles, Gift, ArrowRight
 } from 'lucide-react';
 import { formatLKR } from '../data';
 import { useShop } from '../context/ShopContext';
@@ -12,7 +12,7 @@ import { getMyOrders, ApiOrder, MongoAddress, formatAvatarUrl } from '../lib/api
 import { updatePassword, auth } from '../lib/firebase';
 
 export default function Profile() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'orders' | 'addresses' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'orders' | 'rewards' | 'addresses' | 'settings'>('dashboard');
   const [orders, setOrders] = useState<ApiOrder[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
 
@@ -279,7 +279,20 @@ export default function Profile() {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div
+                className="bg-gradient-to-br from-amber-500/10 via-yellow-500/5 to-white p-6 rounded-2xl shadow-sm border border-amber-500/30 flex flex-col items-center justify-center text-center hover:border-amber-500 transition-colors cursor-pointer"
+                onClick={() => setActiveTab('rewards')}
+              >
+                <div className="w-12 h-12 bg-amber-500/20 text-amber-600 rounded-full flex items-center justify-center mb-3">
+                  <Coins size={24} />
+                </div>
+                <h3 className="font-black text-gray-900 text-lg">
+                  {mongoUser?.points !== undefined ? mongoUser.points : 100} Pts
+                </h3>
+                <p className="text-xs text-amber-700 font-bold">LKR {(mongoUser?.points !== undefined ? mongoUser.points : 100).toLocaleString()} Value</p>
+              </div>
+
               <div
                 className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center hover:border-black transition-colors cursor-pointer"
                 onClick={() => setActiveTab('orders')}
@@ -290,7 +303,7 @@ export default function Profile() {
                 <h3 className="font-bold text-gray-900 text-lg">
                   {ordersLoading ? '...' : `${orders.length} Orders`}
                 </h3>
-                <p className="text-sm text-gray-500">View purchase history</p>
+                <p className="text-sm text-gray-500">Purchase history</p>
               </div>
 
               <div
@@ -424,6 +437,125 @@ export default function Profile() {
                 </div>
               </div>
             )}
+          </div>
+        );
+
+      case 'rewards':
+        const points = mongoUser?.points !== undefined ? mongoUser.points : 100;
+        const history = mongoUser?.pointsHistory || [
+          {
+            amount: 100,
+            type: 'bonus',
+            description: 'Welcome Bonus: 100 Orion Reward Points!',
+            date: mongoUser?.createdAt || new Date().toISOString(),
+          },
+        ];
+
+        return (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight mb-2">Orion Loyalty & Reward Points</h2>
+            <p className="text-gray-500 text-sm mb-6">Earn points on every purchase and redeem them for direct discounts at checkout.</p>
+
+            {/* Main Balance Banner */}
+            <div className="bg-gradient-to-br from-amber-500 via-amber-600 to-yellow-600 rounded-3xl p-8 text-black shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                  <div className="inline-flex items-center gap-2 bg-black/15 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider text-black mb-3">
+                    <Sparkles size={14} /> Orion VIP Loyalty Member
+                  </div>
+                  <h3 className="text-4xl md:text-5xl font-black tracking-tight mb-1">
+                    {points.toLocaleString()} <span className="text-2xl md:text-3xl font-bold">Points</span>
+                  </h3>
+                  <p className="text-black/80 font-bold text-sm">
+                    Equivalent Cash Value: <span className="underline decoration-black/30">LKR {points.toLocaleString()}.00</span> (1 Point = LKR 1.00)
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 shrink-0">
+                  <Link
+                    to="/shop"
+                    className="bg-black hover:bg-gray-900 text-white font-black uppercase tracking-wider py-3 px-6 rounded-xl text-xs transition-colors shadow-lg flex items-center justify-center gap-2"
+                  >
+                    <ShoppingBag size={15} /> Redeem in Store <ArrowRight size={14} />
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* How it works grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center font-black mb-3">
+                  1
+                </div>
+                <h4 className="font-black text-gray-900 text-sm mb-1 uppercase">Earn on Purchases</h4>
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  Earn 1 Point for every LKR 100 spent on any tech products or accessories in our store.
+                </p>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center font-black mb-3">
+                  2
+                </div>
+                <h4 className="font-black text-gray-900 text-sm mb-1 uppercase">1 Point = LKR 1</h4>
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  Direct 1:1 rupee value. No complicated tier requirements or minimum spend restrictions.
+                </p>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center font-black mb-3">
+                  3
+                </div>
+                <h4 className="font-black text-gray-900 text-sm mb-1 uppercase">Instant Checkout</h4>
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  Toggle points redemption during payment to deduct directly from your cart total.
+                </p>
+              </div>
+            </div>
+
+            {/* Points History */}
+            <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
+              <h3 className="text-lg font-black text-gray-900 uppercase mb-4">Points Activity Log</h3>
+              
+              <div className="space-y-3">
+                {history.map((tx: any, idx: number) => {
+                  const isPositive = tx.amount > 0;
+                  return (
+                    <div key={idx} className="flex items-center justify-between p-3.5 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-9 h-9 rounded-full flex items-center justify-center font-black text-xs ${
+                          tx.type === 'bonus' ? 'bg-amber-100 text-amber-700' :
+                          tx.type === 'refund' ? 'bg-blue-100 text-blue-700' :
+                          isPositive ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+                        }`}>
+                          {tx.type === 'bonus' ? <Gift size={16} /> :
+                           tx.type === 'refund' ? <Coins size={16} /> :
+                           isPositive ? '+' : '-'}
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-gray-900">{tx.description}</p>
+                          <p className="text-[10px] text-gray-400">
+                            {tx.date ? new Date(tx.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Recent'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="text-right">
+                        <span className={`text-sm font-black ${isPositive ? 'text-emerald-600' : 'text-rose-600'}`}>
+                          {isPositive ? `+${tx.amount}` : tx.amount} Pts
+                        </span>
+                        <p className="text-[10px] text-gray-400">
+                          {isPositive ? `+LKR ${tx.amount}` : `-LKR ${Math.abs(tx.amount)}`}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         );
 
@@ -744,6 +876,18 @@ export default function Profile() {
                   className={`flex items-center gap-3 p-4 text-left transition-colors border-l-4 border-t border-t-gray-100 ${activeTab === 'orders' ? 'border-l-gray-900 bg-gray-50 text-gray-900 font-bold' : 'border-l-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium'}`}
                 >
                   <ShoppingBag size={18} /> My Orders
+                </button>
+                <button
+                  onClick={() => setActiveTab('rewards')}
+                  className={`flex items-center justify-between p-4 text-left transition-colors border-l-4 border-t border-t-gray-100 ${activeTab === 'rewards' ? 'border-l-amber-500 bg-amber-50/50 text-amber-900 font-bold' : 'border-l-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium'}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Coins size={18} className={activeTab === 'rewards' ? 'text-amber-600' : 'text-amber-500'} />
+                    <span>Reward Points</span>
+                  </div>
+                  <span className="text-[10px] font-black bg-amber-500/20 text-amber-800 px-2 py-0.5 rounded-full">
+                    {mongoUser?.points !== undefined ? mongoUser.points : 100}
+                  </span>
                 </button>
                 <button
                   onClick={() => setActiveTab('addresses')}

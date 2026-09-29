@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Shield, User, ShoppingBag, DollarSign, ToggleLeft, ToggleRight, Mail, RefreshCw } from 'lucide-react';
+import { Search, Shield, User, ShoppingBag, DollarSign, ToggleLeft, ToggleRight, Mail, RefreshCw, Coins } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 
 export default function AdminUsers() {
@@ -26,6 +26,8 @@ export default function AdminUsers() {
     setUsers(users.map(u => u.id === id ? { ...u, isAdmin: !u.isAdmin } : u));
   };
 
+  const totalPoints = users.reduce((s, u) => s + (u.points ?? 100), 0);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -44,11 +46,12 @@ export default function AdminUsers() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: 'Total Users', value: users.length, icon: User, color: 'text-blue-400' },
           { label: 'Total Orders', value: users.reduce((s, u) => s + u.orders, 0), icon: ShoppingBag, color: 'text-[#2ee661]' },
           { label: 'Total Revenue', value: `LKR ${(users.reduce((s, u) => s + u.totalSpent, 0) / 1000).toFixed(0)}K`, icon: DollarSign, color: 'text-purple-400' },
+          { label: 'Reward Points in Circulation', value: `${totalPoints.toLocaleString()} Pts`, icon: Coins, color: 'text-amber-400' },
         ].map(s => (
           <div key={s.label} className="bg-[#161B22] border border-[#30363D] rounded-2xl p-5">
             <s.icon size={20} className={`${s.color} mb-3`} />
@@ -69,14 +72,14 @@ export default function AdminUsers() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[#30363D]">
-                {['User', 'Joined', 'Orders', 'Total Spent', 'Role', 'Admin Toggle'].map(h => (
+                {['User', 'Joined', 'Points Balance', 'Orders', 'Total Spent', 'Role', 'Admin Toggle'].map(h => (
                   <th key={h} className="text-left px-5 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={6} className="text-center py-12 text-gray-500">No users found</td></tr>
+                <tr><td colSpan={7} className="text-center py-12 text-gray-500">No users found</td></tr>
               ) : filtered.map(u => (
                 <tr key={u.id} className="border-b border-[#30363D]/50 hover:bg-white/[0.02] transition-colors">
                   <td className="px-5 py-4">
@@ -91,6 +94,12 @@ export default function AdminUsers() {
                     </div>
                   </td>
                   <td className="px-5 py-4 text-gray-400 text-xs">{u.joined}</td>
+                  <td className="px-5 py-4">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-400/10 border border-amber-400/25 text-amber-400">
+                      <Coins size={12} />
+                      {(u.points ?? 100).toLocaleString()} Pts
+                    </span>
+                  </td>
                   <td className="px-5 py-4 text-white font-bold">{u.orders}</td>
                   <td className="px-5 py-4 text-[#2ee661] font-bold">LKR {u.totalSpent.toLocaleString()}</td>
                   <td className="px-5 py-4">

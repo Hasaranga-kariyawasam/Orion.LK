@@ -15,6 +15,10 @@ import {
   createBrandInDb,
   updateBrandInDb,
   deleteBrandFromDb,
+  getAllOrdersFromDb,
+  updateOrderStatusInDb as apiUpdateOrderStatus,
+  deleteOrderFromDb,
+  OrderItem,
 } from '../lib/api';
 
 export interface Accessory {
@@ -39,12 +43,30 @@ export interface AdminOrder {
   orderNumber: string;
   customerName: string;
   customerEmail: string;
+  customerPhone?: string;
   date: string;
+  subtotal?: number;
+  shipping?: number;
+  pointsUsed?: number;
+  pointsDiscount?: number;
+  pointsEarned?: number;
   total: number;
   status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
   items: number;
+  orderItems?: OrderItem[];
   paymentMethod: string;
   shippingAddress: string;
+  shippingAddressObj?: {
+    name: string;
+    street: string;
+    city: string;
+    province: string;
+    postalCode: string;
+    phone: string;
+  };
+  trackingUpdates?: Array<{ status: string; message: string; timestamp: string }>;
+  notes?: string;
+  createdAt?: string;
 }
 
 export interface AdminUser {
@@ -54,6 +76,7 @@ export interface AdminUser {
   joined: string;
   orders: number;
   totalSpent: number;
+  points?: number;
   isAdmin: boolean;
   avatar?: string;
 }
@@ -130,6 +153,9 @@ interface AdminContextType {
   refreshCategories: () => Promise<void>;
   refreshBrands: () => Promise<void>;
   refreshUsers: () => Promise<void>;
+  refreshOrders: () => Promise<void>;
+  updateOrderStatusInDb: (id: string, status: AdminOrder['status'], note?: string) => Promise<boolean>;
+  deleteOrderFromContext: (id: string) => Promise<boolean>;
   saveProductToDb: (productData: any, editId?: string) => Promise<AdminProductItem>;
   deleteProductFromContext: (id: string) => Promise<boolean>;
   saveCategoryToDb: (catData: any, editId?: string) => Promise<AdminCategory>;
@@ -273,6 +299,7 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           joined: u.createdAt ? new Date(u.createdAt).toISOString().split('T')[0] : '2024-01-01',
           orders: u.orders || 0,
           totalSpent: u.totalSpent || 0,
+          points: u.points !== undefined ? u.points : 100,
           isAdmin: !!u.isAdmin,
           avatar: u.avatar,
         }));
@@ -280,6 +307,75 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       }
     } catch (e) {
       console.warn('Error refreshing MongoDB users:', e);
+    }
+  };
+
+  // 4b. Refresh Orders from MongoDB
+  const refreshOrders = async () => {
+    try {
+      const dbOrders = await getAllOrdersFromDb();
+      if (dbOrders && dbOrders.length > 0) {
+        const mapped: AdminOrder[] = dbOrders.map(o => {
+          const addr = o.shippingAddress;
+          const addressStr = addr
+            ? `${addr.street}, ${addr.city}, ${addr.province}`
+            : 'No address provided';
+          const itemsCount = o.items ? o.items.reduce((sum, item) => sum + item.quantity, 0) : 0;
+          return {
+            id: o._id || o.id || o.orderNumber,
+            orderNumber: o.orderNumber,
+            customerName: o.customerName || addr?.name || 'Customer',
+            customerEmail: o.customerEmail || 'customer@orion.lk',
+            customerPhone: o.customerPhone || addr?.phone || '',
+            date: o.createdAt ? new Date(o.createdAt).toISOString().split('T')[0] : '2024-03-15',
+            subtotal: o.subtotal,
+            shipping: o.shipping,
+            pointsUsed: o.pointsUsed || 0,
+            pointsDiscount: o.pointsDiscount || 0,
+            pointsEarned: o.pointsEarned || 0,
+            total: o.total,
+            status: o.status,
+            items: itemsCount,
+            orderItems: o.items || [],
+            paymentMethod: o.paymentMethod || 'Card',
+            shippingAddress: addressStr,
+            shippingAddressObj: addr,
+            trackingUpdates: o.trackingUpdates || [],
+            notes: o.notes,
+            createdAt: o.createdAt,
+          };
+        });
+        setOrders(mapped);
+        localStorage.setItem('admin_orders', JSON.stringify(mapped));
+      }
+    } catch (e) {
+      console.warn('Error refreshing orders from DB:', e);
+    }
+  };
+
+  const updateOrderStatusInDb = async (id: string, status: AdminOrder['status'], note?: string): Promise<boolean> => {
+    try {
+      await apiUpdateOrderStatus(id, status, note);
+      await refreshOrders();
+      return true;
+    } catch (err) {
+      console.error('Failed to update order status in DB:', err);
+      return false;
+    }
+  };
+
+  const deleteOrderFromContext = async (id: string): Promise<boolean> => {
+    try {
+      await deleteOrderFromDb(id);
+      setOrders(prev => {
+        const updated = prev.filter(o => o.id !== id);
+        localStorage.setItem('admin_orders', JSON.stringify(updated));
+        return updated;
+      });
+      return true;
+    } catch (err) {
+      console.error('Failed to delete order from DB:', err);
+      return false;
     }
   };
 
@@ -407,6 +503,7 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     refreshCategories();
     refreshBrands();
     refreshUsers();
+    refreshOrders();
   }, []);
 
   const saveSettings = () => {
@@ -445,6 +542,9 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       refreshCategories,
       refreshBrands,
       refreshUsers,
+      refreshOrders,
+      updateOrderStatusInDb,
+      deleteOrderFromContext,
       saveProductToDb,
       deleteProductFromContext,
       saveCategoryToDb,

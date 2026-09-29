@@ -22,7 +22,36 @@ export async function GET(req: NextRequest) {
         email: decoded.email,
         avatar: decoded.picture || '',
         addresses: [],
+        points: 100,
+        pointsHistory: [
+          {
+            amount: 100,
+            type: 'bonus',
+            description: 'Welcome Bonus: 100 Orion Reward Points!',
+            date: new Date(),
+          },
+        ],
       });
+    } else if (user) {
+      let needsSave = false;
+      if (user.points === undefined || user.points === null) {
+        user.points = 100;
+        needsSave = true;
+      }
+      if (!Array.isArray(user.pointsHistory) || user.pointsHistory.length === 0) {
+        user.pointsHistory = [
+          {
+            amount: 100,
+            type: 'bonus',
+            description: 'Welcome Bonus: 100 Orion Reward Points!',
+            date: new Date(),
+          },
+        ];
+        needsSave = true;
+      }
+      if (needsSave) {
+        await user.save();
+      }
     }
 
     if (!user) {

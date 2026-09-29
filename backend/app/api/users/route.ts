@@ -30,6 +30,7 @@ export async function GET(req: NextRequest) {
         joined: u.createdAt ? new Date(u.createdAt).toISOString().split('T')[0] : '2024-01-01',
         orders: userOrders.length,
         totalSpent,
+        points: u.points !== undefined ? u.points : 100,
         isAdmin,
       };
     });
