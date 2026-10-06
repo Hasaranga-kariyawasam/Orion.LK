@@ -14,6 +14,8 @@ export async function POST(req: NextRequest) {
     const decoded = await verifyToken(authHeader);
 
     const { name, email } = await req.json();
+    const profileEmail = String(email || decoded.email || `${decoded.uid}@orion.local`).trim().toLowerCase();
+    const profileName = String(name || decoded.name || profileEmail.split('@')[0] || 'Customer').trim();
 
     await connectDB();
 
@@ -23,8 +25,8 @@ export async function POST(req: NextRequest) {
       {
         $setOnInsert: {
           uid: decoded.uid,
-          name: name || decoded.name || 'User',
-          email: email || decoded.email,
+          name: profileName,
+          email: profileEmail,
           avatar: decoded.picture || '',
         },
       },

@@ -89,11 +89,12 @@ export async function POST(req: NextRequest) {
 
     const orderNumber = generateOrderNumber();
     let user = await User.findOne({ uid: decoded.uid });
-    if (!user && decoded.email) {
+    if (!user) {
+      const profileEmail = String(decoded.email || `${decoded.uid}@orion.local`).trim().toLowerCase();
       user = await User.create({
         uid: decoded.uid,
-        name: decoded.name || decoded.email.split('@')[0] || 'Customer',
-        email: decoded.email,
+        name: decoded.name || profileEmail.split('@')[0] || 'Customer',
+        email: profileEmail,
         points: 100,
         pointsHistory: [
           {

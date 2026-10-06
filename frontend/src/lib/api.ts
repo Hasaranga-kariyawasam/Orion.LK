@@ -17,6 +17,48 @@ async function getAuthHeader(): Promise<Record<string, string>> {
   return {};
 }
 
+export async function createPayHerePayment(amount: number): Promise<{
+  merchantId: string;
+  orderId: string;
+  amount: string;
+  currency: string;
+  hash: string;
+  sandbox: boolean;
+}> {
+  const authHeaders = await getAuthHeader();
+  const res = await fetch(`${API_BASE_URL}/api/payhere/hash`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders },
+    body: JSON.stringify({ amount }),
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Unable to start PayHere payment.');
+  return data;
+}
+
+export async function createPayHereRecurringPayment(input: {
+  amount: number;
+  recurrence: string;
+  duration: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+}): Promise<Record<string, string>> {
+  const authHeaders = await getAuthHeader();
+  const res = await fetch(`${API_BASE_URL}/api/payhere/recurring`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders },
+    body: JSON.stringify(input),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Unable to start recurring PayHere payment.');
+  return data;
+}
+
 export interface MongoAddress {
   label: string;
   street: string;

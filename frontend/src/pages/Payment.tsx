@@ -2,12 +2,64 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
 import { useAuth } from '../context/AuthContext';
-import { createOrderInDb } from '../lib/api';
+import { createOrderInDb, createPayHerePayment } from '../lib/api';
 import { formatLKR } from '../data';
 import {
   ChevronRight, ArrowLeft, ShieldCheck, CheckCircle2, CreditCard,
   Wallet, Sparkles, Coins, AlertCircle, Loader2, Check
 } from 'lucide-react';
+
+interface PayHerePaymentPayload {
+  sandbox: boolean;
+  merchant_id: string;
+  return_url: string;
+  cancel_url: string;
+  notify_url: string;
+  order_id: string;
+  items: string;
+  amount: string;
+  currency: string;
+  hash: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  country: string;
+}
+
+declare global {
+  interface Window {
+    payhere?: {
+      startPayment: (payment: PayHerePaymentPayload) => void;
+      onCompleted?: (orderId: string) => void;
+      onDismissed?: () => void;
+      onError?: (error: string) => void;
+    };
+  }
+}
+
+function loadPayHereScript(): Promise<void> {
+  if (window.payhere) return Promise.resolve();
+  const existingScript = document.querySelector('script[data-payhere-sdk]');
+  if (existingScript) {
+    return new Promise((resolve, reject) => {
+      existingScript.addEventListener('load', () => resolve(), { once: true });
+      existingScript.addEventListener('error', () => reject(new Error('Unable to load PayHere.')), { once: true });
+    });
+  }
+
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://www.payhere.lk/lib/payhere.js';
+    script.async = true;
+    script.dataset.payhereSdk = 'true';
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Unable to load PayHere.'));
+    document.head.appendChild(script);
+  });
+}
 
 export default function Payment() {
   const { cart, cartTotal, clearCart } = useShop();
@@ -23,6 +75,12 @@ export default function Payment() {
   const [usePoints, setUsePoints] = useState(false);
   const maxRedeemablePoints = Math.min(userPoints, cartTotal);
   const [pointsAmount, setPointsAmount] = useState(maxRedeemablePoints);
+
+  useEffect(() => {
+    if (paymentMethod === 'payhere') {
+      loadPayHereScript().catch(err => setErrorMessage(err.message));
+    }
+  }, [paymentMethod]);
 
   // Sync points amount when points or cart changes
   useEffect(() => {
@@ -44,6 +102,7 @@ export default function Payment() {
   const handlePayment = async () => {
     setErrorMessage('');
     setIsProcessing(true);
+    let waitingForPayHere = false;
 
     try {
       // Retrieve shipping details from checkout step
@@ -77,48 +136,87 @@ export default function Payment() {
       const paymentMethodLabel =
         paymentMethod === 'cod' ? 'Cash on Delivery' :
         paymentMethod === 'koko' ? 'Koko Installments' :
-        paymentMethod === 'payzy' ? 'Payzy Installments' : 'Credit / Debit Card';
+        paymentMethod === 'payzy' ? 'Payzy Installments' :
+        paymentMethod === 'payhere' ? 'PayHere Sandbox' : 'Credit / Debit Card';
 
-      // Call real order creation API
-      const newOrder = await createOrderInDb({
-        items: cart.map(item => ({
-          productId: item.product.id,
-          name: item.product.name,
-          image: item.product.image,
-          price: item.product.price,
-          quantity: item.quantity,
-        })),
-        subtotal: cartTotal,
-        shipping: shippingCost,
-        pointsUsed: pointsDiscount,
-        pointsDiscount: pointsDiscount,
-        total: finalTotal,
-        shippingAddress: {
-          name: `${shippingData.firstName || ''} ${shippingData.lastName || ''}`.trim() || 'Customer',
-          street: shippingData.address || 'Street',
-          city: shippingData.city || 'City',
-          province: shippingData.district || 'Western Province',
-          postalCode: shippingData.zip || '00000',
-          phone: shippingData.phone || '0770000000',
-        },
-        paymentMethod: paymentMethodLabel,
-        notes: pointsDiscount > 0 ? `Paid with ${pointsDiscount} Orion points discount` : undefined,
-      });
+      const submitOrder = async (label: string) => {
+        const newOrder = await createOrderInDb({
+          items: cart.map(item => ({
+            productId: item.product.id,
+            name: item.product.name,
+            image: item.product.image,
+            price: item.product.price,
+            quantity: item.quantity,
+          })),
+          subtotal: cartTotal,
+          shipping: shippingCost,
+          pointsUsed: pointsDiscount,
+          pointsDiscount,
+          total: finalTotal,
+          shippingAddress: {
+            name: `${shippingData.firstName || ''} ${shippingData.lastName || ''}`.trim() || 'Customer',
+            street: shippingData.address || 'Street',
+            city: shippingData.city || 'City',
+            province: shippingData.district || 'Western Province',
+            postalCode: shippingData.zip || '00000',
+            phone: shippingData.phone || '0770000000',
+          },
+          paymentMethod: label,
+          notes: pointsDiscount > 0 ? `Paid with ${pointsDiscount} Orion points discount` : undefined,
+        });
 
-      // Clear cart and shipping cache
-      clearCart();
-      sessionStorage.removeItem('checkout_shipping_address');
+        clearCart();
+        sessionStorage.removeItem('checkout_shipping_address');
+        await refreshProfile();
+        navigate(`/success?orderNumber=${newOrder.orderNumber}`, { state: { order: newOrder } });
+      };
 
-      // Refresh user profile to immediately show updated points balance
-      await refreshProfile();
+      if (paymentMethod === 'payhere') {
+        waitingForPayHere = true;
+        await loadPayHereScript();
+        if (!window.payhere) throw new Error('PayHere is unavailable. Please try again.');
+        const payHere = await createPayHerePayment(finalTotal);
+        window.payhere.onCompleted = async () => {
+          try {
+            await submitOrder(paymentMethodLabel);
+          } catch (err: any) {
+            setErrorMessage(err.message || 'Payment succeeded, but the order could not be saved.');
+            setIsProcessing(false);
+          }
+        };
+        window.payhere.onDismissed = () => setIsProcessing(false);
+        window.payhere.onError = (message) => {
+          setErrorMessage(message || 'PayHere payment failed.');
+          setIsProcessing(false);
+        };
+        window.payhere.startPayment({
+          sandbox: payHere.sandbox,
+          merchant_id: payHere.merchantId,
+          return_url: `${window.location.origin}/success`,
+          cancel_url: `${window.location.origin}/payment`,
+          notify_url: `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/payhere/notify`,
+          order_id: payHere.orderId,
+          items: cart.map(item => `${item.product.name} x${item.quantity}`).join(', '),
+          amount: payHere.amount,
+          currency: payHere.currency,
+          hash: payHere.hash,
+          first_name: shippingData.firstName || 'Customer',
+          last_name: shippingData.lastName || '',
+          email: shippingData.email || mongoUser?.email || '',
+          phone: shippingData.phone || mongoUser?.phone || '',
+          address: shippingData.address || '',
+          city: shippingData.city || '',
+          country: 'Sri Lanka',
+        });
+        return;
+      }
 
-      // Navigate to order success with real order number and state
-      navigate(`/success?orderNumber=${newOrder.orderNumber}`, { state: { order: newOrder } });
+      await submitOrder(paymentMethodLabel);
     } catch (err: any) {
       console.error('Order creation error:', err);
       setErrorMessage(err.message || 'Failed to process order. Please try again.');
     } finally {
-      setIsProcessing(false);
+      if (!waitingForPayHere) setIsProcessing(false);
     }
   };
 
@@ -262,6 +360,20 @@ export default function Payment() {
               </div>
               
               <div className="space-y-4">
+                {/* PayHere Sandbox */}
+                <label className={`flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all ${paymentMethod === 'payhere' ? 'border-[#1cd75b] bg-[#1cd75b]/5' : 'border-gray-200 hover:border-gray-300'}`} onClick={() => setPaymentMethod('payhere')}>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'payhere' ? 'border-[#1cd75b]' : 'border-gray-300'}`}>
+                      {paymentMethod === 'payhere' && <div className="w-2.5 h-2.5 bg-[#1cd75b] rounded-full" />}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-bold text-gray-900">PayHere</span>
+                      <span className="text-xs text-gray-500">Secure card payment via PayHere Sandbox</span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-[#12b94b] bg-[#1cd75b]/10 px-2 py-1 rounded-full">Sandbox</span>
+                </label>
+
                 {/* Credit Card */}
                 <label className={`flex flex-col border-2 rounded-xl cursor-pointer transition-all ${paymentMethod === 'card' ? 'border-red-500 bg-red-50/30' : 'border-gray-200 hover:border-gray-300'}`}>
                   <div className="flex items-center justify-between p-4" onClick={() => setPaymentMethod('card')}>

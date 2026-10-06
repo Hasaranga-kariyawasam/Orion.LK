@@ -21,6 +21,7 @@ import Drawers from './components/Drawers';
 import AIAssistant from './components/AIAssistant';
 import CompareModal from './components/CompareModal';
 import ProtectedRoute from './components/ProtectedRoute';
+import PayHereSandbox from './pages/PayHereSandbox';
 import { ShopProvider } from './context/ShopContext';
 import { AdminProvider } from './context/AdminContext';
 import { AuthProvider } from './context/AuthContext';
@@ -65,6 +66,10 @@ export default function App() {
                       <Route path="/offers" element={<SpecialOffers />} />
                       <Route path="/build" element={<BuildMyPC />} />
                       <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
+                      <Route path="/payhere-sandbox" element={<PayHereSandbox />} />
+                      <Route path="/payhere-sandbox/success" element={<PayHereSandbox />} />
+                      <Route path="/payhere-sandbox/cancel" element={<PayHereSandbox />} />
+                      <Route path="/payhere-sandbox/error" element={<PayHereSandbox />} />
                     </Routes>
                   </main>
                   <Footer />

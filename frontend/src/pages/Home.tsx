@@ -172,7 +172,7 @@ export default function Home() {
 
             {/* Tall Right Column */}
             <div className="md:col-span-1 relative rounded-2xl overflow-hidden group shadow-lg bg-[#0D1117] cursor-pointer">
-              <img src="https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&q=80&w=400" alt="Monitors" className="absolute inset-0 w-full h-full object-cover" />
+              <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRA-VLozJJnrg0AtDqvZ3A5evBQrAorRcXKl1erZbTKlQ&s=10tps://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&q=80&w=400" alt="Monitors" className="absolute inset-0 w-full h-full object-cover" />
               <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none"></div>
               <div className="absolute bottom-6 left-6 z-20 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
                 <button className="bg-white text-black font-black uppercase tracking-wider py-3 px-8 rounded-full hover:bg-gray-200 transition-all shadow-lg">

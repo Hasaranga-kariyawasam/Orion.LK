@@ -15,11 +15,12 @@ export async function GET(req: NextRequest) {
     await connectDB();
     let user = await User.findOne({ uid: decoded.uid });
 
-    if (!user && decoded.email) {
+    if (!user) {
+      const profileEmail = String(decoded.email || `${decoded.uid}@orion.local`).trim().toLowerCase();
       user = await User.create({
         uid: decoded.uid,
-        name: decoded.name || decoded.email.split('@')[0] || 'Customer',
-        email: decoded.email,
+        name: decoded.name || profileEmail.split('@')[0] || 'Customer',
+        email: profileEmail,
         avatar: decoded.picture || '',
         addresses: [],
         points: 100,
@@ -102,8 +103,8 @@ export async function PATCH(req: NextRequest) {
         $set: updates,
         $setOnInsert: {
           uid: decoded.uid,
-          email: decoded.email || '',
-          name: decoded.name || 'User',
+          email: decoded.email || `${decoded.uid}@orion.local`,
+          name: decoded.name || decoded.email?.split('@')[0] || 'Customer',
         }
       },
       { new: true, upsert: true, runValidators: true }
