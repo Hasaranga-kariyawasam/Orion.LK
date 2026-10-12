@@ -1,15 +1,45 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Sparkles, Flame, Clock } from 'lucide-react';
-import { MOCK_PRODUCTS } from '../data';
+import { useAdmin } from '../context/AdminContext';
 import ProductCard from '../components/ProductCard';
 import ProductCardSkeleton from '../components/ProductCardSkeleton';
 
 export default function SpecialOffers() {
+  const { products, specialOffers, specialOffersDeadline, refreshHomeSettings } = useAdmin();
   const [isLoading, setIsLoading] = useState(true);
+  const [now, setNow] = useState(() => Date.now());
 
-  // Filter products that have a discount
-  const discountedProducts = MOCK_PRODUCTS.filter(p => p.discount && p.discount > 0);
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    void refreshHomeSettings();
+    const timer = window.setInterval(() => void refreshHomeSettings(), 15000);
+    return () => window.clearInterval(timer);
+  }, [refreshHomeSettings]);
+
+  const activeOffers = specialOffers.filter(offer => {
+    if (!offer.enabled) return false;
+    const deadline = specialOffersDeadline ? new Date(specialOffersDeadline).getTime() : Infinity;
+    return !Number.isNaN(deadline) && now < deadline;
+  });
+  const discountedProducts = activeOffers
+    .map(offer => {
+      const product = products.find(item => String(item.id) === String(offer.productId) || String(item._id) === String(offer.productId));
+      return product ? { product, offer } : null;
+    })
+    .filter((item): item is { product: typeof products[number]; offer: typeof activeOffers[number] } => item !== null);
+  const nextExpiry = specialOffersDeadline
+    ? new Date(specialOffersDeadline).getTime()
+    : null;
+  const remainingSeconds = nextExpiry ? Math.max(0, Math.floor((nextExpiry - now) / 1000)) : null;
+  const days = remainingSeconds === null ? 0 : Math.floor(remainingSeconds / 86400);
+  const hours = remainingSeconds === null ? 0 : Math.floor((remainingSeconds % 86400) / 3600);
+  const minutes = remainingSeconds === null ? 0 : Math.floor((remainingSeconds % 3600) / 60);
+  const seconds = remainingSeconds === null ? 0 : remainingSeconds % 60;
   
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -38,9 +68,10 @@ export default function SpecialOffers() {
           <div className="flex items-center gap-4 text-white bg-white/5 border border-white/10 px-6 py-3 rounded-2xl backdrop-blur-md">
             <Clock size={20} className="text-[#f0364c]" />
             <div className="flex gap-4 font-black text-xl font-mono tracking-widest">
-              <span>02<span className="text-xs text-gray-500 font-sans tracking-normal block text-center">DAYS</span></span>:
-              <span>14<span className="text-xs text-gray-500 font-sans tracking-normal block text-center">HRS</span></span>:
-              <span>45<span className="text-xs text-gray-500 font-sans tracking-normal block text-center">MINS</span></span>
+              <span>{String(days).padStart(2, '0')}<span className="text-xs text-gray-500 font-sans tracking-normal block text-center">DAYS</span></span>:
+              <span>{String(hours).padStart(2, '0')}<span className="text-xs text-gray-500 font-sans tracking-normal block text-center">HRS</span></span>:
+              <span>{String(minutes).padStart(2, '0')}<span className="text-xs text-gray-500 font-sans tracking-normal block text-center">MINS</span></span>:
+              <span>{String(seconds).padStart(2, '0')}<span className="text-xs text-gray-500 font-sans tracking-normal block text-center">SECS</span></span>
             </div>
           </div>
         </div>
@@ -70,8 +101,13 @@ export default function SpecialOffers() {
           {isLoading 
             ? [...Array(8)].map((_, i) => <ProductCardSkeleton key={i} />)
             : discountedProducts.length > 0 
-              ? discountedProducts.map((product, idx) => (
-                  <ProductCard key={product.id} product={product} index={idx} />
+              ? discountedProducts.map(({ product, offer }, idx) => (
+                  <div key={product.id} className="relative">
+                    <ProductCard product={offer.offerPrice && offer.offerPrice < product.price
+                      ? { ...product, price: offer.offerPrice, discount: Math.round((1 - offer.offerPrice / product.price) * 100) }
+                      : product} index={idx} />
+                    <span className="absolute top-3 left-3 z-10 bg-[#f0364c] text-white text-[10px] font-black uppercase px-2 py-1 rounded-md">{offer.badgeText}</span>
+                  </div>
                 ))
               : (
                 <div className="col-span-full py-16 text-center text-gray-500 font-bold">

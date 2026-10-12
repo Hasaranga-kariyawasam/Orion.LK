@@ -3,12 +3,23 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
 import { useAuth } from '../context/AuthContext';
 import { formatLKR } from '../data';
-import { ChevronRight, ArrowLeft, ShieldCheck, Truck, Sparkles, MapPin } from 'lucide-react';
+import { ChevronRight, ArrowLeft, ShieldCheck, Truck, Sparkles, MapPin, Loader2 } from 'lucide-react';
+
+const sriLankanDistricts = [
+  'Colombo', 'Gampaha', 'Kalutara', 'Kandy', 'Matale', 'Nuwara Eliya',
+  'Galle', 'Matara', 'Hambantota', 'Jaffna', 'Kilinochchi', 'Mannar',
+  'Mullaitivu', 'Vavuniya', 'Puttalam', 'Kurunegala', 'Anuradhapura',
+  'Polonnaruwa', 'Badulla', 'Monaragala', 'Ratnapura', 'Kegalle',
+  'Ampara', 'Batticaloa', 'Trincomalee'
+];
 
 export default function Checkout() {
   const { cart, cartTotal } = useShop();
-  const { user, mongoUser } = useAuth();
+  const { user, mongoUser, updateMongoProfile } = useAuth();
   const navigate = useNavigate();
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [selectedAddressIndex, setSelectedAddressIndex] = useState<number | null>(null);
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -21,36 +32,57 @@ export default function Checkout() {
     zip: ''
   });
 
-  // Pre-fill user details from profile or existing session
+  // Prefer the user's saved default address, then restore an in-progress checkout.
   useEffect(() => {
     const saved = sessionStorage.getItem('checkout_shipping_address');
+    const addresses = mongoUser?.addresses || [];
+    const defaultIndex = addresses.findIndex(address => address.isDefault);
+    const defaultAddr = addresses[defaultIndex >= 0 ? defaultIndex : 0];
+
+    if (defaultAddr) {
+      const fullName = mongoUser?.name || user?.displayName || '';
+      const parts = fullName.trim().split(' ');
+      setSelectedAddressIndex(defaultIndex >= 0 ? defaultIndex : 0);
+      setFormData(prev => ({
+        ...prev,
+        firstName: parts[0] || prev.firstName,
+        lastName: parts.slice(1).join(' ') || prev.lastName,
+        email: mongoUser?.email || user?.email || prev.email,
+        phone: mongoUser?.phone || prev.phone,
+        address: defaultAddr.street,
+        city: defaultAddr.city,
+        district: defaultAddr.province || 'Colombo',
+        zip: defaultAddr.postalCode || '',
+      }));
+      return;
+    }
+
     if (saved) {
       try {
         setFormData(JSON.parse(saved));
+        setSelectedAddressIndex(null);
         return;
-      } catch (e) {}
+      } catch (error) {
+        console.error('Failed to restore checkout address:', error);
+      }
     }
 
     if (mongoUser || user) {
       const fullName = mongoUser?.name || user?.displayName || '';
       const parts = fullName.trim().split(' ');
-      const defaultAddr = mongoUser?.addresses?.find(a => a.isDefault) || mongoUser?.addresses?.[0];
-
       setFormData(prev => ({
         ...prev,
         firstName: prev.firstName || parts[0] || '',
         lastName: prev.lastName || parts.slice(1).join(' ') || '',
         email: prev.email || mongoUser?.email || user?.email || '',
         phone: prev.phone || mongoUser?.phone || '',
-        address: defaultAddr?.street || prev.address,
-        city: defaultAddr?.city || prev.city,
-        district: defaultAddr?.province || prev.district || 'Colombo',
-        zip: defaultAddr?.postalCode || prev.zip,
+        district: prev.district || 'Colombo',
       }));
     }
   }, [mongoUser, user]);
 
-  const selectAddress = (addr: any) => {
+  const selectAddress = (addr: any, index: number | null = null) => {
+    setSelectedAddressIndex(index);
     setFormData(prev => ({
       ...prev,
       address: addr.street,
@@ -72,10 +104,54 @@ export default function Checkout() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    sessionStorage.setItem('checkout_shipping_address', JSON.stringify(formData));
-    navigate('/payment');
+    setIsSaving(true);
+    setSaveError('');
+    try {
+      sessionStorage.setItem('checkout_shipping_address', JSON.stringify(formData));
+
+      if (user) {
+        const savedAddresses = mongoUser?.addresses || [];
+        const street = formData.address.trim();
+        const city = formData.city.trim();
+        const district = formData.district.trim();
+        const postalCode = formData.zip.trim();
+        const addressIndex = savedAddresses.findIndex(address =>
+          address.street.trim().toLowerCase() === street.toLowerCase()
+        );
+        const checkoutAddress = {
+          label: addressIndex >= 0 ? savedAddresses[addressIndex].label : 'Home',
+          street,
+          city,
+          province: district,
+          postalCode,
+          isDefault: addressIndex >= 0
+            ? savedAddresses[addressIndex].isDefault
+            : savedAddresses.length === 0,
+        };
+        const addresses = addressIndex >= 0
+          ? savedAddresses.map((address, index) => index === addressIndex ? checkoutAddress : address)
+          : [...savedAddresses, checkoutAddress];
+
+        const updatedProfile = await updateMongoProfile({
+          name: `${formData.firstName.trim()} ${formData.lastName.trim()}`.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim(),
+          addresses,
+        });
+        if (!updatedProfile) {
+          throw new Error('Profile address could not be saved');
+        }
+      }
+
+      navigate('/payment');
+    } catch (error) {
+      console.error('Failed to save checkout details:', error);
+      setSaveError('We could not save your address to your profile. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (cart.length === 0) return null;
@@ -127,9 +203,9 @@ export default function Checkout() {
                     {mongoUser.addresses.map((addr, idx) => (
                       <div
                         key={idx}
-                        onClick={() => selectAddress(addr)}
+                        onClick={() => selectAddress(addr, idx)}
                         className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                          formData.address === addr.street
+                          selectedAddressIndex === idx
                             ? 'border-[#1cd75b] bg-[#1cd75b]/5'
                             : 'border-gray-200 hover:border-gray-300'
                         }`}
@@ -139,11 +215,14 @@ export default function Checkout() {
                             <div className="flex items-center gap-1.5">
                               <MapPin size={13} className="text-[#1cd75b]" />
                               <h4 className="font-bold text-gray-900 text-xs uppercase">{addr.label}</h4>
+                              {addr.isDefault && (
+                                <span className="text-[9px] font-black uppercase tracking-wide text-[#12b94b]">Default</span>
+                              )}
                             </div>
                             <p className="text-xs text-gray-600 font-medium mt-1">{addr.street}</p>
                             <p className="text-[11px] text-gray-400">{addr.city}, {addr.province}</p>
                           </div>
-                          {formData.address === addr.street && (
+                          {selectedAddressIndex === idx && (
                             <span className="text-[10px] font-black text-[#1cd75b] uppercase tracking-wider bg-[#1cd75b]/10 px-2 py-0.5 rounded-full">
                               Selected
                             </span>
@@ -204,13 +283,14 @@ export default function Checkout() {
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-gray-700 uppercase mb-2">District *</label>
-                    <select required name="district" value={formData.district} onChange={handleChange} className="w-full p-3 rounded-xl border border-gray-200 focus:border-[#1cd75b] focus:ring-1 focus:ring-[#1cd75b] outline-none transition-all bg-gray-50 focus:bg-white text-gray-900">
-                      <option value="">Select District</option>
-                      <option value="Colombo">Colombo</option>
-                      <option value="Gampaha">Gampaha</option>
-                      <option value="Kandy">Kandy</option>
-                      <option value="Galle">Galle</option>
-                      {/* Add more as needed */}
+                    <select required name="district" value={formData.district} onChange={handleChange} className="w-full p-3 rounded-xl border border-gray-200 focus:border-[#1cd75b] focus:ring-1 focus:ring-[#1cd75b] outline-none transition-all bg-white text-gray-900 appearance-auto">
+                      <option value="" className="text-gray-900">Select District</option>
+                      {formData.district && !sriLankanDistricts.includes(formData.district) && (
+                        <option value={formData.district} className="text-gray-900">{formData.district}</option>
+                      )}
+                      {sriLankanDistricts.map(district => (
+                        <option key={district} value={district} className="text-gray-900">{district}</option>
+                      ))}
                     </select>
                   </div>
                   <div>
@@ -218,6 +298,9 @@ export default function Checkout() {
                     <input type="text" name="zip" value={formData.zip} onChange={handleChange} className="w-full p-3 rounded-xl border border-gray-200 focus:border-[#1cd75b] focus:ring-1 focus:ring-[#1cd75b] outline-none transition-all bg-gray-50 focus:bg-white text-gray-900" placeholder="Postal Code" />
                   </div>
                 </div>
+                {saveError && (
+                  <p className="text-sm font-bold text-red-600" role="alert">{saveError}</p>
+                )}
               </form>
             </div>
           </div>
@@ -276,9 +359,10 @@ export default function Checkout() {
               <button 
                 type="submit" 
                 form="checkout-form"
-                className="w-full bg-black text-white font-black uppercase tracking-wider py-4 rounded-xl hover:bg-gray-900 transition-colors shadow-lg flex justify-center items-center gap-2"
+                disabled={isSaving}
+                className="w-full bg-black text-white font-black uppercase tracking-wider py-4 rounded-xl hover:bg-gray-900 transition-colors shadow-lg flex justify-center items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Proceed to Payment <ChevronRight size={18} />
+                {isSaving ? <><Loader2 size={18} className="animate-spin" /> Saving details...</> : <>Proceed to Payment <ChevronRight size={18} /></>}
               </button>
 
               <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-500 font-bold">

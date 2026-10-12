@@ -1,10 +1,29 @@
 import React, { useState } from 'react';
-import { Tag, Percent, Calendar, ToggleLeft, ToggleRight, Search, Star } from 'lucide-react';
+import { Tag, Percent, Calendar, ToggleLeft, ToggleRight, Search, Star, Save } from 'lucide-react';
 import { useAdmin, SpecialOffer } from '../../context/AdminContext';
+import { broadcastAdminNotification } from '../../lib/api';
+
+const toDateTimeLocal = (value?: string) => {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const offset = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+};
+
+const fromDateTimeLocal = (value: string) => value ? new Date(value).toISOString() : '';
 
 export default function AdminSpecialOffers() {
-  const { products, specialOffers, setSpecialOffers } = useAdmin();
+  const {
+    products,
+    specialOffers,
+    setSpecialOffers,
+    specialOffersDeadline,
+    setSpecialOffersDeadline,
+    saveSettings,
+  } = useAdmin();
   const [search, setSearch] = useState('');
+  const [saved, setSaved] = useState(false);
 
   const filteredProducts = products.filter(p =>
     p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -16,9 +35,26 @@ export default function AdminSpecialOffers() {
   const toggleOffer = (productId: string) => {
     const existing = getOffer(productId);
     if (existing) {
-      setSpecialOffers(specialOffers.map(o => o.productId === productId ? { ...o, enabled: !o.enabled } : o));
+      const enabled = !existing.enabled;
+      setSpecialOffers(specialOffers.map(o => o.productId === productId ? { ...o, enabled } : o));
+      if (enabled) {
+        const product = products.find(item => item.id === productId);
+        if (product) {
+          void broadcastAdminNotification(
+            'New Special Offer',
+            `${product.name} is now on special offer. Check it out before it ends.`
+          ).catch(error => console.error('Failed to broadcast special offer notification:', error));
+        }
+      }
     } else {
       setSpecialOffers([...specialOffers, { productId, badgeText: 'HOT DEAL', enabled: true }]);
+      const product = products.find(item => item.id === productId);
+      if (product) {
+        void broadcastAdminNotification(
+          'New Special Offer',
+          `${product.name} is now on special offer. Check it out before it ends.`
+        ).catch(error => console.error('Failed to broadcast special offer notification:', error));
+      }
     }
   };
 
@@ -32,11 +68,27 @@ export default function AdminSpecialOffers() {
 
   const activeOffers = specialOffers.filter(o => o.enabled);
 
+  const handleSaveOffers = async () => {
+    await saveSettings();
+    setSaved(true);
+    window.setTimeout(() => setSaved(false), 2500);
+  };
+
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-black text-white">Special Offers</h2>
-        <p className="text-gray-500 text-sm mt-1">{activeOffers.length} active offers</p>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-black text-white">Special Offers</h2>
+            <p className="text-gray-500 text-sm mt-1">{activeOffers.length} active offers</p>
+          </div>
+          <button
+            onClick={handleSaveOffers}
+            className="inline-flex items-center gap-2 rounded-xl bg-[#2ee661] px-4 py-2.5 text-xs font-black uppercase tracking-wider text-black hover:bg-[#21d653] transition-colors"
+          >
+            <Save size={15} /> {saved ? 'Saved' : 'Save Offers'}
+          </button>
+        </div>
       </div>
 
       {/* Active Offers Summary */}
@@ -55,7 +107,6 @@ export default function AdminSpecialOffers() {
                     <div className="flex items-center gap-3 mt-1">
                       <span className="bg-red-500 text-white text-xs font-black px-2 py-0.5 rounded">{offer.badgeText}</span>
                       {offer.offerPrice && <span className="text-[#2ee661] text-xs font-bold">LKR {offer.offerPrice.toLocaleString()}</span>}
-                      {offer.expiresAt && <span className="text-gray-500 text-xs">Expires: {offer.expiresAt}</span>}
                     </div>
                   </div>
                   <button onClick={() => removeOffer(offer.productId)} className="text-gray-600 hover:text-red-400 text-xs font-bold transition-colors">Remove</button>
@@ -97,7 +148,7 @@ export default function AdminSpecialOffers() {
                 </div>
 
                 {isActive && offer && (
-                  <div className="grid grid-cols-3 gap-3 pt-3 border-t border-[#30363D]">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-[#30363D]">
                     <div>
                       <label className="text-xs text-gray-500 mb-1 block">Badge Text</label>
                       <input value={offer.badgeText} onChange={e => updateOffer(product.id, { badgeText: e.target.value })}
@@ -109,17 +160,26 @@ export default function AdminSpecialOffers() {
                         placeholder={product.price.toString()}
                         className="w-full bg-[#161B22] border border-[#30363D] rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-[#2ee661]/50" />
                     </div>
-                    <div>
-                      <label className="text-xs text-gray-500 mb-1 block">Expires (optional)</label>
-                      <input type="date" value={offer.expiresAt || ''} onChange={e => updateOffer(product.id, { expiresAt: e.target.value })}
-                        className="w-full bg-[#161B22] border border-[#30363D] rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-[#2ee661]/50" />
-                    </div>
                   </div>
                 )}
               </div>
             );
           })}
         </div>
+      </div>
+      <div className="mt-5 max-w-md rounded-2xl border border-[#30363D] bg-[#161B22] p-4">
+        <label className="mb-1 block text-xs font-black uppercase tracking-wider text-gray-400">
+          Campaign deadline
+        </label>
+        <input
+          type="datetime-local"
+          value={toDateTimeLocal(specialOffersDeadline)}
+          onChange={e => setSpecialOffersDeadline(fromDateTimeLocal(e.target.value))}
+          className="w-full rounded-lg border border-[#30363D] bg-[#0d1117] px-3 py-2 text-sm text-white focus:border-[#2ee661]/50 focus:outline-none"
+        />
+        <p className="mt-2 text-[10px] text-gray-600">
+          One deadline applies to every active special offer item.
+        </p>
       </div>
     </div>
   );

@@ -9,6 +9,7 @@ import { motion } from 'motion/react';
 import { formatLKR } from '../data';
 import { getMyOrders, cancelMyOrder, ApiOrder } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
+import { useShop } from '../context/ShopContext';
 
 type OrderFilter = 'All' | 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
 
@@ -36,6 +37,7 @@ export default function Orders() {
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const navigate = useNavigate();
   const { user, refreshProfile } = useAuth();
+  const { addNotification } = useShop();
 
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
@@ -46,6 +48,20 @@ export default function Orders() {
       try {
         const data = await getMyOrders();
         setOrders(data);
+        const snapshotKey = `customer_order_statuses_${user.uid}`;
+        const previous: Record<string, string> = JSON.parse(localStorage.getItem(snapshotKey) || '{}');
+        const next: Record<string, string> = {};
+        data.forEach(order => {
+          const id = order.id || order._id || order.orderNumber;
+          next[id] = order.status;
+          if (previous[id] && previous[id] !== order.status) {
+            addNotification(
+              `Order ${order.status}`,
+              `${order.orderNumber} status changed from ${previous[id]} to ${order.status}.`
+            );
+          }
+        });
+        localStorage.setItem(snapshotKey, JSON.stringify(next));
       } catch (err) {
         console.error('Failed to load orders:', err);
       } finally {

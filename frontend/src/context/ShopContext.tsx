@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { Product } from '../types';
-import { getWishlist, saveWishlist, getCartFromDb, saveCartToDb } from '../lib/api';
+import { getWishlist, saveWishlist, getCartFromDb, saveCartToDb, getMyNotifications, deleteMyNotification } from '../lib/api';
 import { auth } from '../lib/firebase';
 
 export interface Notification {
@@ -9,6 +9,7 @@ export interface Notification {
   message: string;
   time: string;
   isRead: boolean;
+  orderId?: string;
 }
 
 export interface SavedBuild {
@@ -49,7 +50,7 @@ interface ShopContextType {
   addToBuild: (product: Product) => void;
   removeFromBuild: (productId: string) => void;
   addNotification: (title: string, message: string) => void;
-  markNotificationsRead: () => void;
+  removeNotification: (id: string) => void;
   savedBuilds: SavedBuild[];
   saveBuild: (name: string, items: Product[], total: number) => void;
   loadBuild: (id: string) => void;
@@ -85,10 +86,53 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const saved = localStorage.getItem('buildItems');
     return saved ? JSON.parse(saved) : [];
   });
-  const [notifications, setNotifications] = useState<Notification[]>([
-    { id: '1', title: 'Price Drop', message: 'ASUS ROG Strix RTX 4090 is now 4% off!', time: '2 hours ago', isRead: false },
-    { id: '2', title: 'Special Offer', message: 'Clearance sale is live! Up to 50% off.', time: '1 day ago', isRead: true }
-  ]);
+  const [notifications, setNotifications] = useState<Notification[]>(() => {
+    try {
+      const saved = localStorage.getItem('customer_notifications');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    let refreshTimer: ReturnType<typeof setInterval> | null = null;
+
+    const refreshNotifications = async () => {
+      try {
+        const remote = await getMyNotifications();
+        const remoteNotifications = remote.map(notification => ({
+          ...notification,
+          time: new Date(notification.time).toLocaleString(),
+        }));
+        setNotifications(previous => {
+          const localOnly = previous.filter(notification =>
+            notification.id.startsWith('order-') &&
+            !remoteNotifications.some(remoteNotification => remoteNotification.id === notification.id)
+          );
+          const merged = [...remoteNotifications, ...localOnly];
+          return merged.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+        });
+      } catch (error) {
+        console.warn('Notification refresh failed:', error);
+      }
+    };
+
+    const unsubscribe = auth.onAuthStateChanged(firebaseUser => {
+      if (refreshTimer) {
+        clearInterval(refreshTimer);
+        refreshTimer = null;
+      }
+      if (!firebaseUser) return;
+      void refreshNotifications();
+      refreshTimer = setInterval(() => void refreshNotifications(), 15000);
+    });
+
+    return () => {
+      unsubscribe();
+      if (refreshTimer) clearInterval(refreshTimer);
+    };
+  }, []);
 
   // ── Wishlist DB sync ──────────────────────────────────────────────────────
   const [wishlistSyncing, setWishlistSyncing] = useState(false);
@@ -273,8 +317,14 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setNotifications(prev => [newNotif, ...prev]);
   };
 
-  const markNotificationsRead = () =>
-    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+  const removeNotification = (id: string) => {
+    setNotifications(prev => prev.filter(notification => notification.id !== id));
+    void deleteMyNotification(id);
+  };
+
+  useEffect(() => {
+    localStorage.setItem('customer_notifications', JSON.stringify(notifications));
+  }, [notifications]);
 
   // ── Builds ─────────────────────────────────────────────────────────────
   const saveBuild = (name: string, items: Product[], total: number) => {
@@ -315,7 +365,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       isCompareModalOpen, setIsCompareModalOpen,
       clearCart,
       buildItems, notifications, buildTotal,
-      addToBuild, removeFromBuild, addNotification, markNotificationsRead,
+      addToBuild, removeFromBuild, addNotification, removeNotification,
       savedBuilds, saveBuild, loadBuild, deleteSavedBuild, setBuildItems,
       wishlistSyncing, cartSyncing,
     }}>

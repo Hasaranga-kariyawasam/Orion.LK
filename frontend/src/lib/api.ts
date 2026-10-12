@@ -5,6 +5,47 @@ const API_BASE_URL = (
   (import.meta.env.DEV ? 'http://localhost:5000' : '')
 ).replace(/\/$/, '');
 
+export function resolveMediaUrl(url: string | undefined | null): string {
+  if (!url) return '';
+  if (/^(https?:|data:|blob:)/i.test(url)) return url;
+  return `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+}
+
+export interface HomeSettingsPayload {
+  heroImages: string[];
+  featuredImages: unknown[];
+  pcBuildCards: unknown[];
+  homePromoCards: unknown[];
+  accessories: unknown[];
+  bestSellerIds: string[];
+  whatsappNumber: string;
+  storeAddress: string;
+  specialOffers?: unknown[];
+  specialOffersDeadline?: string;
+  updatedAt?: string;
+}
+
+export async function getHomeSettings(): Promise<Partial<HomeSettingsPayload> | null> {
+  const res = await fetch(`${API_BASE_URL}/api/home-settings?_=${Date.now()}`, {
+    cache: 'no-store',
+  });
+  if (!res.ok) throw new Error('Failed to load home page settings');
+  const data = await res.json();
+  return data.settings || null;
+}
+
+export async function saveHomeSettings(settings: HomeSettingsPayload): Promise<HomeSettingsPayload> {
+  const authHeaders = await getAuthHeader();
+  const res = await fetch(`${API_BASE_URL}/api/home-settings`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...authHeaders },
+    body: JSON.stringify(settings),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Failed to save home page settings');
+  return data.settings || settings;
+}
+
 async function getAuthHeader(): Promise<Record<string, string>> {
   if (auth.currentUser) {
     try {
@@ -73,6 +114,60 @@ export interface IPointsHistoryItem {
   type: 'earned' | 'redeemed' | 'bonus' | 'refund';
   description: string;
   date: string;
+}
+
+export interface ApiNotification {
+  id: string;
+  title: string;
+  message: string;
+  time: string;
+  isRead: boolean;
+}
+
+export async function getMyNotifications(): Promise<ApiNotification[]> {
+  const authHeaders = await getAuthHeader();
+  if (!authHeaders.Authorization) return [];
+  const res = await fetch(`${API_BASE_URL}/api/notifications`, { headers: authHeaders });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.error || 'Failed to load customer notifications');
+  }
+  return data.notifications || [];
+}
+
+export async function deleteMyNotification(id: string): Promise<void> {
+  const authHeaders = await getAuthHeader();
+  if (!authHeaders.Authorization) return;
+  await fetch(`${API_BASE_URL}/api/notifications/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: authHeaders,
+  });
+}
+
+export async function broadcastAdminNotification(title: string, message: string): Promise<ApiNotification> {
+  const authHeaders = await getAuthHeader();
+  const res = await fetch(`${API_BASE_URL}/api/notifications`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders },
+    body: JSON.stringify({ title, message }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.error || 'Failed to send customer notification');
+  }
+  return data.notification;
+}
+
+export async function deleteAdminNotification(id: string): Promise<void> {
+  const authHeaders = await getAuthHeader();
+  const res = await fetch(`${API_BASE_URL}/api/notifications/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: authHeaders,
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || 'Failed to delete customer notification');
+  }
 }
 
 export interface MongoUser {
@@ -230,7 +325,7 @@ export async function uploadImageToServer(file: File): Promise<string> {
   }
 
   const data = await res.json();
-  return data.url;
+  return resolveMediaUrl(data.url);
 }
 
 /**
@@ -726,4 +821,3 @@ export async function saveCartToDb(cart: ApiCartItem[]): Promise<void> {
     console.warn('saveCartToDb error:', err);
   }
 }
-

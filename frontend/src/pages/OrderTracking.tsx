@@ -31,12 +31,28 @@ function getCompletedSteps(status: ApiOrder['status']): number {
 }
 
 const statusColors: Record<string, string> = {
-  Pending:    'bg-amber-500/15 text-amber-400 border-amber-500/30',
-  Processing: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
-  Shipped:    'bg-purple-500/15 text-purple-400 border-purple-500/30',
-  Delivered:  'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
-  Cancelled:  'bg-red-500/15 text-red-400 border-red-500/30',
+  Pending:    'bg-amber-50 text-amber-700 border-amber-200',
+  Processing: 'bg-blue-50 text-blue-700 border-blue-200',
+  Shipped:    'bg-purple-50 text-purple-700 border-purple-200',
+  Delivered:  'bg-emerald-50 text-emerald-700 border-emerald-200',
+  Cancelled:  'bg-red-50 text-red-700 border-red-200',
 };
+
+function getTimeline(order: ApiOrder) {
+  if (order.trackingUpdates?.length) return order.trackingUpdates;
+  const createdAt = order.createdAt || new Date().toISOString();
+  const steps = [
+    { status: 'Order Placed', message: 'Your order has been received.' },
+    { status: 'Processing', message: 'We are preparing your items.' },
+    { status: 'Shipped', message: 'Your order is on its way.' },
+    { status: 'Delivered', message: 'Your order was delivered successfully.' },
+  ];
+  const completed = getCompletedSteps(order.status);
+  return steps.slice(0, order.status === 'Cancelled' ? 1 : Math.max(1, completed)).map((step, index) => ({
+    ...step,
+    timestamp: index === 0 ? createdAt : new Date(new Date(createdAt).getTime() + index * 86400000).toISOString(),
+  }));
+}
 
 export default function OrderTracking() {
   const [searchParams] = useSearchParams();
@@ -94,21 +110,21 @@ export default function OrderTracking() {
   const isCancelled = order?.status === 'Cancelled';
 
   return (
-    <div className="bg-[#0D1117] min-h-screen pb-20">
+    <div className="bg-gray-50 min-h-screen pb-20">
 
       {/* Header */}
-      <div className="border-b border-white/5 bg-white/[0.02]">
+      <div className="border-b border-gray-200 bg-white">
         <div className="max-w-4xl mx-auto px-4 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <h1 className="text-xl md:text-2xl font-black text-white uppercase tracking-tight flex items-center gap-3">
-            <Truck size={22} className="text-[#ea364c]" />
-            Track Your Order
+          <h1 className="text-xl md:text-2xl font-black text-gray-900 uppercase tracking-tight flex items-center gap-3">
+            <Truck size={22} className="text-[#1cd75b]" />
+            Order Tracking
           </h1>
           <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
-            <Link to="/" className="hover:text-white transition-colors">Home</Link>
-            <ChevronRight size={12} className="text-gray-700" />
-            <Link to="/orders" className="hover:text-white transition-colors">Orders</Link>
-            <ChevronRight size={12} className="text-gray-700" />
-            <span className="text-[#ea364c]">Track</span>
+            <Link to="/" className="hover:text-black transition-colors">Home</Link>
+            <ChevronRight size={12} className="text-gray-300" />
+            <Link to="/orders" className="hover:text-black transition-colors">Orders</Link>
+            <ChevronRight size={12} className="text-gray-300" />
+            <span className="text-[#12b94b]">Track</span>
           </div>
         </div>
       </div>
@@ -116,15 +132,15 @@ export default function OrderTracking() {
       <div className="max-w-4xl mx-auto px-4 mt-8 space-y-6">
 
         {/* Search bar */}
-        <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-6 md:p-8 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-[#ea364c]/5 blur-[80px] pointer-events-none" />
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 relative overflow-hidden shadow-sm">
+          <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-[#1cd75b]/5 blur-[80px] pointer-events-none" />
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-[#ea364c]/10 border border-[#ea364c]/20 flex items-center justify-center">
-                <MapPin size={18} className="text-[#ea364c]" />
+              <div className="w-10 h-10 rounded-xl bg-[#1cd75b]/10 border border-[#1cd75b]/20 flex items-center justify-center">
+              <MapPin size={18} className="text-[#12b94b]" />
               </div>
               <div>
-                <h2 className="text-base font-black text-white uppercase tracking-wide">Where is my order?</h2>
+                <h2 className="text-base font-black text-gray-900 uppercase tracking-wide">Where is my order?</h2>
                 <p className="text-xs text-gray-500">Enter your Order ID for real-time tracking</p>
               </div>
             </div>
@@ -135,12 +151,12 @@ export default function OrderTracking() {
                 value={orderId}
                 onChange={e => setOrderId(e.target.value)}
                 placeholder="e.g. ORD-123456"
-                className="flex-1 bg-white/5 border border-white/10 focus:border-[#ea364c]/50 focus:ring-1 focus:ring-[#ea364c]/20 rounded-xl px-4 py-3 text-white placeholder-gray-600 font-mono text-sm outline-none transition-all uppercase"
+                className="flex-1 bg-gray-50 border border-gray-200 focus:border-[#1cd75b]/50 focus:ring-1 focus:ring-[#1cd75b]/20 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-400 font-mono text-sm outline-none transition-all uppercase"
               />
               <button
                 type="submit"
                 disabled={isTracking}
-                className="bg-[#ea364c] hover:bg-[#c42d3f] text-white font-black uppercase tracking-wider py-3 px-7 rounded-xl transition-all shadow-lg shadow-[#ea364c]/25 disabled:opacity-60 flex items-center justify-center gap-2 whitespace-nowrap"
+                className="bg-[#1cd75b] hover:bg-[#18c251] text-black font-black uppercase tracking-wider py-3 px-7 rounded-xl transition-all shadow-lg shadow-green-500/25 disabled:opacity-60 flex items-center justify-center gap-2 whitespace-nowrap"
               >
                 {isTracking ? (
                   <><RefreshCw size={15} className="animate-spin" /> Searching...</>
@@ -175,11 +191,11 @@ export default function OrderTracking() {
               className="space-y-4"
             >
               {/* Order header card */}
-              <div className="bg-white/[0.03] border border-white/8 rounded-2xl overflow-hidden">
-                <div className="p-5 md:p-6 border-b border-white/6 flex flex-col sm:flex-row gap-4 sm:items-center justify-between">
+              <div               className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                <div className="p-5 md:p-6 border-b border-gray-100 flex flex-col sm:flex-row gap-4 sm:items-center justify-between">
                   <div>
                     <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-1">Order Number</p>
-                    <p className="text-xl font-black text-white font-mono">{order.orderNumber}</p>
+                    <p className="text-xl font-black text-gray-900 font-mono">{order.orderNumber}</p>
                     <p className="text-xs text-gray-500 mt-1">
                       Placed on {new Date(order.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                     </p>
@@ -196,7 +212,7 @@ export default function OrderTracking() {
                     {lastRefreshed && order.status !== 'Delivered' && order.status !== 'Cancelled' && (
                       <button
                         onClick={() => fetchOrder(order.orderNumber)}
-                        className="flex items-center gap-1.5 text-[10px] text-gray-500 hover:text-gray-300 transition-colors"
+                        className="flex items-center gap-1.5 text-[10px] text-gray-500 hover:text-gray-900 transition-colors"
                       >
                         <RefreshCw size={10} />
                         Refreshed {lastRefreshed.toLocaleTimeString()}
@@ -206,22 +222,22 @@ export default function OrderTracking() {
                 </div>
 
                 {/* Items preview */}
-                <div className="p-5 md:p-6 border-b border-white/6">
+                <div className="p-5 md:p-6 border-b border-gray-100">
                   <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-3">
                     Items ({order.items.length})
                   </p>
                   <div className="space-y-2">
                     {order.items.map((item, i) => (
                       <div key={i} className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/8 overflow-hidden shrink-0 flex items-center justify-center">
+                        <div className="w-14 h-14 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden shrink-0 flex items-center justify-center">
                           {item.image ? (
                             <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                           ) : (
-                            <ShoppingBag size={14} className="text-gray-600" />
+                            <ShoppingBag size={14} className="text-gray-400" />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-bold text-white truncate">{item.name}</p>
+                          <p className="text-xs font-bold text-gray-900 truncate">{item.name}</p>
                           <p className="text-[10px] text-gray-500">Qty: {item.quantity} · {formatLKR(item.price)}</p>
                         </div>
                       </div>
@@ -230,17 +246,17 @@ export default function OrderTracking() {
                 </div>
 
                 {/* Totals + address */}
-                <div className="p-5 md:p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-5 md:p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">Ship to</p>
-                    <p className="text-xs text-gray-300 font-bold">{order.shippingAddress.name}</p>
+                    <p className="text-xs text-gray-900 font-bold">{order.shippingAddress.name}</p>
                     <p className="text-xs text-gray-500">{order.shippingAddress.street}</p>
                     <p className="text-xs text-gray-500">{order.shippingAddress.city}, {order.shippingAddress.province}</p>
                     <p className="text-xs text-gray-500">{order.shippingAddress.phone}</p>
                   </div>
-                  <div className="sm:text-right">
+                  <div>
                     <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">Order Total</p>
-                    <p className="text-xl font-black text-white">{formatLKR(order.total)}</p>
+                    <p className="text-xl font-black text-gray-900">{formatLKR(order.total)}</p>
                     {order.pointsDiscount !== undefined && order.pointsDiscount > 0 && (
                       <p className="text-[10px] text-amber-400 font-bold mt-0.5">
                         ⭐ Points Discount: -{formatLKR(order.pointsDiscount)}
@@ -253,18 +269,17 @@ export default function OrderTracking() {
 
               {/* Timeline */}
               {!isCancelled ? (
-                <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-5 md:p-8">
+                <div className="bg-white border border-gray-200 rounded-2xl p-5 md:p-8 shadow-sm">
                   <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-6">Shipment Progress</p>
 
                   {/* Progress bar */}
                   <div className="mb-8">
-                    <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${(completedSteps / STATUS_STEPS.length) * 100}%` }}
                         transition={{ duration: 1, delay: 0.3 }}
-                        className="h-full rounded-full bg-gradient-to-r from-[#ea364c] to-[#ff6b35]"
-                        style={{ boxShadow: '0 0 8px rgba(234,54,76,0.5)' }}
+                        className="h-full rounded-full bg-gradient-to-r from-[#1cd75b] to-[#12b94b]"
                       />
                     </div>
                     <div className="flex justify-between mt-1">
@@ -275,12 +290,12 @@ export default function OrderTracking() {
 
                   {/* Steps */}
                   <div className="relative">
-                    <div className="absolute left-5 top-5 bottom-5 w-px bg-white/5" />
+                    <div className="absolute left-5 top-5 bottom-5 w-px bg-gray-200" />
                     <div className="space-y-6">
-                      {STATUS_STEPS.map((step, index) => {
-                        const done = index < completedSteps;
-                        const active = index === completedSteps - 1;
-                        const Icon = step.icon;
+                      {getTimeline(order).map((event, index) => {
+                        const active = index === getTimeline(order).length - 1 && order.status !== 'Delivered';
+                        const done = true;
+                        const Icon = event.status.toLowerCase().includes('deliver') ? CheckCircle2 : event.status.toLowerCase().includes('ship') ? Truck : event.status.toLowerCase().includes('process') ? Settings : Package;
                         return (
                           <motion.div
                             key={index}
@@ -293,11 +308,11 @@ export default function OrderTracking() {
                             <div className={`relative w-10 h-10 rounded-full flex items-center justify-center shrink-0 border-2 z-10 transition-all ${
                               done
                                 ? active
-                                  ? 'bg-[#ea364c] border-[#ea364c] shadow-lg shadow-[#ea364c]/40'
-                                  : 'bg-[#ea364c]/80 border-[#ea364c]/60'
-                                : 'bg-white/3 border-white/10'
+                                  ? 'bg-[#1cd75b] border-[#1cd75b] shadow-lg shadow-green-500/30'
+                                  : 'bg-[#1cd75b]/80 border-[#1cd75b]/60'
+                                : 'bg-white border-gray-200'
                             }`}>
-                              <Icon size={16} className={done ? 'text-white' : 'text-gray-600'} />
+                              <Icon size={16} className={done ? 'text-black' : 'text-gray-400'} />
                               {active && (
                                 <div className="absolute inset-0 rounded-full bg-[#ea364c]/30 animate-ping" />
                               )}
@@ -305,11 +320,12 @@ export default function OrderTracking() {
 
                             {/* Text */}
                             <div className="pt-2">
-                              <h4 className={`text-sm font-black uppercase tracking-wide ${done ? 'text-white' : 'text-gray-600'}`}>
-                                {step.label}
-                                {active && <span className="ml-2 text-[9px] font-black text-[#ea364c] bg-[#ea364c]/10 border border-[#ea364c]/20 px-2 py-0.5 rounded-full">Current</span>}
+                              <h4 className={`text-sm font-black uppercase tracking-wide ${done ? 'text-gray-900' : 'text-gray-400'}`}>
+                                {event.status}
+                                {active &&                                 <span className="ml-2 text-[9px] font-black text-[#12b94b] bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">Current</span>}
                               </h4>
-                              <p className={`text-[11px] mt-0.5 ${done ? 'text-gray-400' : 'text-gray-600'}`}>{step.desc}</p>
+                              <p className={`text-[11px] mt-0.5 ${done ? 'text-gray-500' : 'text-gray-400'}`}>{event.message}</p>
+                              <p className="text-[10px] text-gray-400 mt-1">{new Date(event.timestamp).toLocaleString()}</p>
                             </div>
                           </motion.div>
                         );
@@ -319,14 +335,14 @@ export default function OrderTracking() {
 
                   {/* Live Tracking Activity Updates */}
                   {order.trackingUpdates && order.trackingUpdates.length > 0 && (
-                    <div className="mt-8 pt-6 border-t border-white/6">
+                    <div className="mt-8 pt-6 border-t border-gray-100">
                       <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-3">Activity Log</p>
                       <div className="space-y-2">
                         {order.trackingUpdates.map((update, uIdx) => (
-                          <div key={uIdx} className="p-3 bg-white/[0.02] border border-white/5 rounded-xl flex items-start justify-between gap-3 text-xs">
+                          <div key={uIdx} className="p-3 bg-gray-50 border border-gray-100 rounded-xl flex items-start justify-between gap-3 text-xs">
                             <div>
-                              <span className="font-bold text-white text-[11px] uppercase">{update.status}:</span>
-                              <span className="text-gray-400 text-xs ml-1.5">{update.message}</span>
+                              <span className="font-bold text-gray-900 text-[11px] uppercase">{update.status}:</span>
+                              <span className="text-gray-500 text-xs ml-1.5">{update.message}</span>
                             </div>
                             <span className="text-[10px] text-gray-600 shrink-0">
                               {new Date(update.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

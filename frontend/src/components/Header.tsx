@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Heart, Search, Menu, User, Phone, Globe, ChevronRight, Shuffle, Watch, Headphones, Square, Keyboard, HardDrive, Headset, BatteryCharging, Smartphone, Speaker, Cable, Car, Camera, Monitor, MoreHorizontal, Home, LayoutGrid, RefreshCw, Wind, Store, MapPin, Package, Bell, LogOut, Settings, Coins, Truck } from 'lucide-react';
+import { ShoppingCart, Heart, Search, Menu, User, Phone, Globe, ChevronRight, Shuffle, Watch, Headphones, Square, Keyboard, HardDrive, Headset, BatteryCharging, Smartphone, Speaker, Cable, Car, Camera, Monitor, MoreHorizontal, Home, LayoutGrid, RefreshCw, Wind, Store, MapPin, Package, Bell, LogOut, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
 import { BRAND_NEW_CATEGORIES, USED_CATEGORIES, MOCK_PRODUCTS, BRAND_LOGO_URL } from '../data';
@@ -10,7 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { formatAvatarUrl } from '../lib/api';
 
 export default function Header() {
-  const { categories, products } = useAdmin();
+  const { categories, products, whatsappNumber } = useAdmin();
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [activeDropdown, setActiveDropdown] = useState<'brandNew' | 'used' | null>(null);
@@ -42,7 +42,7 @@ export default function Header() {
     navigate(`/product/${id}`);
   };
 
-  const { cart, wishlist, setIsCartOpen, setIsWishlistOpen, cartTotal, compareList, setIsCompareModalOpen, notifications, markNotificationsRead } = useShop();
+  const { cart, wishlist, setIsCartOpen, setIsWishlistOpen, cartTotal, compareList, setIsCompareModalOpen, notifications, removeNotification } = useShop();
   const { user, mongoUser, logout } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const unreadCount = notifications.filter(n => !n.isRead).length;
@@ -151,11 +151,11 @@ export default function Header() {
 
           {/* Action Icons */}
           <div className="flex items-center gap-4 shrink-0">
-            <Link to="/orders" title="My Orders" className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:border-[#2ee661] hover:bg-[#2ee661]/10 transition-colors">
+            <Link to="/profile?tab=orders" title="My Orders" className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:border-[#2ee661] hover:bg-[#2ee661]/10 transition-colors">
               <Package size={20} />
             </Link>
 
-            <div className="relative group" onMouseEnter={() => { setShowNotifications(true); markNotificationsRead(); }} onMouseLeave={() => setShowNotifications(false)}>
+            <div className="relative group" onMouseEnter={() => setShowNotifications(true)} onMouseLeave={() => setShowNotifications(false)}>
               <button className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:border-[#2ee661] hover:bg-[#2ee661]/10 transition-colors relative">
                 <Bell size={20} />
                 {unreadCount > 0 && (
@@ -176,8 +176,11 @@ export default function Header() {
                     <div className="max-h-80 overflow-y-auto">
                       {notifications.length > 0 ? (
                         notifications.map(notif => (
-                          <div key={notif.id} className={`p-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors cursor-pointer ${!notif.isRead ? 'bg-blue-50/50' : ''}`}>
-                            <h4 className="text-sm font-bold text-gray-900 mb-1">{notif.title}</h4>
+                          <div key={notif.id} onClick={() => removeNotification(notif.id)} className={`p-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors cursor-pointer ${!notif.isRead ? 'bg-blue-50/50' : ''}`}>
+                            <div className="flex items-start justify-between gap-3">
+                              <h4 className="text-sm font-bold text-gray-900 mb-1">{notif.title}</h4>
+                              <span className="text-[10px] text-gray-400 shrink-0">Dismiss</span>
+                            </div>
                             <p className="text-xs text-gray-600 mb-2 leading-relaxed">{notif.message}</p>
                             <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">{notif.time}</span>
                           </div>
@@ -190,18 +193,6 @@ export default function Header() {
                 )}
               </AnimatePresence>
             </div>
-
-            {/* User Points Badge for Logged In Users */}
-            {user && (
-              <Link
-                to="/profile"
-                title="Orion Reward Points"
-                className="hidden sm:flex items-center gap-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 px-3 py-1.5 rounded-full text-xs font-black transition-all"
-              >
-                <Coins size={14} className="text-amber-400" />
-                <span>{mongoUser?.points !== undefined ? mongoUser.points : 100} Pts</span>
-              </Link>
-            )}
 
             <div className="relative group" onMouseEnter={() => setShowProfileDropdown(true)} onMouseLeave={() => setShowProfileDropdown(false)}>
               {user ? (
@@ -239,11 +230,8 @@ export default function Header() {
                       <Link to="/profile" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-600 hover:text-black hover:bg-gray-50 transition-colors">
                         <User size={16} /> My Profile
                       </Link>
-                      <Link to="/orders" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-600 hover:text-black hover:bg-gray-50 transition-colors">
+                      <Link to="/profile?tab=orders" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-600 hover:text-black hover:bg-gray-50 transition-colors">
                         <Package size={16} /> My Orders
-                      </Link>
-                      <Link to="/track" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-600 hover:text-black hover:bg-gray-50 transition-colors">
-                        <Truck size={16} /> Track Order
                       </Link>
                       <Link to="/admin" className="flex items-center gap-3 px-4 py-2 text-sm text-[#2ee661] font-bold hover:bg-[#2ee661]/10 transition-colors">
                         <Settings size={16} /> Admin Dashboard
@@ -368,7 +356,7 @@ export default function Header() {
                 <Phone className="text-gray-400" size={20} />
                 <div className="flex flex-col leading-tight">
                   <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Contact Us</span>
-                  <span className="text-xs font-bold text-[#2ee661]">077757 46 43</span>
+                  <span className="text-xs font-bold text-[#2ee661]">{whatsappNumber}</span>
                 </div>
               </div>
             </div>

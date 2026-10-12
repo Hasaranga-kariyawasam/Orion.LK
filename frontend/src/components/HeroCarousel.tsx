@@ -1,40 +1,51 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
-
-const HERO_IMAGES = [
-  "https://images.unsplash.com/photo-1587202372634-32705e3bf49c?auto=format&fit=crop&q=80&w=800",
-  "https://images.unsplash.com/photo-1542393545-10f5cde2c810?auto=format&fit=crop&q=80&w=800",
-  "https://images.unsplash.com/photo-1605810230434-7631ac76ec81?auto=format&fit=crop&q=80&w=800"
-];
+import { resolveMediaUrl } from '../lib/api';
 
 const HeroCarousel = () => {
   const { heroImages } = useAdmin();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const validHeroImages = useMemo(() => heroImages.map(resolveMediaUrl).filter(Boolean), [heroImages]);
 
   useEffect(() => {
+    if (validHeroImages.length === 0) return;
+    const preload = document.createElement('link');
+    preload.rel = 'preload';
+    preload.as = 'image';
+    preload.href = validHeroImages[0];
+    document.head.appendChild(preload);
     const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % heroImages.length);
+      setCurrentIndex((prev) => (prev + 1) % validHeroImages.length);
     }, 4000);
-    return () => clearInterval(timer);
-  }, []);
+    return () => {
+      clearInterval(timer);
+      preload.remove();
+    };
+  }, [validHeroImages]);
 
   const nextSlide = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setCurrentIndex((prev) => (prev + 1) % heroImages.length);
+    setCurrentIndex((prev) => (prev + 1) % validHeroImages.length);
   };
 
   const prevSlide = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setCurrentIndex((prev) => (prev - 1 + heroImages.length) % heroImages.length);
+    setCurrentIndex((prev) => (prev - 1 + validHeroImages.length) % validHeroImages.length);
   };
 
   return (
     <div className="w-full h-full relative group bg-[#0D1117] rounded-2xl overflow-hidden cursor-pointer shadow-lg">
-      {heroImages.map((img, idx) => (
-        <img 
+      {validHeroImages.map((img, idx) => (
+        <img
           key={idx}
           src={img} 
+          onError={(event) => {
+            event.currentTarget.style.display = 'none';
+          }}
+          loading={idx === 0 ? 'eager' : 'lazy'}
+          fetchPriority={idx === 0 ? 'high' : 'low'}
+          decoding="async"
           alt="Premium PC Build" 
           className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
             idx === currentIndex ? 'opacity-100' : 'opacity-0'

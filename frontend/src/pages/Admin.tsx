@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   LayoutDashboard, Package, Plus, ShoppingBag, Users, Home, Tags,
-  LayoutGrid, CreditCard, Star, Save, Menu, X, ChevronRight,
-  Bell, Settings, LogOut, Lock, ShieldAlert, AlertCircle, Eye, EyeOff, Loader2, ArrowLeft, LogIn
+  LayoutGrid, CreditCard, BarChart3, Star, Save, Menu, X, ChevronRight,
+  Bell, Settings, LogOut, Lock, ShieldAlert, AlertCircle, Eye, EyeOff, Loader2, ArrowLeft, LogIn, CheckCircle2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
@@ -20,6 +20,8 @@ import AdminSpecialOffers from './admin/AdminSpecialOffers';
 import AdminCategories from './admin/AdminCategories';
 import AdminBrands from './admin/AdminBrands';
 import AdminPayments from './admin/AdminPayments';
+import AdminAnalytics from './admin/AdminAnalytics';
+import AdminNotifications from './admin/AdminNotifications';
 
 const ALLOWED_ADMIN_EMAILS = ['orian@admin.lk', 'orion@admin.lk'];
 
@@ -28,7 +30,7 @@ export const isAuthorizedAdmin = (email?: string | null): boolean => {
   return ALLOWED_ADMIN_EMAILS.includes(email.trim().toLowerCase());
 };
 
-type TabId = 'dashboard' | 'products' | 'add-item' | 'orders' | 'users' | 'home-page' | 'special-offers' | 'categories' | 'brands' | 'payments';
+type TabId = 'dashboard' | 'analytics' | 'notifications' | 'products' | 'add-item' | 'orders' | 'users' | 'home-page' | 'special-offers' | 'categories' | 'brands' | 'payments';
 
 interface NavItem {
   id: TabId;
@@ -42,6 +44,8 @@ const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
     title: 'Overview',
     items: [
       { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      { id: 'analytics', label: 'Payment Analytics', icon: BarChart3 },
+      { id: 'notifications', label: 'Customer Notifications', icon: Bell },
     ],
   },
   {
@@ -83,8 +87,20 @@ export default function Admin() {
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState('');
   const [authSubmitting, setAuthSubmitting] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const pendingOrders = orders.filter(o => o.status === 'Pending').length;
+
+  const handleSave = async () => {
+    try {
+      await saveSettings();
+      setSaveMessage({ type: 'success', text: 'Changes saved successfully.' });
+    } catch (error) {
+      console.error('Failed to save admin settings:', error);
+      setSaveMessage({ type: 'error', text: 'Could not save changes. Please try again.' });
+    }
+    window.setTimeout(() => setSaveMessage(null), 3500);
+  };
 
   const handleAddItem = () => { setEditItemId(undefined); setActiveTab('add-item'); };
   const handleEditItem = (id: string) => { setEditItemId(id); setActiveTab('add-item'); };
@@ -368,13 +384,27 @@ export default function Admin() {
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-black w-4.5 h-4.5 w-5 h-5 rounded-full flex items-center justify-center">{pendingOrders}</span>
               </button>
             )}
-            <button onClick={saveSettings}
+            <button onClick={handleSave}
               className="flex items-center gap-2 bg-[#2ee661] text-black px-4 py-2 rounded-xl font-bold text-sm hover:bg-[#24c24e] transition-colors shadow-md shadow-[#2ee661]/20">
               <Save size={15} /> Save
             </button>
             <Link to="/" className="text-gray-500 hover:text-white transition-colors text-xs font-medium hidden sm:block">← View Site</Link>
           </div>
         </header>
+
+        {saveMessage && (
+          <div
+            role="status"
+            className={`fixed right-5 top-20 z-50 flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-bold shadow-2xl ${
+              saveMessage.type === 'success'
+                ? 'border-[#2ee661]/30 bg-[#14251a] text-[#2ee661]'
+                : 'border-red-400/30 bg-[#2a1717] text-red-300'
+            }`}
+          >
+            {saveMessage.type === 'success' ? <CheckCircle2 size={17} /> : <AlertCircle size={17} />}
+            {saveMessage.text}
+          </div>
+        )}
 
         {/* Page Content */}
         <main className="flex-1 p-4 lg:p-8 overflow-auto">
@@ -387,11 +417,16 @@ export default function Admin() {
               transition={{ duration: 0.18 }}
             >
               {activeTab === 'dashboard' && <AdminDashboard />}
+              {activeTab === 'analytics' && <AdminAnalytics />}
+              {activeTab === 'notifications' && <AdminNotifications />}
               {activeTab === 'products' && <AdminProducts onAddItem={handleAddItem} onEditItem={handleEditItem} />}
               {activeTab === 'add-item' && <AdminAddItem onBack={handleBackFromAddItem} editId={editItemId} />}
               {activeTab === 'orders' && <AdminOrders />}
               {activeTab === 'users' && <AdminUsers />}
-              {activeTab === 'home-page' && <AdminHomePage />}
+              {activeTab === 'home-page' && <AdminHomePage onSaved={() => {
+                setSaveMessage({ type: 'success', text: 'Home page changes saved successfully.' });
+                window.setTimeout(() => setSaveMessage(null), 3500);
+              }} />}
               {activeTab === 'special-offers' && <AdminSpecialOffers />}
               {activeTab === 'categories' && <AdminCategories />}
               {activeTab === 'brands' && <AdminBrands />}

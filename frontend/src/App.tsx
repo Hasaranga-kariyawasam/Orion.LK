@@ -8,8 +8,6 @@ import Checkout from './pages/Checkout';
 import Payment from './pages/Payment';
 import OrderSuccess from './pages/OrderSuccess';
 import Profile from './pages/Profile';
-import OrderTracking from './pages/OrderTracking';
-import Orders from './pages/Orders';
 import SpecialOffers from './pages/SpecialOffers';
 import BuildMyPC from './pages/BuildMyPC';
 import Admin from './pages/Admin';
@@ -61,9 +59,9 @@ export default function App() {
                       <Route path="/payment" element={<ProtectedRoute><Payment /></ProtectedRoute>} />
                       <Route path="/success" element={<ProtectedRoute><OrderSuccess /></ProtectedRoute>} />
                       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-                      <Route path="/track" element={<OrderTracking />} />
-                      <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+                      <Route path="/orders" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                       <Route path="/offers" element={<SpecialOffers />} />
+                      <Route path="/special-offers" element={<SpecialOffers />} />
                       <Route path="/build" element={<BuildMyPC />} />
                       <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
                       <Route path="/payhere-sandbox" element={<PayHereSandbox />} />
@@ -93,4 +91,3 @@ export default function App() {
     </AuthProvider>
   );
 }
-

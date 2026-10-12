@@ -22,6 +22,14 @@ export interface IPointsTransaction {
   date: Date;
 }
 
+export interface IUserNotification {
+  id: string;
+  title: string;
+  message: string;
+  time: Date;
+  isRead: boolean;
+}
+
 export interface IUser extends Document {
   uid: string;          // Firebase UID
   name: string;
@@ -33,6 +41,7 @@ export interface IUser extends Document {
   cart: IUserCartItem[]; // array of cart items
   points: number;       // loyalty points balance
   pointsHistory: IPointsTransaction[];
+  notifications: IUserNotification[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -65,6 +74,17 @@ const PointsTransactionSchema = new Schema<IPointsTransaction>(
   { _id: false }
 );
 
+const NotificationSchema = new Schema<IUserNotification>(
+  {
+    id: { type: String, required: true },
+    title: { type: String, required: true },
+    message: { type: String, required: true },
+    time: { type: Date, default: Date.now },
+    isRead: { type: Boolean, default: false },
+  },
+  { _id: false }
+);
+
 const UserSchema = new Schema<IUser>(
   {
     uid: { type: String, required: true, unique: true, index: true },
@@ -87,6 +107,7 @@ const UserSchema = new Schema<IUser>(
         },
       ],
     },
+    notifications: { type: [NotificationSchema], default: [] },
   },
   { timestamps: true }
 );

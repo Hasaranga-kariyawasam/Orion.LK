@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Upload, Trash2, Plus, Video, Image as ImageIcon, Phone, MapPin, Star, X } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
+import { uploadImageToServer } from '../../lib/api';
 
 const GRADIENT_PRESETS = [
   'from-purple-800 to-indigo-600',
@@ -11,25 +12,55 @@ const GRADIENT_PRESETS = [
   'from-yellow-500 to-orange-500',
 ];
 
-export default function AdminHomePage() {
+export default function AdminHomePage({ onSaved }: { onSaved?: () => void }) {
   const {
     heroImages, setHeroImages,
     videoUrl, setVideoUrl,
     accessories, setAccessories,
+    featuredImages, setFeaturedImages,
+    pcBuildCards, setPcBuildCards,
+    homePromoCards, setHomePromoCards,
     products, bestSellerIds, setBestSellerIds,
     whatsappNumber, setWhatsappNumber,
     storeAddress, setStoreAddress,
     saveSettings,
   } = useAdmin();
 
-  const [activeTab, setActiveTab] = useState<'hero' | 'video' | 'accessories' | 'bestsellers' | 'contact'>('hero');
+  const [activeTab, setActiveTab] = useState<'hero' | 'featured' | 'pc-builds' | 'promos' | 'video' | 'accessories' | 'bestsellers' | 'contact'>('hero');
   const heroFileRefs = useRef<HTMLInputElement[]>([]);
   const newHeroRef = useRef<HTMLInputElement>(null);
 
   const addHeroImage = () => setHeroImages([...heroImages, '']);
   const updateHeroImage = (i: number, val: string) => { const n = [...heroImages]; n[i] = val; setHeroImages(n); };
   const removeHeroImage = (i: number) => setHeroImages(heroImages.filter((_, j) => j !== i));
-  const handleHeroFile = (i: number, file: File) => updateHeroImage(i, URL.createObjectURL(file));
+  const handleHeroFile = async (i: number, file: File) => {
+    try {
+      updateHeroImage(i, await uploadImageToServer(file));
+    } catch (err: any) {
+      alert('Image upload failed: ' + (err.message || 'Unknown error'));
+    }
+  };
+
+  const updateFeaturedImage = (id: string, url: string) => {
+    setFeaturedImages(featuredImages.map(image => image.id === id ? { ...image, url } : image));
+  };
+
+  const updatePcBuildCard = (id: string, field: 'eyebrow' | 'title' | 'image' | 'alt', value: string) => {
+    setPcBuildCards(pcBuildCards.map(card => card.id === id ? { ...card, [field]: value } : card));
+  };
+
+  const updatePromoCard = (id: string, field: string, value: string) => {
+    setHomePromoCards(homePromoCards.map(card => card.id === id ? { ...card, [field]: value } : card));
+  };
+
+  const handleFeaturedFile = async (id: string, file: File) => {
+    try {
+      const url = await uploadImageToServer(file);
+      updateFeaturedImage(id, url);
+    } catch (err: any) {
+      alert('Image upload failed: ' + (err.message || 'Unknown error'));
+    }
+  };
 
   const addAccessory = () => setAccessories([...accessories, { id: Date.now().toString(), name: 'New Category', image: '', colorClass: 'bg-gray-800', gradientClass: 'from-gray-700 to-gray-900' }]);
   const updateAccessory = (id: string, field: string, val: string) => setAccessories(accessories.map(a => a.id === id ? { ...a, [field]: val } : a));
@@ -43,6 +74,9 @@ export default function AdminHomePage() {
 
   const tabs = [
     { id: 'hero', label: 'Hero Banner', icon: ImageIcon },
+    { id: 'featured', label: 'Featured Images', icon: ImageIcon },
+    { id: 'pc-builds', label: 'PC Builds', icon: ImageIcon },
+    { id: 'promos', label: 'Promo Cards', icon: ImageIcon },
     { id: 'video', label: 'Video', icon: Video },
     { id: 'accessories', label: 'Accessories', icon: Plus },
     { id: 'bestsellers', label: 'Best Sellers', icon: Star },
@@ -56,7 +90,7 @@ export default function AdminHomePage() {
           <h2 className="text-2xl font-black text-white">Home Page</h2>
           <p className="text-gray-500 text-sm mt-1">Customize the home page content</p>
         </div>
-        <button onClick={saveSettings} className="flex items-center gap-2 bg-[#2ee661] text-black px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-[#24c24e] transition-colors">
+        <button onClick={async () => { await saveSettings(); onSaved?.(); }} className="flex items-center gap-2 bg-[#2ee661] text-black px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-[#24c24e] transition-colors">
           Save All Changes
         </button>
       </div>
@@ -90,7 +124,7 @@ export default function AdminHomePage() {
                     input.type = 'file'; input.accept = 'image/*';
                     input.onchange = (e) => {
                       const file = (e.target as HTMLInputElement).files?.[0];
-                      if (file) handleHeroFile(i, file);
+                      if (file) void handleHeroFile(i, file);
                     };
                     input.click();
                   }} className="px-3 py-2 bg-[#0d1117] border border-[#30363D] rounded-xl text-gray-400 hover:text-[#2ee661] hover:border-[#2ee661]/40 transition-colors">
@@ -107,6 +141,108 @@ export default function AdminHomePage() {
             className="w-full border-2 border-dashed border-[#30363D] hover:border-[#2ee661]/50 text-gray-600 hover:text-[#2ee661] py-5 rounded-2xl font-bold flex items-center justify-center gap-2 transition-colors text-sm">
             <Plus size={18} /> Add Hero Slide
           </button>
+        </div>
+      )}
+
+      {/* Featured Images */}
+      {activeTab === 'featured' && (
+        <div className="space-y-4">
+          <p className="text-gray-500 text-sm">Change the three image cards displayed beside the main hero banner.</p>
+          {featuredImages.map(image => (
+            <div key={image.id} className="flex gap-4 items-center bg-[#161B22] border border-[#30363D] p-4 rounded-2xl">
+              <div className="w-28 h-20 rounded-xl overflow-hidden bg-[#0d1117] shrink-0">
+                {image.url ? <img src={image.url} alt={image.alt} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-600 text-xs">No image</div>}
+              </div>
+              <div className="flex-1 space-y-2">
+                <label className="text-xs font-bold text-gray-500 uppercase">{image.label}</label>
+                <div className="flex gap-2">
+                  <input value={image.url} onChange={e => updateFeaturedImage(image.id, e.target.value)}
+                    placeholder="Image URL..." className={`flex-1 ${inputCls}`} />
+                  <label className="px-3 py-2 bg-[#0d1117] border border-[#30363D] rounded-xl text-gray-400 hover:text-[#2ee661] hover:border-[#2ee661]/40 transition-colors cursor-pointer">
+                    <Upload size={16} />
+                    <input type="file" accept="image/*" className="hidden"
+                      onChange={e => {
+                        const file = e.target.files?.[0];
+                        if (file) void handleFeaturedFile(image.id, file);
+                        e.currentTarget.value = '';
+                      }} />
+                  </label>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Video */}
+      {activeTab === 'promos' && (
+        <div className="space-y-4">
+          <p className="text-gray-500 text-sm">Edit every promotional image, text and button destination shown on the home page.</p>
+          {homePromoCards.map(card => (
+            <div key={card.id} className="bg-[#161B22] border border-[#30363D] rounded-2xl p-5 space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <input value={card.eyebrow} onChange={e => updatePromoCard(card.id, 'eyebrow', e.target.value)} placeholder="Small heading" className={inputCls} />
+                <input value={card.alt} onChange={e => updatePromoCard(card.id, 'alt', e.target.value)} placeholder="Image alt text" className={inputCls} />
+                <textarea value={card.title} onChange={e => updatePromoCard(card.id, 'title', e.target.value)} placeholder="Main title (use a new line for line breaks)" rows={2} className={`${inputCls} resize-none`} />
+                <input value={card.description} onChange={e => updatePromoCard(card.id, 'description', e.target.value)} placeholder="Description / price" className={inputCls} />
+                <input value={card.buttonText} onChange={e => updatePromoCard(card.id, 'buttonText', e.target.value)} placeholder="Button text" className={inputCls} />
+                <input value={card.href} onChange={e => updatePromoCard(card.id, 'href', e.target.value)} placeholder="Redirect path, e.g. /shop?category=Keyboards" className={inputCls} />
+                <div className="md:col-span-2 flex gap-2">
+                  <input value={card.image} onChange={e => updatePromoCard(card.id, 'image', e.target.value)} placeholder="Image URL..." className={`flex-1 ${inputCls}`} />
+                  <label className="px-3 py-2 bg-[#0d1117] border border-[#30363D] rounded-xl text-gray-400 hover:text-[#2ee661] cursor-pointer flex items-center">
+                    <Upload size={16} />
+                    <input type="file" accept="image/*" className="hidden" onChange={async e => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      try {
+                        updatePromoCard(card.id, 'image', await uploadImageToServer(file));
+                      } catch (err: any) {
+                        alert('Image upload failed: ' + (err.message || 'Unknown error'));
+                      }
+                      e.currentTarget.value = '';
+                    }} />
+                  </label>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Video */}
+      {activeTab === 'pc-builds' && (
+        <div className="space-y-4">
+          <p className="text-gray-500 text-sm">Change the three PC Build cards shown on the home page. Use a new line in the title to split it into two lines.</p>
+          {pcBuildCards.map(card => (
+            <div key={card.id} className="bg-[#161B22] border border-[#30363D] rounded-2xl p-5 space-y-4">
+              <div className="flex gap-4 items-start">
+                <div className="w-32 h-24 rounded-xl overflow-hidden bg-[#0d1117] shrink-0">
+                  {card.image ? <img src={card.image} alt={card.alt} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-600 text-xs">No image</div>}
+                </div>
+                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <input value={card.eyebrow} onChange={e => updatePcBuildCard(card.id, 'eyebrow', e.target.value)} placeholder="Small label" className={inputCls} />
+                  <input value={card.alt} onChange={e => updatePcBuildCard(card.id, 'alt', e.target.value)} placeholder="Image alt text" className={inputCls} />
+                  <textarea value={card.title} onChange={e => updatePcBuildCard(card.id, 'title', e.target.value)} placeholder="Card title" rows={2} className={`${inputCls} resize-none`} />
+                  <div className="flex gap-2">
+                    <input value={card.image} onChange={e => updatePcBuildCard(card.id, 'image', e.target.value)} placeholder="Image URL..." className={inputCls} />
+                    <label className="px-3 py-2 bg-[#0d1117] border border-[#30363D] rounded-xl text-gray-400 hover:text-[#2ee661] cursor-pointer flex items-center">
+                      <Upload size={16} />
+                      <input type="file" accept="image/*" className="hidden" onChange={async e => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        try {
+                          updatePcBuildCard(card.id, 'image', await uploadImageToServer(file));
+                        } catch (err: any) {
+                          alert('Image upload failed: ' + (err.message || 'Unknown error'));
+                        }
+                        e.currentTarget.value = '';
+                      }} />
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -147,7 +283,24 @@ export default function AdminHomePage() {
                 </div>
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Image URL</label>
-                  <input value={acc.image} onChange={e => updateAccessory(acc.id, 'image', e.target.value)} className={inputCls} placeholder="https://..." />
+                  <div className="flex gap-2">
+                    <input value={acc.image} onChange={e => updateAccessory(acc.id, 'image', e.target.value)} className={`flex-1 ${inputCls}`} placeholder="https://..." />
+                    <label className="px-3 py-2 bg-[#0d1117] border border-[#30363D] rounded-xl text-gray-400 hover:text-[#2ee661] hover:border-[#2ee661]/40 transition-colors cursor-pointer flex items-center">
+                      <Upload size={16} />
+                      <input type="file" accept="image/*" className="hidden"
+                        onChange={async e => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            try {
+                              updateAccessory(acc.id, 'image', await uploadImageToServer(file));
+                            } catch (err: any) {
+                              alert('Image upload failed: ' + (err.message || 'Unknown error'));
+                            }
+                          }
+                          e.currentTarget.value = '';
+                        }} />
+                    </label>
+                  </div>
                 </div>
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Gradient</label>

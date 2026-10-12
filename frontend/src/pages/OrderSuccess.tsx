@@ -73,13 +73,13 @@ export default function OrderSuccess() {
 
           <div className="flex flex-col sm:flex-row items-center gap-3 justify-center">
             <Link 
-              to={`/track?id=${orderNumber}`}
+              to="/profile?tab=orders"
               className="w-full sm:w-auto bg-[#ea364c] hover:bg-[#c42d3f] text-white font-black uppercase tracking-wider py-3.5 px-6 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-xs"
             >
-              <Truck size={16} /> Track Shipment
+              <Truck size={16} /> View Order Progress
             </Link>
             <Link 
-              to="/orders" 
+              to="/profile?tab=orders" 
               className="w-full sm:w-auto bg-black hover:bg-gray-900 text-white font-black uppercase tracking-wider py-3.5 px-6 rounded-xl transition-colors shadow-md flex items-center justify-center gap-2 text-xs"
             >
               <ShoppingBag size={16} /> My Orders

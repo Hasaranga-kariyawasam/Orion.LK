@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import HeroCarousel from '../components/HeroCarousel';
 import { useAdmin } from '../context/AdminContext';
+import { resolveMediaUrl } from '../lib/api';
 import { Truck, Smile, ShieldCheck, Award, CheckCircle, ChevronLeft, ChevronRight, Play, Youtube, Volume2, VolumeX, ArrowRight } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -91,11 +92,25 @@ const BRANDS = [
 ];
 
 export default function Home() {
-  const { videoUrl, accessories, brands, categories, products } = useAdmin();
+  const { videoUrl, heroImages, accessories, featuredImages, pcBuildCards, homePromoCards, brands, categories, products, bestSellerIds, whatsappNumber, storeAddress, refreshHomeSettings } = useAdmin();
   const [isMuted, setIsMuted] = useState(true);
   const [videoFailed, setVideoFailed] = useState(false);
   const [showVideoText, setShowVideoText] = useState(true);
+  const imageSettingsKey = JSON.stringify([heroImages, featuredImages, pcBuildCards, homePromoCards, accessories]);
+
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState === 'visible') void refreshHomeSettings();
+    };
+    const interval = window.setInterval(refresh, 15000);
+    window.addEventListener('focus', refresh);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener('focus', refresh);
+    };
+  }, [refreshHomeSettings]);
   const [bestSellerCategory, setBestSellerCategory] = useState('Processors');
+  const [pageLoading, setPageLoading] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const categorySliderRef = useRef<HTMLDivElement>(null);
   const clearanceSliderRef = useRef<HTMLDivElement>(null);
@@ -125,10 +140,41 @@ export default function Home() {
     }
     return p.category === bestSellerCategory;
   });
-  const displayBestSellers = bestSellerProducts.length > 0 ? bestSellerProducts.slice(0, 4) : products.slice(0, 4);
+  const selectedBestSellers = products.filter(product => bestSellerIds.includes(product.id));
+  const displayBestSellers = selectedBestSellers.length > 0
+    ? selectedBestSellers.slice(0, 4)
+    : bestSellerProducts.length > 0 ? bestSellerProducts.slice(0, 4) : products.slice(0, 4);
+  const deliveryPromo = homePromoCards[0];
+  const installmentsPromo = homePromoCards[1];
+  const gamingPromo = homePromoCards[2];
+  const keyboardsPromo = homePromoCards[3];
+  const speakersPromo = homePromoCards[4];
 
   const laptopProducts = products.filter(p => p.category === 'Laptops' || p.category.toLowerCase().includes('laptop')).slice(0, 4);
   const displayLaptops = laptopProducts.length > 0 ? laptopProducts : products.slice(0, 4);
+
+  useEffect(() => {
+    setPageLoading(true);
+    const waitForImages = () => {
+      const images = Array.from(document.images).filter(image => {
+        const bounds = image.getBoundingClientRect();
+        return bounds.top < window.innerHeight * 1.25;
+      });
+      if (images.length === 0) {
+        setPageLoading(false);
+        return;
+      }
+      Promise.all(images.map(image => image.complete
+        ? Promise.resolve()
+        : new Promise<void>(resolve => {
+          image.addEventListener('load', () => resolve(), { once: true });
+          image.addEventListener('error', () => resolve(), { once: true });
+        })
+      )).then(() => setPageLoading(false));
+    };
+    const frame = window.requestAnimationFrame(waitForImages);
+    return () => window.cancelAnimationFrame(frame);
+  }, [imageSettingsKey]);
 
   useEffect(() => {
     const hideTextTimer = window.setTimeout(() => setShowVideoText(false), 5000);
@@ -137,6 +183,14 @@ export default function Home() {
   return (
     //add littel bit space on top
     <>
+      {pageLoading && (
+        <div className="fixed inset-0 z-[100] flex min-h-screen items-center justify-center bg-white">
+          <div className="flex flex-col items-center gap-3">
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-[#2ee661]" />
+            <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Loading Orion LK</span>
+          </div>
+        </div>
+      )}
       <div className="h-10 w-full bg-white"></div>
       <div className="min-h-screen bg-gray-50 pb-12">
 
@@ -151,7 +205,7 @@ export default function Home() {
             {/* Stacked Right Columns */}
             <div className="md:col-span-1 flex flex-col gap-4">
               <div className="flex-1 relative rounded-2xl overflow-hidden group shadow-lg bg-[#0D1117] cursor-pointer">
-                <img src="https://images.unsplash.com/photo-1608231387042-66d1773070a5?auto=format&fit=crop&q=80&w=400" alt="Accessories" className="absolute inset-0 w-full h-full object-cover" />
+                <img src={featuredImages[0]?.url} alt={featuredImages[0]?.alt || 'Accessories'} loading="eager" fetchPriority="high" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
                 <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none"></div>
                 <div className="absolute bottom-4 left-4 z-20 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
                   <button className="bg-white text-black font-black uppercase tracking-wider py-2 px-6 rounded-full hover:bg-gray-200 transition-all shadow-lg">
@@ -160,7 +214,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="flex-1 relative rounded-2xl overflow-hidden group shadow-lg bg-[#0D1117] cursor-pointer">
-                <img src="https://images.unsplash.com/photo-1593640408182-31c70c8268f5?auto=format&fit=crop&q=80&w=400" alt="Hardware" className="absolute inset-0 w-full h-full object-cover" />
+                <img src={featuredImages[1]?.url} alt={featuredImages[1]?.alt || 'Hardware'} loading="eager" fetchPriority="high" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
                 <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none"></div>
                 <div className="absolute bottom-4 left-4 z-20 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
                   <button className="bg-white text-black font-black uppercase tracking-wider py-2 px-6 rounded-full hover:bg-gray-200 transition-all shadow-lg">
@@ -172,7 +226,7 @@ export default function Home() {
 
             {/* Tall Right Column */}
             <div className="md:col-span-1 relative rounded-2xl overflow-hidden group shadow-lg bg-[#0D1117] cursor-pointer">
-              <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRA-VLozJJnrg0AtDqvZ3A5evBQrAorRcXKl1erZbTKlQ&s=10tps://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&q=80&w=400" alt="Monitors" className="absolute inset-0 w-full h-full object-cover" />
+              <img src={featuredImages[2]?.url} alt={featuredImages[2]?.alt || 'Monitors'} loading="eager" fetchPriority="high" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
               <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none"></div>
               <div className="absolute bottom-6 left-6 z-20 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
                 <button className="bg-white text-black font-black uppercase tracking-wider py-3 px-8 rounded-full hover:bg-gray-200 transition-all shadow-lg">
@@ -257,12 +311,12 @@ export default function Home() {
         <AnimatedSection className="max-w-7xl mx-auto px-4 mt-10 md:mt-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <TiltCard className="md:col-span-1 rounded-xl overflow-hidden cursor-pointer shadow-sm relative h-[380px] group bg-black">
-              <img src="https://images.unsplash.com/photo-1587202372634-32705e3bf49c?auto=format&fit=crop&q=80&w=600" alt="Hybrid PC Builds" className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" />
+              <img src={pcBuildCards[0]?.image} alt={pcBuildCards[0]?.alt} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" />
               <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/20 to-black/90"></div>
               <div className="absolute inset-0 pt-8 pb-6 px-4 flex flex-col justify-between items-center text-center text-white">
                 <div>
-                  <span className="text-[#ff9800] font-bold text-xs uppercase tracking-wide block mb-2">PRE-BUILT PCS</span>
-                  <h3 className="text-3xl font-black uppercase leading-[1.1] tracking-wide drop-shadow-md">HYBRID PC<br />BUILDS</h3>
+                  <span className="text-[#ff9800] font-bold text-xs uppercase tracking-wide block mb-2">{pcBuildCards[0]?.eyebrow}</span>
+                  <h3 className="text-3xl font-black uppercase leading-[1.1] tracking-wide drop-shadow-md whitespace-pre-line">{pcBuildCards[0]?.title}</h3>
                 </div>
                 <button className="bg-white text-black font-black text-[13px] py-2.5 px-6 rounded flex items-center gap-2 hover:bg-gray-100 transition-colors shadow-lg shadow-white/10 mt-auto">
                   Shop Now <ChevronRight size={14} className="text-black" strokeWidth={3} />
@@ -271,12 +325,12 @@ export default function Home() {
             </TiltCard>
 
             <TiltCard className="md:col-span-2 rounded-xl overflow-hidden cursor-pointer shadow-sm relative h-[380px] group bg-black">
-              <img src="https://images.unsplash.com/photo-1587202372585-79464e83fdf5?auto=format&fit=crop&q=80&w=800" alt="Brand New PC Builds" className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:scale-105 transition-transform duration-700" />
+              <img src={pcBuildCards[1]?.image} alt={pcBuildCards[1]?.alt} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover opacity-70 group-hover:scale-105 transition-transform duration-700" />
               <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/30 to-black/80"></div>
               <div className="absolute inset-0 pt-8 pb-6 px-6 flex flex-col justify-between items-center text-center text-white">
                 <div>
-                  <span className="text-[#ff9800] font-bold text-[13px] uppercase tracking-wide block mb-2">PRE-BUILT PCS</span>
-                  <h3 className="text-4xl font-black uppercase leading-[1.1] tracking-wide drop-shadow-lg">BRAND NEW<br />PC BUILDS</h3>
+                  <span className="text-[#ff9800] font-bold text-[13px] uppercase tracking-wide block mb-2">{pcBuildCards[1]?.eyebrow}</span>
+                  <h3 className="text-4xl font-black uppercase leading-[1.1] tracking-wide drop-shadow-lg whitespace-pre-line">{pcBuildCards[1]?.title}</h3>
                 </div>
                 <button className="bg-white text-black font-black text-[13px] py-2.5 px-6 rounded flex items-center gap-2 hover:bg-gray-100 transition-colors shadow-lg shadow-white/10 mt-auto">
                   Shop Now <ChevronRight size={14} className="text-black" strokeWidth={3} />
@@ -285,12 +339,12 @@ export default function Home() {
             </TiltCard>
 
             <TiltCard className="md:col-span-1 rounded-xl overflow-hidden cursor-pointer shadow-sm relative h-[380px] group bg-[#09101a]">
-              <img src="https://images.unsplash.com/photo-1555680202-c86f0e12f086?auto=format&fit=crop&q=80&w=600" alt="Used PC Builds" className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" />
+              <img src={pcBuildCards[2]?.image} alt={pcBuildCards[2]?.alt} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" />
               <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-blue-900/30 to-black/90 mix-blend-overlay"></div>
               <div className="absolute inset-0 pt-8 pb-6 px-4 flex flex-col justify-between items-center text-center text-white">
                 <div>
-                  <span className="text-[#ff9800] font-bold text-xs uppercase tracking-wide block mb-2">PRE-BUILT PCS</span>
-                  <h3 className="text-3xl font-black uppercase leading-[1.1] tracking-wide drop-shadow-md">USED PC<br />BUILDS</h3>
+                  <span className="text-[#ff9800] font-bold text-xs uppercase tracking-wide block mb-2">{pcBuildCards[2]?.eyebrow}</span>
+                  <h3 className="text-3xl font-black uppercase leading-[1.1] tracking-wide drop-shadow-md whitespace-pre-line">{pcBuildCards[2]?.title}</h3>
                 </div>
                 <button className="bg-white text-black font-black text-[13px] py-2.5 px-6 rounded flex items-center gap-2 hover:bg-gray-100 transition-colors shadow-lg shadow-white/10 mt-auto">
                   Shop Now <ChevronRight size={14} className="text-black" strokeWidth={3} />
@@ -366,30 +420,23 @@ export default function Home() {
         <AnimatedSection className="max-w-7xl mx-auto px-4 mt-10 md:mt-16">
           <h2 className="text-2xl font-black mb-6 text-gray-900 uppercase">Shop Accessories</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {/* Adapters */}
-            <div className="bg-[#5a2e98] rounded-xl p-6 relative overflow-hidden group cursor-pointer shadow-sm h-32 md:h-40 flex items-center justify-center">
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-800 to-indigo-600 opacity-80 z-0"></div>
-              <img src="https://images.unsplash.com/photo-1583394838084-25e1a38481ff?auto=format&fit=crop&q=80&w=300" className="absolute inset-0 w-full h-full object-cover mix-blend-overlay group-hover:scale-110 transition-transform duration-500 z-0" alt="Adapters" />
-              <h3 className="text-white font-black text-lg md:text-xl relative z-10 drop-shadow-md">Adapters</h3>
-            </div>
-            {/* Headsets */}
-            <div className="bg-[#d43763] rounded-xl p-6 relative overflow-hidden group cursor-pointer shadow-sm h-32 md:h-40 flex items-center justify-center">
-              <div className="absolute inset-0 bg-gradient-to-r from-rose-500 to-pink-500 opacity-80 z-0"></div>
-              <img src="https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?auto=format&fit=crop&q=80&w=300" className="absolute inset-0 w-full h-full object-cover mix-blend-overlay group-hover:scale-110 transition-transform duration-500 z-0" alt="Headsets" />
-              <h3 className="text-white font-black text-lg md:text-xl relative z-10 drop-shadow-md">Headsets</h3>
-            </div>
-            {/* Speakers */}
-            <div className="bg-[#1f487e] rounded-xl p-6 relative overflow-hidden group cursor-pointer shadow-sm h-32 md:h-40 flex items-center justify-center">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-cyan-600 opacity-80 z-0"></div>
-              <img src="https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?auto=format&fit=crop&q=80&w=300" className="absolute inset-0 w-full h-full object-cover mix-blend-overlay group-hover:scale-110 transition-transform duration-500 z-0" alt="Speakers" />
-              <h3 className="text-white font-black text-lg md:text-xl relative z-10 drop-shadow-md">Speakers</h3>
-            </div>
-            {/* Webcam */}
-            <div className="bg-[#247c45] rounded-xl p-6 relative overflow-hidden group cursor-pointer shadow-sm h-32 md:h-40 flex items-center justify-center">
-              <div className="absolute inset-0 bg-gradient-to-r from-green-600 to-emerald-500 opacity-80 z-0"></div>
-              <img src="https://images.unsplash.com/photo-1595787142842-7404bc60470d?auto=format&fit=crop&q=80&w=300" className="absolute inset-0 w-full h-full object-cover mix-blend-overlay group-hover:scale-110 transition-transform duration-500 z-0" alt="Webcam" />
-              <h3 className="text-white font-black text-lg md:text-xl relative z-10 drop-shadow-md">Webcam</h3>
-            </div>
+            {accessories.map((accessory, index) => (
+              <Link key={accessory.id} to={`/shop?category=${encodeURIComponent(accessory.name)}`} className={`${accessory.colorClass} rounded-xl p-6 relative overflow-hidden group cursor-pointer shadow-sm h-32 md:h-40 flex items-center justify-center`}>
+                <div className={`absolute inset-0 bg-gradient-to-r ${accessory.gradientClass} opacity-80 z-0`}></div>
+                <img
+                  src={resolveMediaUrl(accessory.image)}
+                  onError={(event) => {
+                    event.currentTarget.style.display = 'none';
+                  }}
+                  className="absolute inset-0 w-full h-full object-cover mix-blend-overlay group-hover:scale-110 transition-transform duration-500 z-0"
+                  alt={accessory.name}
+                  loading="eager"
+                  fetchPriority={index < 2 ? 'high' : 'auto'}
+                  decoding="async"
+                />
+                <h3 className="text-white font-black text-lg md:text-xl relative z-10 drop-shadow-md">{accessory.name}</h3>
+              </Link>
+            ))}
           </div>
         </AnimatedSection>
 
@@ -535,62 +582,63 @@ export default function Home() {
         <AnimatedSection className="max-w-7xl mx-auto px-1 mt-12 md:mt-16 mb-12">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <TiltCard className="col-span-1 rounded-xl overflow-hidden cursor-pointer shadow-sm relative h-48 md:h-64 group bg-[#0e1628]">
-              <img src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&q=80&w=800" alt="Island Wide Delivery" className="absolute inset-0 w-full h-full object-cover opacity-50 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" />
+              <img src={deliveryPromo?.image} alt={deliveryPromo?.alt} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover opacity-50 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" />
               <div className="absolute inset-0 bg-gradient-to-r from-red-600/90 to-transparent"></div>
               <div className="absolute inset-0 p-8 flex flex-col justify-center text-white">
-                <h3 className="text-4xl md:text-5xl font-black italic tracking-tighter uppercase mb-2 drop-shadow-md">Island Wide</h3>
+                <h3 className="text-4xl md:text-5xl font-black italic tracking-tighter uppercase mb-2 drop-shadow-md whitespace-pre-line">{deliveryPromo?.title}</h3>
                 <div className="bg-gray-900 self-start px-4 py-1 rounded shadow-lg border border-white/20">
-                  <span className="font-bold text-sm tracking-widest uppercase">Delivery Available</span>
+                  <span className="font-bold text-sm tracking-widest uppercase">{deliveryPromo?.description}</span>
                 </div>
+                <Link to={deliveryPromo?.href || '/shop'} className="bg-white text-black self-start mt-4 px-5 py-2 rounded font-bold text-xs uppercase">{deliveryPromo?.buttonText || 'Shop Now'}</Link>
               </div>
             </TiltCard>
 
             <TiltCard className="col-span-1 rounded-xl overflow-hidden cursor-pointer shadow-sm relative h-48 md:h-64 group bg-[#281b3d]">
-              <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&q=80&w=800" alt="Koko Option 2" className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" />
+              <img src={installmentsPromo?.image} alt={installmentsPromo?.alt} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" />
               <div className="absolute inset-0 bg-gradient-to-r from-indigo-900/90 to-transparent"></div>
               <div className="absolute inset-0 p-8 flex flex-col justify-center text-white">
-                <h4 className="text-indigo-300 font-bold tracking-widest uppercase mb-1">Pay in 3 Installments</h4>
-                <h3 className="text-3xl md:text-4xl font-black mb-4">Option 2</h3>
-                <button className="bg-white text-indigo-900 self-start px-6 py-2 rounded font-bold text-sm shadow-lg">Learn More</button>
+                <h4 className="text-indigo-300 font-bold tracking-widest uppercase mb-1">{installmentsPromo?.eyebrow}</h4>
+                <h3 className="text-3xl md:text-4xl font-black mb-4 whitespace-pre-line">{installmentsPromo?.title}</h3>
+                <Link to={installmentsPromo?.href || '/shop'} className="bg-white text-indigo-900 self-start px-6 py-2 rounded font-bold text-sm shadow-lg">{installmentsPromo?.buttonText || 'Learn More'}</Link>
               </div>
             </TiltCard>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <TiltCard className="rounded-xl overflow-hidden cursor-pointer shadow-sm relative h-64 md:h-80 group bg-black">
-              <img src="https://images.unsplash.com/photo-1527814050087-379381547996?auto=format&fit=crop&q=80&w=600" alt="Gaming Accessories" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:scale-105 transition-transform duration-700" />
+              <img src={gamingPromo?.image} alt={gamingPromo?.alt} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:scale-105 transition-transform duration-700" />
               <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-transparent to-black/80"></div>
               <div className="absolute inset-0 p-6 flex flex-col justify-between text-white">
                 <div>
-                  <span className="text-gray-400 font-bold text-[10px] tracking-widest uppercase block mb-1">Ergonomic Precision</span>
-                  <h3 className="text-2xl font-black uppercase leading-tight">Shop Gaming<br />Accessories</h3>
-                  <p className="text-gray-900 font-bold text-sm mt-2">Starting at just Rs.550</p>
+                  <span className="text-gray-400 font-bold text-[10px] tracking-widest uppercase block mb-1">{gamingPromo?.eyebrow}</span>
+                  <h3 className="text-2xl font-black uppercase leading-tight whitespace-pre-line">{gamingPromo?.title}</h3>
+                  <p className="text-gray-900 font-bold text-sm mt-2">{gamingPromo?.description}</p>
                 </div>
-                <button className="bg-white text-black font-black text-xs py-2 px-6 rounded self-start uppercase">Shop Now</button>
+                <Link to={gamingPromo?.href || '/shop'} className="bg-white text-black font-black text-xs py-2 px-6 rounded self-start uppercase">{gamingPromo?.buttonText || 'Shop Now'}</Link>
               </div>
             </TiltCard>
 
             <TiltCard className="rounded-xl overflow-hidden cursor-pointer shadow-sm relative h-64 md:h-80 group bg-gray-900">
-              <img src="https://images.unsplash.com/photo-1595225476474-87563907a212?auto=format&fit=crop&q=80&w=600" alt="Keyboards" className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:scale-105 transition-transform duration-700" />
+              <img src={keyboardsPromo?.image} alt={keyboardsPromo?.alt} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:scale-105 transition-transform duration-700" />
               <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors duration-500"></div>
               <div className="absolute inset-0 p-6 flex flex-col justify-center items-center text-white text-center">
-                <span className="text-yellow-500 font-bold text-[10px] tracking-widest uppercase block mb-2">Keyboards</span>
-                <h3 className="text-3xl font-black uppercase tracking-wider mb-2">Crafted for Speed</h3>
-                <p className="text-gray-300 font-bold text-sm mb-6">From Rs.1,190 Upwards</p>
-                <button className="bg-white text-black font-black text-xs py-2 px-6 rounded uppercase">Shop Now</button>
+                <span className="text-yellow-500 font-bold text-[10px] tracking-widest uppercase block mb-2">{keyboardsPromo?.eyebrow}</span>
+                <h3 className="text-3xl font-black uppercase tracking-wider mb-2 whitespace-pre-line">{keyboardsPromo?.title}</h3>
+                <p className="text-gray-300 font-bold text-sm mb-6">{keyboardsPromo?.description}</p>
+                <Link to={keyboardsPromo?.href || '/shop'} className="bg-white text-black font-black text-xs py-2 px-6 rounded uppercase">{keyboardsPromo?.buttonText || 'Shop Now'}</Link>
               </div>
             </TiltCard>
 
             <TiltCard className="rounded-xl overflow-hidden cursor-pointer shadow-sm relative h-64 md:h-80 group bg-black">
-              <img src="https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?auto=format&fit=crop&q=80&w=600" alt="Speakers and Headphones" className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:scale-105 transition-transform duration-700" />
+              <img src={speakersPromo?.image} alt={speakersPromo?.alt} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:scale-105 transition-transform duration-700" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent"></div>
               <div className="absolute inset-0 p-6 flex flex-col justify-between text-white text-right items-end">
                 <div>
-                  <span className="text-gray-400 font-bold text-[10px] tracking-widest uppercase block mb-1">Volcanic Sound</span>
-                  <h3 className="text-2xl font-black uppercase leading-tight">Speakers &<br />Headphones</h3>
-                  <p className="text-gray-900 font-bold text-sm mt-2">From Rs.1,500</p>
+                  <span className="text-gray-400 font-bold text-[10px] tracking-widest uppercase block mb-1">{speakersPromo?.eyebrow}</span>
+                  <h3 className="text-2xl font-black uppercase leading-tight whitespace-pre-line">{speakersPromo?.title}</h3>
+                  <p className="text-gray-900 font-bold text-sm mt-2">{speakersPromo?.description}</p>
                 </div>
-                <button className="bg-white text-black font-black text-xs py-2 px-6 rounded uppercase">Shop Now</button>
+                <Link to={speakersPromo?.href || '/shop'} className="bg-white text-black font-black text-xs py-2 px-6 rounded uppercase">{speakersPromo?.buttonText || 'Shop Now'}</Link>
               </div>
             </TiltCard>
           </div>

@@ -69,14 +69,14 @@ export default function AdminProducts({ onAddItem, onEditItem }: { onAddItem: ()
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[#30363D]">
-                {['Product', 'Category', 'Price', 'Rating', 'Status', 'Actions'].map(h => (
+                {['Product', 'Category', 'Price', 'Stock', 'Rating', 'Status', 'Actions'].map(h => (
                   <th key={h} className="text-left px-5 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={6} className="text-center py-12 text-gray-500">No products found</td></tr>
+                <tr><td colSpan={7} className="text-center py-12 text-gray-500">No products found</td></tr>
               ) : filtered.map(p => (
                 <tr key={p.id} className="border-b border-[#30363D]/50 hover:bg-white/[0.02] transition-colors group">
                   <td className="px-5 py-4">
@@ -92,6 +92,12 @@ export default function AdminProducts({ onAddItem, onEditItem }: { onAddItem: ()
                   <td className="px-5 py-4">
                     <p className="text-white font-bold">LKR {p.price.toLocaleString()}</p>
                     {p.originalPrice && <p className="text-gray-500 text-xs line-through">LKR {p.originalPrice.toLocaleString()}</p>}
+                  </td>
+                  <td className="px-5 py-4">
+                    <span className={`font-bold ${(p.stock || 0) === 0 ? 'text-red-400' : (p.stock || 0) <= 5 ? 'text-yellow-400' : 'text-[#2ee661]'}`}>
+                      {p.stock || 0}
+                    </span>
+                    <span className="text-gray-500 text-xs ml-1">units</span>
                   </td>
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-1">

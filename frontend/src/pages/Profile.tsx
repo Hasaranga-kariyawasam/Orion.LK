@@ -1,20 +1,51 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   User, Package, MapPin, Settings, LogOut, ChevronRight,
   ShoppingBag, Edit2, CheckCircle2, Clock, Heart, Camera,
-  Loader2, Plus, Trash2, AlertCircle, Save, Check, Coins, Sparkles, Gift, ArrowRight
+  Loader2, Plus, Trash2, AlertCircle, Save, Check, Coins, Sparkles, Gift, ArrowRight,
+  Truck, ChevronDown
 } from 'lucide-react';
 import { formatLKR } from '../data';
 import { useShop } from '../context/ShopContext';
 import { useAuth } from '../context/AuthContext';
-import { getMyOrders, ApiOrder, MongoAddress, formatAvatarUrl } from '../lib/api';
+import { getMyOrders, cancelMyOrder, ApiOrder, MongoAddress, formatAvatarUrl } from '../lib/api';
 import { updatePassword, auth } from '../lib/firebase';
 
+const ORDER_STEPS = ['Pending', 'Processing', 'Shipped', 'Delivered'] as const;
+const ORDER_FILTERS = ['All', 'Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'] as const;
+type OrderFilter = typeof ORDER_FILTERS[number];
+
+function orderProgress(status: ApiOrder['status']) {
+  if (status === 'Cancelled') return 0;
+  const index = ORDER_STEPS.indexOf(status as typeof ORDER_STEPS[number]);
+  return index < 0 ? 1 : index + 1;
+}
+
+function orderTimeline(order: ApiOrder) {
+  if (order.trackingUpdates?.length) return order.trackingUpdates;
+  const labels = [
+    ['Order Received', 'Your order has been received.'],
+    ['Processing', 'We are preparing your items.'],
+    ['Shipped', 'Your order is on its way.'],
+    ['Delivered', 'Your order was delivered successfully.'],
+  ];
+  const count = orderProgress(order.status);
+  return labels.slice(0, Math.max(1, count)).map(([status, message], index) => ({
+    status,
+    message,
+    timestamp: new Date(new Date(order.createdAt).getTime() + index * 86400000).toISOString(),
+  }));
+}
+
 export default function Profile() {
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<'dashboard' | 'orders' | 'rewards' | 'addresses' | 'settings'>('dashboard');
   const [orders, setOrders] = useState<ApiOrder[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
+  const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [cancellingOrder, setCancellingOrder] = useState<string | null>(null);
+  const [orderFilter, setOrderFilter] = useState<OrderFilter>('All');
 
   // Settings Form States
   const [firstName, setFirstName] = useState('');
@@ -51,6 +82,10 @@ export default function Profile() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  useEffect(() => {
+    if (searchParams.get('tab') === 'orders') setActiveTab('orders');
+  }, [searchParams]);
 
   // Sync real profile data from Mongo/Firebase
   useEffect(() => {
@@ -207,6 +242,26 @@ export default function Profile() {
     await updateMongoProfile({ addresses: updated });
   };
 
+  const handleCancelOrder = async (order: ApiOrder) => {
+    if (order.status !== 'Pending') return;
+    if (!window.confirm(`Cancel order ${order.orderNumber}? This can only be done before processing starts.`)) return;
+
+    const orderId = order.id || order._id || order.orderNumber;
+    setCancellingOrder(orderId);
+    try {
+      await cancelMyOrder(orderId);
+      setOrders(current => current.map(item =>
+        (item.orderNumber === order.orderNumber || item.id === order.id || item._id === order._id)
+          ? { ...item, status: 'Cancelled' }
+          : item
+      ));
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : 'Failed to cancel this order.');
+    } finally {
+      setCancellingOrder(null);
+    }
+  };
+
   // Real user display data
   const displayName = mongoUser?.name || user?.displayName || user?.email?.split('@')[0] || 'User';
   const userEmail = user?.email || mongoUser?.email || '';
@@ -356,7 +411,7 @@ export default function Profile() {
                   </Link>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {orders.slice(0, 3).map((order) => (
                     <div key={order.orderNumber || order.id || order._id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-gray-100 rounded-xl gap-4 hover:bg-gray-50/50 transition-colors">
                       <div className="flex items-center gap-4">
@@ -385,7 +440,31 @@ export default function Profile() {
       case 'orders':
         return (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight mb-6">My Orders</h2>
+            <div>
+              <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight">My Orders</h2>
+              <p className="text-sm text-gray-500 mt-1">View your products, payment details, and delivery progress.</p>
+            </div>
+
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              {ORDER_FILTERS.map(filter => {
+                const count = filter === 'All' ? orders.length : orders.filter(order => order.status === filter).length;
+                const active = orderFilter === filter;
+                return (
+                  <button
+                    key={filter}
+                    type="button"
+                    onClick={() => setOrderFilter(filter)}
+                    className={`shrink-0 px-4 py-2 rounded-full border text-[10px] font-black uppercase tracking-wider transition-colors ${
+                      active
+                        ? filter === 'Cancelled' ? 'bg-red-100 text-red-700 border-red-200' : 'bg-gray-900 text-white border-gray-900'
+                        : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400 hover:text-gray-900'
+                    }`}
+                  >
+                    {filter} <span className="ml-1 opacity-70">{count}</span>
+                  </button>
+                );
+              })}
+            </div>
 
             {ordersLoading ? (
               <div className="bg-white p-12 rounded-2xl border border-gray-100 flex justify-center">
@@ -401,40 +480,117 @@ export default function Profile() {
                 </Link>
               </div>
             ) : (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="hidden md:grid grid-cols-5 gap-4 p-4 border-b border-gray-100 bg-gray-50 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                  <div className="col-span-2">Order ID & Date</div>
-                  <div>Status</div>
-                  <div>Items</div>
-                  <div className="text-right">Total</div>
-                </div>
-
-                <div className="divide-y divide-gray-100">
-                  {orders.map((order) => (
-                    <div key={order.orderNumber || order.id || order._id} className="flex flex-col md:grid md:grid-cols-5 gap-4 p-4 md:p-6 items-start md:items-center hover:bg-gray-50 transition-colors">
-                      <div className="col-span-2 flex flex-col w-full md:w-auto">
-                        <div className="flex justify-between items-center md:block">
-                          <span className="font-bold text-gray-900">{order.orderNumber}</span>
-                          <span className="md:hidden font-black text-gray-900">{formatLKR(order.total)}</span>
+              <div className="space-y-6">
+                {orders.filter(order => orderFilter === 'All' || order.status === orderFilter).map((order) => {
+                  const key = order.orderNumber || order.id || order._id || '';
+                  const progress = orderProgress(order.status);
+                  const isExpanded = expandedOrder === key;
+                  const statusStyle = order.status === 'Delivered'
+                    ? 'bg-green-100 text-green-700'
+                    : order.status === 'Cancelled'
+                      ? 'bg-red-100 text-red-700'
+                      : 'bg-blue-100 text-blue-700';
+                  return (
+                    <div key={key} className="bg-white rounded-2xl border border-gray-200 shadow-md overflow-hidden ring-1 ring-gray-100">
+                      <button
+                        type="button"
+                        onClick={() => setExpandedOrder(isExpanded ? null : key)}
+                        className="w-full text-left p-4 md:p-6 border-b-4 border-transparent hover:border-[#1cd75b]/40 hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex flex-col md:flex-row md:items-start gap-4">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden shrink-0 flex items-center justify-center">
+                              {order.items?.[0]?.image ? <img src={order.items[0].image} alt={order.items[0].name} className="w-full h-full object-cover" /> : <Package size={20} className="text-gray-400" />}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-black text-gray-900 font-mono">{order.orderNumber}</p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {new Date(order.createdAt).toLocaleDateString()} · {order.items?.length || 0} item{order.items?.length === 1 ? '' : 's'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between gap-4 md:flex-col md:items-end">
+                            <div className="text-right">
+                              <p className="font-black text-gray-900">{formatLKR(order.total)}</p>
+                              <span className={`inline-flex mt-1 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider ${statusStyle}`}>{order.status}</span>
+                            </div>
+                            <ChevronDown size={18} className={`text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                          </div>
                         </div>
-                        <span className="text-xs text-gray-500 mt-1">
-                          {new Date(order.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                        </span>
-                      </div>
-                      <div>
-                        <span className={`inline-flex text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${order.status === 'Delivered' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
-                          {order.status}
-                        </span>
-                      </div>
-                      <div className="text-gray-500 font-medium text-sm hidden md:block">
-                        {order.items?.length || 0} Items
-                      </div>
-                      <div className="text-right font-black text-gray-900 hidden md:block">
-                        {formatLKR(order.total)}
-                      </div>
+                        {order.status !== 'Cancelled' && (
+                          <div className="mt-5">
+                            <div className="flex items-center">
+                              {ORDER_STEPS.map((step, index) => (
+                                <React.Fragment key={step}>
+                                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-black shrink-0 ${index < progress ? 'bg-[#1cd75b] text-black' : 'bg-gray-100 text-gray-400'}`}>
+                                    {index < progress ? <Check size={12} /> : index + 1}
+                                  </div>
+                                  {index < ORDER_STEPS.length - 1 && <div className={`h-1 flex-1 mx-1 rounded-full ${index + 1 < progress ? 'bg-[#1cd75b]' : 'bg-gray-100'}`} />}
+                                </React.Fragment>
+                              ))}
+                            </div>
+                            <div className="flex justify-between mt-2 text-[9px] font-bold uppercase text-gray-400">
+                              {ORDER_STEPS.map(step => <span key={step}>{step}</span>)}
+                            </div>
+                          </div>
+                        )}
+                      </button>
+
+                      {isExpanded && (
+                        <div className="border-t border-gray-100 bg-gray-50/60 p-4 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                          <div className="lg:col-span-2">
+                            <h3 className="text-xs font-black uppercase tracking-wider text-gray-500 mb-4 flex items-center gap-2"><Truck size={14} /> Shipment details</h3>
+                            <div className="relative ml-2 space-y-5">
+                              <div className="absolute left-[7px] top-2 bottom-2 w-px bg-gray-200" />
+                              {orderTimeline(order).map((event, index) => (
+                                <div key={`${event.timestamp}-${index}`} className="relative flex gap-4">
+                                  <div className={`w-4 h-4 rounded-full border-2 border-white shadow-sm shrink-0 z-10 ${index === orderTimeline(order).length - 1 ? 'bg-[#1cd75b]' : 'bg-gray-400'}`} />
+                                  <div className="min-w-0 -mt-1">
+                                    <p className="text-sm font-bold text-gray-900">{event.status}</p>
+                                    <p className="text-xs text-gray-500 mt-1">{event.message}</p>
+                                    <p className="text-[10px] text-gray-400 mt-1">{new Date(event.timestamp).toLocaleString()}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="space-y-5">
+                            <div>
+                              <h3 className="text-xs font-black uppercase tracking-wider text-gray-500 mb-2">Products</h3>
+                              <div className="space-y-2">
+                                {order.items.map((item, index) => <div key={index} className="flex gap-2 items-center"><div className="w-10 h-10 bg-white rounded-lg border border-gray-100 overflow-hidden shrink-0">{item.image && <img src={item.image} alt={item.name} className="w-full h-full object-cover" />}</div><div className="min-w-0"><p className="text-xs font-bold text-gray-900 truncate">{item.name}</p><p className="text-[10px] text-gray-500">Qty {item.quantity} · {formatLKR(item.price)}</p></div></div>)}
+                              </div>
+                            </div>
+                            <div>
+                              <h3 className="text-xs font-black uppercase tracking-wider text-gray-500 mb-2">Delivery address</h3>
+                              <p className="text-xs font-bold text-gray-900">{order.shippingAddress.name}</p>
+                              <p className="text-xs text-gray-500">{order.shippingAddress.street}, {order.shippingAddress.city}</p>
+                              <p className="text-xs text-gray-500">{order.shippingAddress.province} {order.shippingAddress.postalCode}</p>
+                            </div>
+                            <div className="border-t border-gray-200 pt-3 flex justify-between text-xs"><span className="text-gray-500">Payment · {order.paymentMethod}</span><span className="font-black text-gray-900">{formatLKR(order.total)}</span></div>
+                            {order.status === 'Pending' && (
+                              <button
+                                type="button"
+                                onClick={() => handleCancelOrder(order)}
+                                disabled={cancellingOrder === (order.id || order._id || order.orderNumber)}
+                                className="w-full border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-60 rounded-xl py-2.5 text-xs font-black uppercase tracking-wider transition-colors"
+                              >
+                                {cancellingOrder === (order.id || order._id || order.orderNumber) ? 'Cancelling...' : 'Cancel Order'}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
+                  );
+                })}
+                {orders.filter(order => orderFilter === 'All' || order.status === orderFilter).length === 0 && (
+                  <div className="bg-white p-10 rounded-2xl border border-gray-100 text-center">
+                    <Package size={36} className="mx-auto text-gray-300 mb-3" />
+                    <p className="font-bold text-gray-900">No {orderFilter.toLowerCase()} orders</p>
+                    <p className="text-sm text-gray-500 mt-1">Orders in this category will appear here.</p>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -574,7 +730,13 @@ export default function Profile() {
 
             {/* Add Address Form Modal / Inline */}
             {showAddAddress && (
-              <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm mb-6 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="relative bg-white p-6 rounded-2xl border border-gray-200 shadow-sm mb-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                {addrSaving && (
+                  <div className="absolute inset-0 z-20 rounded-2xl bg-white/85 backdrop-blur-[2px] flex flex-col items-center justify-center gap-2">
+                    <Loader2 size={28} className="animate-spin text-[#12b94b]" />
+                    <p className="text-xs font-black uppercase tracking-wider text-gray-600">Saving address...</p>
+                  </div>
+                )}
                 <h3 className="font-bold text-gray-900 mb-4">Add Shipping Address</h3>
                 <form onSubmit={handleAddAddress} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -663,7 +825,7 @@ export default function Profile() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {addresses.map((addr, idx) => (
-                  <div key={idx} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 relative group">
+                  <div key={`${addr.label}-${addr.street}-${idx}`} className="bg-white p-6 rounded-2xl shadow-md border border-gray-200 ring-1 ring-gray-100 relative group">
                     {addr.isDefault && (
                       <div className="absolute top-4 right-4 bg-gray-900 text-white text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded">
                         Default
