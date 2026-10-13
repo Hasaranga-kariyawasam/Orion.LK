@@ -50,7 +50,7 @@ export default function App() {
               <Route path="*" element={
                 <>
                   <Header />
-                  <main className="flex-grow pt-[136px] md:pt-[152px] pb-16 md:pb-0">
+                  <main className="flex-grow pt-[128px] md:pt-[128px] pb-16 md:pb-0">
                     <Routes>
                       <Route path="/" element={<Home />} />
                       <Route path="/shop" element={<Shop />} />

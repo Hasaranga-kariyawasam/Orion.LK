@@ -73,15 +73,6 @@ const getYouTubeEmbedUrl = (value: string) => {
 
 const FALLBACK_VIDEO_URL = 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4';
 
-const CATEGORIES = [
-  { name: 'Graphics Cards', img: 'https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&q=80&w=150' },
-  { name: 'Laptops', img: 'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?auto=format&fit=crop&q=80&w=150' },
-  { name: 'Monitors', img: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&q=80&w=150' },
-  { name: 'Storage Devices', img: 'https://images.unsplash.com/photo-1531492746076-161ca9bcad58?auto=format&fit=crop&q=80&w=150' },
-  { name: 'Pre-Owned Laptops', img: 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&q=80&w=150' },
-  { name: 'Gaming Chairs', img: 'https://images.unsplash.com/photo-1598550476439-6847785fcea6?auto=format&fit=crop&q=80&w=150' },
-];
-
 const BRANDS = [
   { name: 'Apple', domain: 'apple.com' },
   { name: 'Samsung', domain: 'samsung.com' },
@@ -92,7 +83,7 @@ const BRANDS = [
 ];
 
 export default function Home() {
-  const { videoUrl, heroImages, accessories, featuredImages, pcBuildCards, homePromoCards, brands, categories, products, bestSellerIds, whatsappNumber, storeAddress, refreshHomeSettings } = useAdmin();
+  const { videoUrl, heroImages, accessories, featuredImages, pcBuildCards, homePromoCards, brands, categories, products, bestSellerIds, whatsappNumber, storeAddress, refreshHomeSettings, homeSettingsReady } = useAdmin();
   const [isMuted, setIsMuted] = useState(true);
   const [videoFailed, setVideoFailed] = useState(false);
   const [showVideoText, setShowVideoText] = useState(true);
@@ -111,10 +102,29 @@ export default function Home() {
   }, [refreshHomeSettings]);
   const [bestSellerCategory, setBestSellerCategory] = useState('Processors');
   const [pageLoading, setPageLoading] = useState(true);
+  const [heroImageReady, setHeroImageReady] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const categorySliderRef = useRef<HTMLDivElement>(null);
   const clearanceSliderRef = useRef<HTMLDivElement>(null);
   const youtubeEmbedUrl = getYouTubeEmbedUrl(videoUrl);
+
+  useEffect(() => {
+    setHeroImageReady(false);
+    const heroUrl = heroImages.map(resolveMediaUrl).find(Boolean);
+    if (!homeSettingsReady) return;
+    if (!heroUrl) {
+      setHeroImageReady(true);
+      return;
+    }
+    const image = new Image();
+    image.onload = () => setHeroImageReady(true);
+    image.onerror = () => setHeroImageReady(true);
+    image.src = heroUrl;
+    return () => {
+      image.onload = null;
+      image.onerror = null;
+    };
+  }, [heroImages, homeSettingsReady]);
 
   const scrollCategories = (direction: 'left' | 'right') => {
     if (categorySliderRef.current) {
@@ -130,7 +140,7 @@ export default function Home() {
     }
   };
 
-  const displayCategories = categories && categories.length > 0 ? categories : CATEGORIES;
+  const displayCategories = categories.filter(category => Boolean(category.img));
   const clearanceProducts = products.filter(p => (p.discount && p.discount > 0) || p.price < 150000).slice(0, 8);
   const displayClearance = clearanceProducts.length > 0 ? clearanceProducts : products.slice(0, 8);
 
@@ -155,6 +165,7 @@ export default function Home() {
 
   useEffect(() => {
     setPageLoading(true);
+    if (!homeSettingsReady || !heroImageReady) return;
     const waitForImages = () => {
       const images = Array.from(document.images).filter(image => {
         const bounds = image.getBoundingClientRect();
@@ -174,7 +185,7 @@ export default function Home() {
     };
     const frame = window.requestAnimationFrame(waitForImages);
     return () => window.cancelAnimationFrame(frame);
-  }, [imageSettingsKey]);
+  }, [imageSettingsKey, homeSettingsReady, heroImageReady]);
 
   useEffect(() => {
     const hideTextTimer = window.setTimeout(() => setShowVideoText(false), 5000);
@@ -186,11 +197,29 @@ export default function Home() {
       {pageLoading && (
         <div className="fixed inset-0 z-[100] flex min-h-screen items-center justify-center bg-white">
           <div className="flex flex-col items-center gap-3">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-[#2ee661]" />
-            <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Loading Orion LK</span>
+            <div className="home-loader" aria-label="Loading Orion LK" />
+            <p className="text-sm font-black tracking-tight text-gray-900">ORION<span className="text-[#2ee661]">.LK</span></p>
           </div>
         </div>
       )}
+      <style>{`
+        .home-loader {
+          width: 50px;
+          aspect-ratio: 1;
+          background: #1f2937;
+          border-radius: 50%;
+          animation: home-loader-morph 3s infinite linear;
+        }
+        @keyframes home-loader-morph {
+          12.5% { border-radius: 37% 63% 70% 30% / 30% 62% 38% 70%; }
+          25% { border-radius: 50% 50% 70% 30% / 52% 62% 38% 48%; }
+          37.5% { border-radius: 33% 67% 18% 82% / 52% 75% 25% 48%; }
+          50% { border-radius: 73% 27% 18% 82% / 52% 32% 68% 48%; }
+          62.5% { border-radius: 73% 27% 74% 26% / 64% 32% 68% 36%; }
+          75% { border-radius: 84% 16% 15% 85% / 55% 79% 21% 45%; }
+          87.5% { border-radius: 12% 88% 69% 31% / 10% 66% 34% 90%; }
+        }
+      `}</style>
       <div className="h-10 w-full bg-white"></div>
       <div className="min-h-screen bg-gray-50 pb-12">
 
@@ -264,11 +293,10 @@ export default function Home() {
         </AnimatedSection>
 
         {/* 3. Top Categories */}
-        <AnimatedSection className="max-w-7xl mx-auto px-4 mt-8 md:mt-10 relative">
-          <div className="flex items-center justify-between mb-6">
+        <AnimatedSection className="max-w-7xl mx-auto px-3 sm:px-4 mt-6 md:mt-10 relative">
+          <div className="flex items-center justify-between mb-4 md:mb-6">
             <div>
-              <h2 className="text-2xl font-black text-gray-900 uppercase">Top Categories</h2>
-              <p className="text-xs text-gray-500 font-medium mt-0.5">Explore {displayCategories.length} categories available at Orion LK</p>
+              <h2 className="text-xl md:text-2xl font-black text-gray-900 uppercase">Top Categories</h2>
             </div>
             <Link to="/shop" className="text-xs font-bold text-gray-700 hover:text-black flex items-center gap-1">
               View All in Shop <ChevronRight size={14} />
@@ -278,30 +306,30 @@ export default function Home() {
           {/* Scroll Arrows */}
           <button
             onClick={() => scrollCategories('left')}
-            className="absolute left-2 top-[58%] -translate-y-1/2 bg-white/95 p-2.5 rounded-full  z-10 hover:bg-white text-gray-800 transition-all hover:scale-105"
+            className="absolute left-1 sm:left-2 top-[57%] -translate-y-1/2 bg-white/95 p-2 rounded-full z-10 hover:bg-white text-gray-800 transition-all hover:scale-105"
             aria-label="Scroll left"
           >
             <ChevronLeft size={22} />
           </button>
 
-          <div ref={categorySliderRef} className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide px-6 scroll-smooth">
+          <div ref={categorySliderRef} className="flex overflow-x-auto gap-3 md:gap-4 pb-4 scrollbar-hide px-5 md:px-6 scroll-smooth">
             {displayCategories.map((cat, idx) => (
               <Link
                 key={cat.id || idx}
                 to={`/shop?category=${encodeURIComponent(cat.name)}`}
-                className="flex flex-col items-center gap-2.5 cursor-pointer group min-w-[110px] shrink-0"
+                className="flex flex-col items-center gap-2 cursor-pointer group min-w-[88px] md:min-w-[110px] shrink-0"
               >
-                <div className="w-24 h-24 rounded-2xl bg-white  overflow-hidden flex items-center justify-center p-3 transition-all duration-300">
+                <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-white overflow-hidden flex items-center justify-center p-2.5 md:p-3 transition-all duration-300">
                   <img src={cat.img} alt={cat.name} className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500" />
                 </div>
-                <span className="text-xs font-bold text-center text-gray-800 group-hover:text-black transition-colors leading-tight line-clamp-2 max-w-[110px]">{cat.name}</span>
+                <span className="text-[11px] md:text-xs font-bold text-center text-gray-800 group-hover:text-black transition-colors leading-tight line-clamp-2 max-w-[100px]">{cat.name}</span>
               </Link>
             ))}
           </div>
 
           <button
             onClick={() => scrollCategories('right')}
-            className="absolute right-2 top-[58%] -translate-y-1/2 bg-white/95 p-2.5 rounded-full shadow-lg z-10 hover:bg-white text-gray-800 border border-gray-200 transition-all hover:scale-105"
+            className="absolute right-1 sm:right-2 top-[57%] -translate-y-1/2 bg-white/95 p-2 rounded-full shadow-lg z-10 hover:bg-white text-gray-800 border border-gray-200 transition-all hover:scale-105"
             aria-label="Scroll right"
           >
             <ChevronRight size={22} />
@@ -360,7 +388,6 @@ export default function Home() {
           <div className="flex flex-col md:flex-row justify-between items-end mb-6 gap-4">
             <div>
               <h2 className="text-3xl font-black text-gray-900 uppercase tracking-tight">Hardware Spotlight</h2>
-              <p className="text-gray-500 font-medium">Experience the next generation of gaming performance.</p>
             </div>
           </div>
 
@@ -380,7 +407,6 @@ export default function Home() {
               <video
                 ref={videoRef}
                 src={videoFailed ? FALLBACK_VIDEO_URL : videoUrl}
-                poster="https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&q=80&w=1600"
                 className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
                 autoPlay
                 muted={isMuted}
@@ -489,7 +515,6 @@ export default function Home() {
 
               {/* Watch Image Mock */}
               <div className="relative z-10 w-[280px] md:w-[450px] h-[280px] md:h-[450px] mt-10 md:mt-20">
-                <img src="https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?auto=format&fit=crop&q=80&w=600" className="w-full h-full object-cover rounded-full shadow-[0_0_50px_rgba(0,0,0,0.8)] border-[12px] border-[#1a1a24]" alt="Haylou Smartwatch Face" />
                 <div className="absolute -inset-4 rounded-full border-4 border-gray-800/50 shadow-2xl z-[-1]"></div>
                 <div className="absolute top-1/2 -left-8 w-12 h-24 bg-[#1a1a24] -translate-y-1/2 rounded-l-xl z-[-2]"></div>
                 <div className="absolute top-1/2 -right-8 w-12 h-24 bg-[#1a1a24] -translate-y-1/2 rounded-r-xl z-[-2]"></div>
@@ -521,7 +546,6 @@ export default function Home() {
 
         {/* 4. Clearance Sale */}
         <AnimatedSection className="max-w-7xl mx-auto px-4 mt-10 md:mt-14 relative bg-[#030816] rounded-2xl p-8 pt-12 overflow-hidden shadow-xl">
-          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1598550476439-6847785fcea6?auto=format&fit=crop&q=80&w=1200')] opacity-20 bg-cover bg-center"></div>
           <div className="absolute inset-0 bg-gradient-to-r from-[#030816] to-transparent"></div>
           <div className="relative z-10 mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
             <div>
@@ -679,7 +703,6 @@ export default function Home() {
               <p className="text-gray-600 text-sm italic">"Best prices in town for genuine products. The staff was very helpful with my new PC build."</p>
             </div>
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden relative group">
-              <img src="https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&fit=crop&q=80&w=400" className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500" alt="Happy Customer" />
               <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <Play className="text-white w-12 h-12" fill="white" />
               </div>

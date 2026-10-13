@@ -186,6 +186,7 @@ interface AdminContextType {
   bestSellerIds: string[];
   setBestSellerIds: (ids: string[]) => void;
   refreshHomeSettings: () => Promise<void>;
+  homeSettingsReady: boolean;
   // Async actions connected to MongoDB
   refreshProducts: () => Promise<void>;
   refreshCategories: () => Promise<void>;
@@ -288,20 +289,21 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     } catch { return defaultValue; }
   };
 
-  const [heroImages, setHeroImages] = useState<string[]>(() => loadState('admin_heroImages', DEFAULT_HERO_IMAGES).map(resolveMediaUrl));
+  const [heroImages, setHeroImages] = useState<string[]>([]);
   const [videoUrl, setVideoUrl] = useState<string>(() => loadState('admin_videoUrl', DEFAULT_VIDEO_URL));
-  const [accessories, setAccessories] = useState<Accessory[]>(() => loadState('admin_accessories', DEFAULT_ACCESSORIES).map((item: Accessory) => ({ ...item, image: resolveMediaUrl(item.image) })));
-  const [featuredImages, setFeaturedImages] = useState<FeaturedImage[]>(() => loadState('admin_featuredImages', DEFAULT_FEATURED_IMAGES).map((item: FeaturedImage) => ({ ...item, url: resolveMediaUrl(item.url) })));
-  const [pcBuildCards, setPcBuildCards] = useState<PcBuildCard[]>(() => loadState('admin_pcBuildCards', DEFAULT_PC_BUILD_CARDS).map((item: PcBuildCard) => ({ ...item, image: resolveMediaUrl(item.image) })));
-  const [homePromoCards, setHomePromoCards] = useState<HomePromoCard[]>(() => loadState('admin_homePromoCards', DEFAULT_HOME_PROMO_CARDS).map((item: HomePromoCard) => ({ ...item, image: resolveMediaUrl(item.image) })));
+  const [accessories, setAccessories] = useState<Accessory[]>([]);
+  const [featuredImages, setFeaturedImages] = useState<FeaturedImage[]>([]);
+  const [pcBuildCards, setPcBuildCards] = useState<PcBuildCard[]>([]);
+  const [homePromoCards, setHomePromoCards] = useState<HomePromoCard[]>([]);
   const [brands, setBrands] = useState<Brand[]>(() => loadState('admin_brands', []));
-  const [products, setProducts] = useState<AdminProductItem[]>(() => loadState('admin_products', MOCK_PRODUCTS));
+  const [products, setProducts] = useState<AdminProductItem[]>([]);
   const [orders, setOrders] = useState<AdminOrder[]>(() => loadState('admin_orders', DEFAULT_ORDERS));
   const [users, setUsers] = useState<AdminUser[]>(() => loadState('admin_users', DEFAULT_USERS));
   const [categories, setCategories] = useState<AdminCategory[]>(() => loadState('admin_categories', []));
   const [paymentOptions, setPaymentOptions] = useState<PaymentOption[]>(() => loadState('admin_payments', DEFAULT_PAYMENTS));
   const [specialOffers, setSpecialOffers] = useState<SpecialOffer[]>(() => loadState('admin_offers', DEFAULT_SPECIAL_OFFERS));
   const [specialOffersDeadline, setSpecialOffersDeadline] = useState<string>(() => loadState('admin_offers_deadline', ''));
+  const [homeSettingsReady, setHomeSettingsReady] = useState(false);
   const [whatsappNumber, setWhatsappNumber] = useState<string>(() => loadState('admin_whatsapp', '+94 77 123 4567'));
   const [storeAddress, setStoreAddress] = useState<string>(() => loadState('admin_address', 'No. 123, Main Street, Colombo 03, Sri Lanka'));
   const [bestSellerIds, setBestSellerIds] = useState<string[]>(() => loadState('admin_bestsellers', ['1', '2', '3', '4']));
@@ -643,6 +645,8 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       applyHomeSettings(await getHomeSettings());
     } catch (error) {
       console.warn('Home settings load failed:', error);
+    } finally {
+      setHomeSettingsReady(true);
     }
   }, [applyHomeSettings]);
 
@@ -695,7 +699,7 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       whatsappNumber, setWhatsappNumber,
       storeAddress, setStoreAddress,
       bestSellerIds, setBestSellerIds,
-      refreshHomeSettings,
+      refreshHomeSettings, homeSettingsReady,
       refreshProducts,
       refreshCategories,
       refreshBrands,

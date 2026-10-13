@@ -294,20 +294,20 @@ export default function Admin() {
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={() => setSidebarOpen(false)}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
           />
         )}
       </AnimatePresence>
 
       {/* Sidebar */}
-      <aside className={`fixed top-0 left-0 h-full w-64 bg-[#161B22] border-r border-[#30363D] z-50 flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+      <aside className={`fixed top-0 left-0 h-full w-[min(86vw,18rem)] md:w-64 bg-[#161B22] border-r border-[#30363D] z-50 flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         {/* Logo */}
         <div className="h-16 flex items-center justify-between px-5 border-b border-[#30363D] shrink-0">
           <Link to="/" className="flex items-center gap-2">
             <span className="text-[#2ee661] font-black text-xl tracking-tight" style={{ fontFamily: "'Orbitron', sans-serif" }}>ORION</span>
             <span className="text-xs text-gray-500 bg-[#0d1117] border border-[#30363D] rounded px-1.5 py-0.5 font-bold">ADMIN</span>
           </Link>
-          <button onClick={() => setSidebarOpen(false)} className="p-1.5 text-gray-500 hover:text-white lg:hidden"><X size={18} /></button>
+          <button onClick={() => setSidebarOpen(false)} aria-label="Close admin navigation" className="p-1.5 text-gray-500 hover:text-white md:hidden"><X size={18} /></button>
         </div>
 
         {/* Nav */}
@@ -363,30 +363,30 @@ export default function Admin() {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 lg:ml-64 flex flex-col min-h-screen">
+      <div className="flex-1 md:ml-64 flex flex-col min-h-screen">
         {/* Top Bar */}
-        <header className="h-16 bg-[#161B22] border-b border-[#30363D] flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30">
+        <header className="min-h-16 bg-[#161B22] border-b border-[#30363D] flex items-center justify-between gap-3 px-3 sm:px-4 lg:px-6 py-3 sticky top-0 z-30">
           <div className="flex items-center gap-3">
-            <button onClick={() => setSidebarOpen(true)} className="p-2 text-gray-500 hover:text-white lg:hidden">
+            <button onClick={() => setSidebarOpen(true)} aria-label="Open admin navigation" className="p-2 -ml-1 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 md:hidden">
               <Menu size={20} />
             </button>
-            <div>
-              <h1 className="text-white font-bold text-sm capitalize">
+            <div className="min-w-0">
+              <h1 className="text-white font-bold text-sm capitalize truncate">
                 {activeTab.replace('-', ' ')}
               </h1>
               <p className="text-gray-600 text-xs hidden sm:block">Orion.LK Admin Panel</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             {pendingOrders > 0 && (
-              <button onClick={() => navigate('orders')} className="relative p-2 text-gray-500 hover:text-white transition-colors">
+              <button onClick={() => navigate('orders')} aria-label={`${pendingOrders} pending orders`} className="relative p-2 rounded-xl text-gray-500 hover:text-white hover:bg-white/5 transition-colors">
                 <Bell size={20} />
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-black w-4.5 h-4.5 w-5 h-5 rounded-full flex items-center justify-center">{pendingOrders}</span>
               </button>
             )}
             <button onClick={handleSave}
-              className="flex items-center gap-2 bg-[#2ee661] text-black px-4 py-2 rounded-xl font-bold text-sm hover:bg-[#24c24e] transition-colors shadow-md shadow-[#2ee661]/20">
-              <Save size={15} /> Save
+              className="flex items-center gap-2 bg-[#2ee661] text-black px-3 sm:px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm hover:bg-[#24c24e] transition-colors shadow-md shadow-[#2ee661]/20">
+              <Save size={15} /> <span className="hidden xs:inline sm:inline">Save</span>
             </button>
             <Link to="/" className="text-gray-500 hover:text-white transition-colors text-xs font-medium hidden sm:block">← View Site</Link>
           </div>
@@ -395,7 +395,7 @@ export default function Admin() {
         {saveMessage && (
           <div
             role="status"
-            className={`fixed right-5 top-20 z-50 flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-bold shadow-2xl ${
+            className={`fixed left-3 right-3 sm:left-auto sm:right-5 top-[7.5rem] sm:top-20 z-50 flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-bold shadow-2xl ${
               saveMessage.type === 'success'
                 ? 'border-[#2ee661]/30 bg-[#14251a] text-[#2ee661]'
                 : 'border-red-400/30 bg-[#2a1717] text-red-300'
@@ -407,7 +407,7 @@ export default function Admin() {
         )}
 
         {/* Page Content */}
-        <main className="flex-1 p-4 lg:p-8 overflow-auto">
+        <main className="flex-1 min-w-0 p-3 sm:p-5 lg:p-8 overflow-x-hidden overflow-y-auto">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}

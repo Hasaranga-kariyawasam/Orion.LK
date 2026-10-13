@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Heart, Search, Menu, User, Phone, Globe, ChevronRight, Shuffle, Watch, Headphones, Square, Keyboard, HardDrive, Headset, BatteryCharging, Smartphone, Speaker, Cable, Car, Camera, Monitor, MoreHorizontal, Home, LayoutGrid, RefreshCw, Wind, Store, MapPin, Package, Bell, LogOut, Settings } from 'lucide-react';
+import { ShoppingCart, Heart, Search, Menu, X, User, Phone, Globe, ChevronRight, Shuffle, Watch, Headphones, Square, Keyboard, HardDrive, Headset, BatteryCharging, Smartphone, Speaker, Cable, Car, Camera, Monitor, MoreHorizontal, Home, LayoutGrid, RefreshCw, Wind, Store, MapPin, Package, Bell, LogOut, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
 import { BRAND_NEW_CATEGORIES, USED_CATEGORIES, MOCK_PRODUCTS, BRAND_LOGO_URL } from '../data';
@@ -73,9 +73,10 @@ export default function Header() {
 
   return (
     <>
-      <header className={`w-full bg-[#161B22]/90 backdrop-blur-md fixed top-0 left-0 right-0 z-40 transition-transform duration-300  border-b border-[#30363D] ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+      <header className={`w-full bg-[#e8eef7] fixed top-0 left-0 right-0 z-40 transition-transform duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
         {/* Top Header */}
-        <div className="container mx-auto max-w-7xl px-4 h-24 flex items-center justify-between gap-6">
+        <div className="bg-[#161B22]/90 backdrop-blur-md">
+          <div className="relative z-10 container mx-auto max-w-7xl px-4 h-20 flex items-center justify-between gap-6">
 
           {/* Logo */}
           <a href="/" className="flex items-center shrink-0">
@@ -117,7 +118,7 @@ export default function Header() {
                     <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                       {searchQuery.trim() === '' ? 'Trending Products' : 'Search Results'}
                     </span>
-                  </div>
+                    </div>
                   <div className="max-h-96 overflow-y-auto">
                     {searchResults.length > 0 ? (
                       searchResults.map(product => (
@@ -278,36 +279,65 @@ export default function Header() {
             </button>
           </div>
         </div>
+        </div>
 
         {/* Sub Header */}
-        <div className="bg-white border-b border-gray-200 relative" onMouseLeave={() => setActiveDropdown(null)}>
-          <div className="container mx-auto max-w-7xl px-4 h-14 flex items-center justify-between">
+        <div className="bg-[#e8eef7] relative border-0" onMouseLeave={() => setActiveDropdown(null)}>
+          <div className="container mx-auto max-w-7xl px-4 h-12 flex items-center justify-between">
             <div className="flex items-center gap-6 h-full">
               {/* Links */}
-              <nav className="hidden lg:flex items-center gap-4 xl:gap-6 font-bold text-gray-600 text-[12px] xl:text-[13px] uppercase tracking-wide h-full whitespace-nowrap">
+              <nav className="hidden lg:flex items-center gap-4 xl:gap-6 font-bold text-slate-700 text-[12px] xl:text-[13px] uppercase tracking-wide h-full whitespace-nowrap">
                 <button
                   onMouseEnter={() => setActiveDropdown('brandNew')}
-                  className={`flex items-center gap-1 transition-colors h-full outline-none ${activeDropdown === 'brandNew' ? 'text-[#2ee661]' : 'hover:text-black'}`}
+                  className={`flex items-center gap-1 transition-colors h-full outline-none ${activeDropdown === 'brandNew' ? 'text-[#2ee661]' : 'hover:text-slate-950'}`}
                 >
                   BRAND NEW PRODUCTS <ChevronRight size={14} className={`transition-transform duration-300 ${activeDropdown === 'brandNew' ? '-rotate-90' : 'rotate-90'}`} />
                 </button>
                 <button
                   onMouseEnter={() => setActiveDropdown('used')}
-                  className={`flex items-center gap-1 transition-colors h-full outline-none ${activeDropdown === 'used' ? 'text-[#2ee661]' : 'hover:text-black'}`}
+                  className={`flex items-center gap-1 transition-colors h-full outline-none ${activeDropdown === 'used' ? 'text-[#2ee661]' : 'hover:text-slate-950'}`}
                 >
                   USED PRODUCTS <ChevronRight size={14} className={`transition-transform duration-300 ${activeDropdown === 'used' ? '-rotate-90' : 'rotate-90'}`} />
                 </button>
-                <a href="/shop" className="hover:text-black transition-colors">
+                <a href="/shop" className="hover:text-slate-950 transition-colors">
                   ALL PRODUCTS
                 </a>
                 <Link to="/offers" className="text-[#f0364c] hover:text-red-700 transition-colors flex items-center gap-1">
                   <Heart size={14} className="fill-current" /> SPECIAL OFFERS
                 </Link>
-                <Link to="/orders" className="hover:text-black transition-colors">
+                <Link to="/orders" className="hover:text-slate-950 transition-colors">
                   TRACK YOUR DELIVERY
                 </Link>
-                <Link to="/build" className="text-[#2ee661] font-black hover:text-[#24c24e] transition-colors flex items-center gap-1">
+                <Link to="/build" className="text-slate-900 font-black hover:text-black transition-colors flex items-center gap-1">
                   <Package size={14} /> BUILD MY PC
+                </Link>
+              </nav>
+
+              {/* Compact navigation for mobile and tablet screens */}
+              <nav className="lg:hidden flex items-center gap-1.5 h-full w-full overflow-x-auto scrollbar-hide whitespace-nowrap pr-2 text-[10px] sm:text-[11px] font-black uppercase tracking-wide">
+                <button
+                  onClick={() => setActiveDropdown(activeDropdown === 'brandNew' ? null : 'brandNew')}
+                  className={`shrink-0 rounded-full px-3 py-1.5 transition-colors ${activeDropdown === 'brandNew' ? 'bg-slate-900 text-white' : 'bg-white/70 text-slate-700 hover:bg-white'}`}
+                >
+                  New
+                </button>
+                <button
+                  onClick={() => setActiveDropdown(activeDropdown === 'used' ? null : 'used')}
+                  className={`shrink-0 rounded-full px-3 py-1.5 transition-colors ${activeDropdown === 'used' ? 'bg-slate-900 text-white' : 'bg-white/70 text-slate-700 hover:bg-white'}`}
+                >
+                  Used
+                </button>
+                <a href="/shop" className="shrink-0 rounded-full bg-white/70 px-3 py-1.5 text-slate-700 hover:bg-white transition-colors">
+                  All Products
+                </a>
+                <Link to="/offers" className="shrink-0 rounded-full bg-red-50 px-3 py-1.5 text-[#d92840] hover:bg-red-100 transition-colors">
+                  Offers
+                </Link>
+                <Link to="/orders" className="shrink-0 rounded-full bg-white/70 px-3 py-1.5 text-slate-700 hover:bg-white transition-colors">
+                  Track
+                </Link>
+                <Link to="/build" className="shrink-0 rounded-full bg-white/70 px-3 py-1.5 text-slate-900 hover:bg-white transition-colors">
+                  Build PC
                 </Link>
               </nav>
 
@@ -319,15 +349,30 @@ export default function Header() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
                     transition={{ duration: 0.2 }}
-                    className="absolute top-[100%] left-0 w-full bg-white border-t border-gray-100 shadow-2xl z-50 py-10 px-4"
+                    className="fixed inset-y-0 left-0 w-[86vw] max-w-sm bg-white shadow-2xl z-[80] py-5 px-4 overflow-y-auto lg:absolute lg:inset-y-auto lg:top-[100%] lg:left-0 lg:w-full lg:max-w-none lg:shadow-2xl lg:border-t lg:border-gray-100 lg:py-10"
                   >
-                    <div className="container mx-auto max-w-7xl grid grid-cols-3 md:grid-cols-5 lg:grid-cols-8 gap-x-4 gap-y-12">
+                    <div className="flex items-center justify-between mb-6 lg:hidden">
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-wider text-gray-400">Browse</p>
+                        <h3 className="text-lg font-black text-gray-900">
+                          {activeDropdown === 'brandNew' ? 'Brand New Products' : 'Used Products'}
+                        </h3>
+                      </div>
+                      <button
+                        onClick={() => setActiveDropdown(null)}
+                        aria-label="Close category menu"
+                        className="rounded-full bg-gray-100 p-2 text-gray-500 hover:bg-gray-200 hover:text-gray-900"
+                      >
+                        <X size={18} />
+                      </button>
+                    </div>
+                    <div className="container mx-auto max-w-7xl grid grid-cols-2 md:grid-cols-5 lg:grid-cols-8 gap-x-4 gap-y-8 lg:gap-y-12">
                       {(activeDropdown === 'brandNew' ? brandNewCategories : usedCategories).map((cat: any, idx) => (
                         <Link
                           key={cat.id || idx}
                           to={`/shop?category=${encodeURIComponent(cat.name)}&type=${activeDropdown === 'brandNew' ? 'brand-new' : 'used'}`}
                           onClick={() => setActiveDropdown(null)}
-                          className="flex flex-col items-center text-center group cursor-pointer"
+                          className="flex flex-col items-center text-center group cursor-pointer rounded-xl p-2 hover:bg-gray-50"
                         >
                           <div className="h-16 flex items-center justify-center transform group-hover:-translate-y-1 group-hover:scale-105 transition-all duration-300 mb-3 w-full p-2">
                             <img src={cat.img} alt={cat.name} className="max-w-full max-h-full object-contain" />
@@ -349,14 +394,14 @@ export default function Header() {
                 <Globe className="text-gray-400" size={20} />
                 <div className="flex flex-col leading-tight">
                   <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Islandwide</span>
-                  <span className="text-xs font-bold text-[#2ee661]">Fast Delivery</span>
+                  <span className="text-xs font-bold text-slate-900">Fast Delivery</span>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="text-gray-400" size={20} />
                 <div className="flex flex-col leading-tight">
                   <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Contact Us</span>
-                  <span className="text-xs font-bold text-[#2ee661]">{whatsappNumber}</span>
+                  <span className="text-xs font-bold text-slate-900">{whatsappNumber}</span>
                 </div>
               </div>
             </div>
