@@ -765,14 +765,14 @@ export async function POST(req: NextRequest) {
           name: c.name,
           slug: c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
           type: 'brand-new',
-          count: c.count,
+          count: 5,
           img: c.img,
         })),
         ...USED_CATEGORIES.map(c => ({
           name: c.name,
           slug: c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
           type: 'used',
-          count: c.count,
+          count: 5,
           img: c.img,
         })),
       ];
@@ -796,38 +796,79 @@ export async function POST(req: NextRequest) {
     if (existingProductCount === 0 || force) {
       if (force) await Product.deleteMany({});
 
-      // Expand to ensure EVERY single category has multiple realistic items (100+ products)
+      // Keep the curated products above and add deterministic catalogue entries
+      // so every category has at least five products without random placeholder data.
       const expandedProducts: any[] = [...INITIAL_PRODUCTS];
       const allCategoryList = [...BRAND_NEW_CATEGORIES, ...USED_CATEGORIES];
+      const productVariants = ['Core', 'Pro', 'Plus', 'Advanced', 'Elite'];
+      const categoryBasePrices: Record<string, number> = {
+        Adapters: 4500,
+        'Cables & Connectors': 3500,
+        'Computer Casings': 28000,
+        Coolers: 18000,
+        'Cooling Pads': 9500,
+        'Fan Kits': 12000,
+        'Gaming Chairs': 78000,
+        'Gaming Controllers': 22000,
+        'Graphics Cards': 185000,
+        HDD: 22000,
+        'Headset Stand': 8500,
+        Headsets: 18000,
+        Keyboards: 16000,
+        Laptops: 185000,
+        Microphones: 24000,
+        Monitors: 65000,
+        Motherboards: 55000,
+        Mouse: 8500,
+        'Mouse Pads': 6500,
+        NVMe: 28000,
+        'Pen Drive': 6500,
+        'Power Supply Units': 32000,
+        Processors: 65000,
+        RAM: 18000,
+        'SATA SSD': 22000,
+        Speakers: 18000,
+        'Storage Devices': 25000,
+        UPS: 28000,
+        Webcam: 18000,
+      };
 
       // Add variations per category so total count exceeds 100 items
       allCategoryList.forEach((cat, idx) => {
         const isUsed = cat.name.toLowerCase().includes('used');
-        const itemCount = isUsed ? 2 : 3;
-        for (let i = 1; i <= itemCount; i++) {
+        const existingCount = expandedProducts.filter(product => product.category === cat.name).length;
+        const itemCount = Math.max(0, 5 - existingCount);
+        const cleanCategory = cat.name.replace(/^Used /, '');
+        const basePrice = categoryBasePrices[cleanCategory] || 15000;
+
+        for (let i = 0; i < itemCount; i++) {
+          const variantIndex = (idx + i) % productVariants.length;
           const brandName = INITIAL_BRANDS[(idx * 3 + i) % INITIAL_BRANDS.length].name;
+          const price = Math.round((basePrice * (1 + variantIndex * 0.18) * (isUsed ? 0.62 : 1)) / 100) * 100;
+          const originalPrice = Math.round((price * (isUsed ? 1.12 : 1.1)) / 100) * 100;
+          const productNumber = existingCount + i + 1;
           expandedProducts.push({
-            name: `${brandName} ${cat.name.replace(/Used /g, '')} ${i === 1 ? 'Ultra' : i === 2 ? 'Elite OC' : 'Max Pro'} Edition`,
+            name: `${brandName} ${cleanCategory} ${productVariants[variantIndex]}`,
             category: cat.name,
-            price: Math.floor((Math.random() * 50 + 10) * 1000),
-            originalPrice: Math.floor((Math.random() * 60 + 65) * 1000),
-            rating: parseFloat((4.4 + Math.random() * 0.6).toFixed(1)),
-            reviews: Math.floor(Math.random() * 80 + 12),
+            price,
+            originalPrice,
+            rating: Number((4.2 + ((idx + i) % 8) / 10).toFixed(1)),
+            reviews: 18 + ((idx * 17 + i * 11) % 160),
             image: cat.img,
             images: [cat.img],
             isNewProduct: !isUsed,
-            discount: Math.floor(Math.random() * 15 + 5),
+            discount: Math.round((1 - price / originalPrice) * 100),
             status: 'In Stock',
-            shortDescription: `Original genuine ${cat.name} by ${brandName} with official warranty.`,
-            description: `Experience premier performance with the genuine ${cat.name} from ${brandName}. Fully tested, guaranteed authentic, and backed by Orion LK support.`,
-            sku: `ORK-${cat.name.replace(/[^A-Za-z]/g, '').substring(0, 3).toUpperCase()}-${idx * 10 + i}`,
+            shortDescription: `${brandName} ${cleanCategory} with reliable performance for work, gaming, and everyday use.`,
+            description: `Genuine ${brandName} ${cleanCategory} selected for Orion LK customers. This ${isUsed ? 'certified pre-owned item is inspected and tested before dispatch' : 'brand-new item is supplied with manufacturer packaging and warranty support'}.`,
+            sku: `ORK-${cleanCategory.replace(/[^A-Za-z]/g, '').substring(0, 5).toUpperCase()}-${idx + 1}-${productNumber}`,
             brand: brandName,
-            stock: Math.floor(Math.random() * 20 + 5),
+            stock: 5 + ((idx * 7 + i * 3) % 16),
             warranty: isUsed ? '6 Months' : '24 Months',
             specifications: {
               'Brand': brandName,
-              'Category': cat.name,
-              'Type': isUsed ? 'Certified Pre-Owned' : 'Brand New Boxed',
+              'Category': cleanCategory,
+              'Type': isUsed ? 'Certified Pre-Owned' : 'Brand New',
               'Warranty': isUsed ? '6 Months Orion LK Warranty' : '2 Years Official Warranty',
               'Condition': isUsed ? 'Grade A Tested' : 'Brand New Factory Sealed'
             }
