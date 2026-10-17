@@ -150,6 +150,15 @@ export default function Home() {
   };
 
   const displayCategories = categories.filter(category => Boolean(category.img));
+  const databaseImageFallbacks = products
+    .flatMap(product => product.images || [product.image])
+    .map(resolveMediaUrl)
+    .filter(Boolean);
+  const getFeaturedImage = (index: number) =>
+    resolveMediaUrl(featuredImages[index]?.url) ||
+    databaseImageFallbacks[index] ||
+    resolveMediaUrl(displayCategories[index]?.img) ||
+    FALLBACK_HOME_IMAGE;
   const clearanceProducts = products.filter(p => (p.discount && p.discount > 0) || p.price < 150000).slice(0, 8);
   const displayClearance = clearanceProducts.length > 0 ? clearanceProducts : products.slice(0, 8);
 
@@ -243,7 +252,7 @@ export default function Home() {
             {/* Stacked Right Columns */}
             <div className="md:col-span-1 flex flex-col gap-4">
               <div className="flex-1 relative rounded-2xl overflow-hidden group shadow-lg bg-[#0D1117] cursor-pointer">
-                <img src={getHomeImage(featuredImages[0]?.url)} onError={handleHomeImageError} alt={featuredImages[0]?.alt || 'Accessories'} loading="eager" fetchPriority="high" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
+                <img src={getFeaturedImage(0)} onError={handleHomeImageError} alt={featuredImages[0]?.alt || 'Accessories'} loading="eager" fetchPriority="high" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
                 <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none"></div>
                 <div className="absolute bottom-4 left-4 z-20 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
                   <button className="bg-white text-black font-black uppercase tracking-wider py-2 px-6 rounded-full hover:bg-gray-200 transition-all shadow-lg">
@@ -252,7 +261,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="flex-1 relative rounded-2xl overflow-hidden group shadow-lg bg-[#0D1117] cursor-pointer">
-                <img src={getHomeImage(featuredImages[1]?.url)} onError={handleHomeImageError} alt={featuredImages[1]?.alt || 'Hardware'} loading="eager" fetchPriority="high" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
+                <img src={getFeaturedImage(1)} onError={handleHomeImageError} alt={featuredImages[1]?.alt || 'Hardware'} loading="eager" fetchPriority="high" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
                 <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none"></div>
                 <div className="absolute bottom-4 left-4 z-20 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
                   <button className="bg-white text-black font-black uppercase tracking-wider py-2 px-6 rounded-full hover:bg-gray-200 transition-all shadow-lg">
@@ -264,7 +273,7 @@ export default function Home() {
 
             {/* Tall Right Column */}
             <div className="md:col-span-1 relative rounded-2xl overflow-hidden group shadow-lg bg-[#0D1117] cursor-pointer">
-              <img src={getHomeImage(featuredImages[2]?.url)} onError={handleHomeImageError} alt={featuredImages[2]?.alt || 'Monitors'} loading="eager" fetchPriority="high" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
+              <img src={getFeaturedImage(2)} onError={handleHomeImageError} alt={featuredImages[2]?.alt || 'Monitors'} loading="eager" fetchPriority="high" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
               <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none"></div>
               <div className="absolute bottom-6 left-6 z-20 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
                 <button className="bg-white text-black font-black uppercase tracking-wider py-3 px-8 rounded-full hover:bg-gray-200 transition-all shadow-lg">

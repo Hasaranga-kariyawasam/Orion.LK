@@ -4,9 +4,19 @@ import { useAdmin } from '../context/AdminContext';
 import { resolveMediaUrl } from '../lib/api';
 
 const HeroCarousel = () => {
-  const { heroImages } = useAdmin();
+  const { heroImages, products, categories } = useAdmin();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const validHeroImages = useMemo(() => heroImages.map(resolveMediaUrl).filter(Boolean), [heroImages]);
+  const validHeroImages = useMemo(() => {
+    const configuredImages = heroImages.map(resolveMediaUrl).filter(Boolean);
+    if (configuredImages.length > 0) return configuredImages;
+
+    const databaseImages = [
+      ...products.flatMap(product => product.images || [product.image]),
+      ...categories.map(category => category.img),
+    ].map(resolveMediaUrl).filter(Boolean);
+
+    return Array.from(new Set(databaseImages)).slice(0, 8);
+  }, [heroImages, products, categories]);
 
   useEffect(() => {
     if (validHeroImages.length === 0) return;
