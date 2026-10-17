@@ -7,8 +7,10 @@ const ADMIN_EMAILS = ['orian@admin.lk', 'orion@admin.lk'];
 
 export async function GET() {
   try {
-    await connectDB();
-    const settings = await HomeSettings.findOne({ key: 'default' }).lean();
+    const db = await connectDB();
+    const settings = await db.connection
+      .collection('homesettings')
+      .findOne({ key: 'default' });
     return NextResponse.json(
       { settings },
       { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } }
