@@ -21,6 +21,15 @@ const AnimatedSection = ({ children, className, delay = 0 }: { children: React.R
   </motion.section>
 );
 
+const FALLBACK_HOME_IMAGE = 'https://images.unsplash.com/photo-1587202372634-32705e3bf49c?auto=format&fit=crop&q=80&w=1200';
+
+const getHomeImage = (url: string | undefined) => resolveMediaUrl(url) || FALLBACK_HOME_IMAGE;
+
+const handleHomeImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
+  event.currentTarget.onerror = null;
+  event.currentTarget.src = FALLBACK_HOME_IMAGE;
+};
+
 const TiltCard = ({ children, className }: { children: React.ReactNode, className?: string }) => {
   const [transform, setTransform] = useState('');
   const cardRef = useRef<HTMLDivElement>(null);
@@ -234,7 +243,7 @@ export default function Home() {
             {/* Stacked Right Columns */}
             <div className="md:col-span-1 flex flex-col gap-4">
               <div className="flex-1 relative rounded-2xl overflow-hidden group shadow-lg bg-[#0D1117] cursor-pointer">
-                <img src={featuredImages[0]?.url} alt={featuredImages[0]?.alt || 'Accessories'} loading="eager" fetchPriority="high" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
+                <img src={getHomeImage(featuredImages[0]?.url)} onError={handleHomeImageError} alt={featuredImages[0]?.alt || 'Accessories'} loading="eager" fetchPriority="high" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
                 <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none"></div>
                 <div className="absolute bottom-4 left-4 z-20 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
                   <button className="bg-white text-black font-black uppercase tracking-wider py-2 px-6 rounded-full hover:bg-gray-200 transition-all shadow-lg">
@@ -243,7 +252,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="flex-1 relative rounded-2xl overflow-hidden group shadow-lg bg-[#0D1117] cursor-pointer">
-                <img src={featuredImages[1]?.url} alt={featuredImages[1]?.alt || 'Hardware'} loading="eager" fetchPriority="high" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
+                <img src={getHomeImage(featuredImages[1]?.url)} onError={handleHomeImageError} alt={featuredImages[1]?.alt || 'Hardware'} loading="eager" fetchPriority="high" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
                 <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none"></div>
                 <div className="absolute bottom-4 left-4 z-20 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
                   <button className="bg-white text-black font-black uppercase tracking-wider py-2 px-6 rounded-full hover:bg-gray-200 transition-all shadow-lg">
@@ -255,7 +264,7 @@ export default function Home() {
 
             {/* Tall Right Column */}
             <div className="md:col-span-1 relative rounded-2xl overflow-hidden group shadow-lg bg-[#0D1117] cursor-pointer">
-              <img src={featuredImages[2]?.url} alt={featuredImages[2]?.alt || 'Monitors'} loading="eager" fetchPriority="high" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
+              <img src={getHomeImage(featuredImages[2]?.url)} onError={handleHomeImageError} alt={featuredImages[2]?.alt || 'Monitors'} loading="eager" fetchPriority="high" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
               <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none"></div>
               <div className="absolute bottom-6 left-6 z-20 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
                 <button className="bg-white text-black font-black uppercase tracking-wider py-3 px-8 rounded-full hover:bg-gray-200 transition-all shadow-lg">
@@ -339,7 +348,7 @@ export default function Home() {
         <AnimatedSection className="max-w-7xl mx-auto px-4 mt-10 md:mt-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <TiltCard className="md:col-span-1 rounded-xl overflow-hidden cursor-pointer shadow-sm relative h-[380px] group bg-black">
-              <img src={pcBuildCards[0]?.image} alt={pcBuildCards[0]?.alt} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" />
+              <img src={getHomeImage(pcBuildCards[0]?.image)} onError={handleHomeImageError} alt={pcBuildCards[0]?.alt} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" />
               <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/20 to-black/90"></div>
               <div className="absolute inset-0 pt-8 pb-6 px-4 flex flex-col justify-between items-center text-center text-white">
                 <div>
@@ -353,7 +362,7 @@ export default function Home() {
             </TiltCard>
 
             <TiltCard className="md:col-span-2 rounded-xl overflow-hidden cursor-pointer shadow-sm relative h-[380px] group bg-black">
-              <img src={pcBuildCards[1]?.image} alt={pcBuildCards[1]?.alt} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover opacity-70 group-hover:scale-105 transition-transform duration-700" />
+              <img src={getHomeImage(pcBuildCards[1]?.image)} onError={handleHomeImageError} alt={pcBuildCards[1]?.alt} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover opacity-70 group-hover:scale-105 transition-transform duration-700" />
               <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/30 to-black/80"></div>
               <div className="absolute inset-0 pt-8 pb-6 px-6 flex flex-col justify-between items-center text-center text-white">
                 <div>
@@ -367,7 +376,7 @@ export default function Home() {
             </TiltCard>
 
             <TiltCard className="md:col-span-1 rounded-xl overflow-hidden cursor-pointer shadow-sm relative h-[380px] group bg-[#09101a]">
-              <img src={pcBuildCards[2]?.image} alt={pcBuildCards[2]?.alt} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" />
+              <img src={getHomeImage(pcBuildCards[2]?.image)} onError={handleHomeImageError} alt={pcBuildCards[2]?.alt} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" />
               <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-blue-900/30 to-black/90 mix-blend-overlay"></div>
               <div className="absolute inset-0 pt-8 pb-6 px-4 flex flex-col justify-between items-center text-center text-white">
                 <div>
@@ -606,7 +615,7 @@ export default function Home() {
         <AnimatedSection className="max-w-7xl mx-auto px-1 mt-12 md:mt-16 mb-12">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <TiltCard className="col-span-1 rounded-xl overflow-hidden cursor-pointer shadow-sm relative h-48 md:h-64 group bg-[#0e1628]">
-              <img src={deliveryPromo?.image} alt={deliveryPromo?.alt} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover opacity-50 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" />
+              <img src={getHomeImage(deliveryPromo?.image)} onError={handleHomeImageError} alt={deliveryPromo?.alt} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover opacity-50 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" />
               <div className="absolute inset-0 bg-gradient-to-r from-red-600/90 to-transparent"></div>
               <div className="absolute inset-0 p-8 flex flex-col justify-center text-white">
                 <h3 className="text-4xl md:text-5xl font-black italic tracking-tighter uppercase mb-2 drop-shadow-md whitespace-pre-line">{deliveryPromo?.title}</h3>
@@ -618,7 +627,7 @@ export default function Home() {
             </TiltCard>
 
             <TiltCard className="col-span-1 rounded-xl overflow-hidden cursor-pointer shadow-sm relative h-48 md:h-64 group bg-[#281b3d]">
-              <img src={installmentsPromo?.image} alt={installmentsPromo?.alt} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" />
+              <img src={getHomeImage(installmentsPromo?.image)} onError={handleHomeImageError} alt={installmentsPromo?.alt} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" />
               <div className="absolute inset-0 bg-gradient-to-r from-indigo-900/90 to-transparent"></div>
               <div className="absolute inset-0 p-8 flex flex-col justify-center text-white">
                 <h4 className="text-indigo-300 font-bold tracking-widest uppercase mb-1">{installmentsPromo?.eyebrow}</h4>
@@ -630,7 +639,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <TiltCard className="rounded-xl overflow-hidden cursor-pointer shadow-sm relative h-64 md:h-80 group bg-black">
-              <img src={gamingPromo?.image} alt={gamingPromo?.alt} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:scale-105 transition-transform duration-700" />
+              <img src={getHomeImage(gamingPromo?.image)} onError={handleHomeImageError} alt={gamingPromo?.alt} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:scale-105 transition-transform duration-700" />
               <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-transparent to-black/80"></div>
               <div className="absolute inset-0 p-6 flex flex-col justify-between text-white">
                 <div>
@@ -643,7 +652,7 @@ export default function Home() {
             </TiltCard>
 
             <TiltCard className="rounded-xl overflow-hidden cursor-pointer shadow-sm relative h-64 md:h-80 group bg-gray-900">
-              <img src={keyboardsPromo?.image} alt={keyboardsPromo?.alt} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:scale-105 transition-transform duration-700" />
+              <img src={getHomeImage(keyboardsPromo?.image)} onError={handleHomeImageError} alt={keyboardsPromo?.alt} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:scale-105 transition-transform duration-700" />
               <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors duration-500"></div>
               <div className="absolute inset-0 p-6 flex flex-col justify-center items-center text-white text-center">
                 <span className="text-yellow-500 font-bold text-[10px] tracking-widest uppercase block mb-2">{keyboardsPromo?.eyebrow}</span>
@@ -654,7 +663,7 @@ export default function Home() {
             </TiltCard>
 
             <TiltCard className="rounded-xl overflow-hidden cursor-pointer shadow-sm relative h-64 md:h-80 group bg-black">
-              <img src={speakersPromo?.image} alt={speakersPromo?.alt} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:scale-105 transition-transform duration-700" />
+              <img src={getHomeImage(speakersPromo?.image)} onError={handleHomeImageError} alt={speakersPromo?.alt} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:scale-105 transition-transform duration-700" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent"></div>
               <div className="absolute inset-0 p-6 flex flex-col justify-between text-white text-right items-end">
                 <div>

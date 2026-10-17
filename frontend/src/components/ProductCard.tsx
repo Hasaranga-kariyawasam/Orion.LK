@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { Product } from '../types';
 import { formatLKR } from '../data';
 import { useShop } from '../context/ShopContext';
+import { resolveMediaUrl } from '../lib/api';
 
 const FALLBACK_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&q=80&w=600';
 
@@ -17,7 +18,10 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
   const kokoInstallment = product.price / 3;
   const payzyInstallment = product.price / 4;
 
-  const images = product.images && product.images.length > 0 ? product.images : [product.image];
+  const images = (product.images && product.images.length > 0 ? product.images : [product.image])
+    .map(resolveMediaUrl)
+    .filter(Boolean);
+  const displayImages = images.length > 0 ? images : [FALLBACK_PRODUCT_IMAGE];
 
   return (
     <motion.div
@@ -75,18 +79,18 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
       <div
         className="relative aspect-[4/4] w-full flex items-center justify-center overflow-hidden mb-4 group/image mt-0"
         onMouseMove={(e) => {
-          if (images.length <= 1) return;
+          if (displayImages.length <= 1) return;
           const { left, width } = e.currentTarget.getBoundingClientRect();
           const x = e.clientX - left;
-          const sectionWidth = width / images.length;
-          const index = Math.min(Math.floor(x / sectionWidth), images.length - 1);
+          const sectionWidth = width / displayImages.length;
+          const index = Math.min(Math.floor(x / sectionWidth), displayImages.length - 1);
           setCurrentImageIndex(Math.max(0, index));
         }}
         onMouseLeave={() => setCurrentImageIndex(0)}
       >
         <Link to={`/product/${product.id}`} className="w-full h-full block">
           <img
-            src={images[currentImageIndex]}
+            src={displayImages[currentImageIndex]}
             alt={product.name}
             className="w-full h-full object-contain transition-transform duration-300 group-hover/image:scale-105"
             onError={(event) => {
@@ -97,9 +101,9 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
         </Link>
 
         {/* Dots */}
-        {images.length > 1 && (
+        {displayImages.length > 1 && (
           <div className="absolute bottom-1 left-0 right-0 flex justify-center gap-1.5 opacity-0 group-hover/image:opacity-100 transition-opacity">
-            {images.map((_, idx) => (
+            {displayImages.map((_, idx) => (
               <div key={idx} className={`h-1 rounded-sm transition-all ${idx === currentImageIndex ? 'bg-gray-800 w-4' : 'bg-gray-300 w-2'}`} />
             ))}
           </div>

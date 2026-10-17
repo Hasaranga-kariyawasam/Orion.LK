@@ -1,12 +1,13 @@
 const mongoose = require('mongoose');
 
 const MONGO_URI = process.env.MONGO_URI;
-const TARGET_COUNT = 500;
+const TARGET_COUNT = 165;
 const PAGE_SIZE = 100;
 const SOURCES = [
-  { name: 'MyMemory', url: 'https://mymemorylk.com/wp-json/wc/store/products' },
   { name: 'Pentium City', url: 'https://pentiumcity.com/wp-json/wc/store/products' },
 ];
+const COMPUTER_CATEGORY_PATTERN = /motherboard|mouse|casing|keyboard|ram|headset|monitor|graphic|power supply|processor|nvme|cooler|laptop|speaker|usb hub|converter|fan|cooling pad|microphone|ssd|hdd|printer|enclosure|thermal paste|webcam|gaming controller|combo|ups|storage|adapter|cable/i;
+const RECOGNIZED_BRAND_PATTERN = /ASUS|MSI|Gigabyte|Acer|Dell|HP|Lenovo|Apple|Intel|AMD|NVIDIA|Kingston|Corsair|G\.Skill|Samsung|Western Digital|WD|Seagate|Crucial|Redragon|Havit|Jedel|Logitech|Razer|Thermaltake|Deepcool|Cooler Master|Antec|FSP|EVGA|Adata|TeamGroup|Transcend|Ugreen|Baseus|TP-Link|Rapoo|JBL|A4Tech|Epson|Canon|Brother|Zotac|Palit|Galax|Biostar|Asrock|ViewSonic|AOC|BenQ|Philips|D-Link|Xiaomi|Gamdias|Jungle Leopard|Kingfast|Hikvision|Dahua/i;
 
 if (!MONGO_URI) {
   throw new Error('MONGO_URI is required');
@@ -34,7 +35,7 @@ function productBrand(product) {
 
 async function fetchProducts(source) {
   const products = [];
-  for (let page = 1; products.length < TARGET_COUNT; page += 1) {
+  for (let page = 1; ; page += 1) {
     const response = await fetch(`${source.url}?page=${page}&per_page=${PAGE_SIZE}&orderby=date&order=desc`);
     if (!response.ok) throw new Error(`${source.name} returned ${response.status}`);
     const batch = await response.json();
@@ -50,6 +51,10 @@ async function main() {
   const sourceProducts = (await Promise.all(SOURCES.map(fetchProducts))).flat();
   const selected = sourceProducts
     .filter((product) => Number(product.prices?.price || 0) / 100 >= 1000)
+    .filter((product) => {
+      const category = (product.categories || []).map((item) => item.name).join(' ');
+      return COMPUTER_CATEGORY_PATTERN.test(category) && RECOGNIZED_BRAND_PATTERN.test(product.name);
+    })
     .filter((product) => product.images?.[0]?.src)
     .slice(0, TARGET_COUNT);
 

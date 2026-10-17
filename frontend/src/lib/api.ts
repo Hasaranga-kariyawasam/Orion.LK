@@ -2,13 +2,23 @@ import { auth } from './firebase';
 
 const API_BASE_URL = (
   import.meta.env.VITE_API_URL ||
-  (import.meta.env.DEV ? 'http://localhost:5000' : '')
+  (import.meta.env.DEV ? 'http://localhost:5000' : 'https://orion-lkbackend-psi.vercel.app')
 ).replace(/\/$/, '');
 
 export function resolveMediaUrl(url: string | undefined | null): string {
   if (!url) return '';
   if (/^(https?:|data:|blob:)/i.test(url)) return url;
   return `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+}
+
+function normalizeProductMedia(product: any): any {
+  return {
+    ...product,
+    image: resolveMediaUrl(product.image),
+    images: Array.isArray(product.images)
+      ? product.images.map((image: string) => resolveMediaUrl(image)).filter(Boolean)
+      : undefined,
+  };
 }
 
 export interface HomeSettingsPayload {
@@ -405,7 +415,10 @@ export async function fetchProducts(params?: {
     const res = await fetch(url);
     if (!res.ok) return { products: [] };
     const data = await res.json();
-    return { products: data.products || [], pagination: data.pagination };
+    return {
+      products: (data.products || []).map(normalizeProductMedia),
+      pagination: data.pagination,
+    };
   } catch (err) {
     console.warn('fetchProducts error:', err);
     return { products: [] };
@@ -417,7 +430,7 @@ export async function fetchProductById(id: string): Promise<any | null> {
     const res = await fetch(`${API_BASE_URL}/api/products/${id}`);
     if (!res.ok) return null;
     const data = await res.json();
-    return data.product || null;
+    return data.product ? normalizeProductMedia(data.product) : null;
   } catch (err) {
     console.warn('fetchProductById error:', err);
     return null;

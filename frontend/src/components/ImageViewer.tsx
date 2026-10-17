@@ -1,5 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { Maximize2, ChevronUp, ChevronDown, X } from 'lucide-react';
+import { resolveMediaUrl } from '../lib/api';
+
+const FALLBACK_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&q=80&w=600';
 
 interface ImageViewerProps {
   images: string[];
@@ -7,7 +10,9 @@ interface ImageViewerProps {
   discount?: number;
 }
 
-const ImageViewer: React.FC<ImageViewerProps> = ({ images, productName, discount }) => {
+const ImageViewer: React.FC<ImageViewerProps> = ({ images: rawImages, productName, discount }) => {
+  const resolvedImages = rawImages.map(resolveMediaUrl).filter(Boolean);
+  const images = resolvedImages.length > 0 ? resolvedImages : [FALLBACK_PRODUCT_IMAGE];
   const [activeIndex, setActiveIndex] = useState(0);
   const [isFullScreen, setIsFullScreen] = useState(false);
   

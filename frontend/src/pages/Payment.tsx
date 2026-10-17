@@ -194,7 +194,7 @@ export default function Payment() {
           merchant_id: payHere.merchantId,
           return_url: `${window.location.origin}/success`,
           cancel_url: `${window.location.origin}/payment`,
-          notify_url: `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/payhere/notify`,
+          notify_url: `${import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : 'https://orion-lkbackend-psi.vercel.app')}/api/payhere/notify`,
           order_id: payHere.orderId,
           items: cart.map(item => `${item.product.name} x${item.quantity}`).join(', '),
           amount: payHere.amount,

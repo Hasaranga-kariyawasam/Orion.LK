@@ -289,12 +289,12 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     } catch { return defaultValue; }
   };
 
-  const [heroImages, setHeroImages] = useState<string[]>([]);
+  const [heroImages, setHeroImages] = useState<string[]>(DEFAULT_HERO_IMAGES);
   const [videoUrl, setVideoUrl] = useState<string>(() => loadState('admin_videoUrl', DEFAULT_VIDEO_URL));
-  const [accessories, setAccessories] = useState<Accessory[]>([]);
-  const [featuredImages, setFeaturedImages] = useState<FeaturedImage[]>([]);
-  const [pcBuildCards, setPcBuildCards] = useState<PcBuildCard[]>([]);
-  const [homePromoCards, setHomePromoCards] = useState<HomePromoCard[]>([]);
+  const [accessories, setAccessories] = useState<Accessory[]>(DEFAULT_ACCESSORIES);
+  const [featuredImages, setFeaturedImages] = useState<FeaturedImage[]>(DEFAULT_FEATURED_IMAGES);
+  const [pcBuildCards, setPcBuildCards] = useState<PcBuildCard[]>(DEFAULT_PC_BUILD_CARDS);
+  const [homePromoCards, setHomePromoCards] = useState<HomePromoCard[]>(DEFAULT_HOME_PROMO_CARDS);
   const [brands, setBrands] = useState<Brand[]>(() => loadState('admin_brands', []));
   const [products, setProducts] = useState<AdminProductItem[]>([]);
   const [orders, setOrders] = useState<AdminOrder[]>(() => loadState('admin_orders', DEFAULT_ORDERS));
@@ -358,7 +358,7 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           name: c.name,
           slug: c.slug,
           count: c.count || 0,
-          img: c.img || '',
+          img: resolveMediaUrl(c.img),
           type: c.type || 'brand-new',
         }));
         setCategories(mapped);
@@ -378,8 +378,8 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           id: b._id || b.id,
           _id: b._id,
           name: b.name,
-          image: b.image || '',
-          banner: b.banner || '',
+          image: resolveMediaUrl(b.image),
+          banner: resolveMediaUrl(b.banner),
           visible: b.visible !== false,
         }));
         setBrands(mapped);
@@ -618,19 +618,19 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const applyHomeSettings = useCallback((settings: Awaited<ReturnType<typeof getHomeSettings>>) => {
       if (!settings) return;
-      if (Array.isArray(settings.heroImages)) {
+      if (Array.isArray(settings.heroImages) && settings.heroImages.length > 0) {
         setHeroImages(settings.heroImages.map(resolveMediaUrl).filter(Boolean));
       }
-      if (Array.isArray(settings.featuredImages)) {
+      if (Array.isArray(settings.featuredImages) && settings.featuredImages.length > 0) {
         setFeaturedImages((settings.featuredImages as FeaturedImage[]).map(image => ({ ...image, url: resolveMediaUrl(image.url) })));
       }
-      if (Array.isArray(settings.pcBuildCards)) {
+      if (Array.isArray(settings.pcBuildCards) && settings.pcBuildCards.length > 0) {
         setPcBuildCards((settings.pcBuildCards as PcBuildCard[]).map(card => ({ ...card, image: resolveMediaUrl(card.image) })));
       }
-      if (Array.isArray(settings.homePromoCards)) {
+      if (Array.isArray(settings.homePromoCards) && settings.homePromoCards.length > 0) {
         setHomePromoCards((settings.homePromoCards as HomePromoCard[]).map(card => ({ ...card, image: resolveMediaUrl(card.image) })));
       }
-      if (Array.isArray(settings.accessories)) {
+      if (Array.isArray(settings.accessories) && settings.accessories.length > 0) {
         setAccessories((settings.accessories as Accessory[]).map(accessory => ({ ...accessory, image: resolveMediaUrl(accessory.image) })));
       }
       if (Array.isArray(settings.bestSellerIds)) setBestSellerIds(settings.bestSellerIds);
