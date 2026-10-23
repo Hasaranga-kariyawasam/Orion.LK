@@ -152,14 +152,14 @@ export default function Header() {
 
           {/* Action Icons */}
           <div className="flex items-center gap-4 shrink-0">
-            <Link to="/profile?tab=orders" title="My Orders" className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:border-[#2ee661] hover:bg-[#2ee661]/10 transition-colors">
+            <Link to="/profile?tab=orders" title="My Orders" className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors">
               <Package size={20} />
             </Link>
 
             <div className="relative group" onMouseEnter={() => setShowNotifications(true)} onMouseLeave={() => setShowNotifications(false)}>
               <button
                 onClick={() => setShowNotifications(prev => !prev)}
-                className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:border-[#2ee661] hover:bg-[#2ee661]/10 transition-colors relative cursor-pointer"
+                className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors relative cursor-pointer"
               >
                 <Bell size={20} />
                 {unreadCount > 0 && (
@@ -206,7 +206,7 @@ export default function Header() {
               {user ? (
                 <button
                   onClick={() => setShowProfileDropdown(prev => !prev)}
-                  className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center overflow-hidden hover:border-[#2ee661] transition-colors cursor-pointer"
+                  className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center overflow-hidden hover:bg-white/10 transition-colors cursor-pointer"
                 >
                   {formatAvatarUrl(mongoUser?.avatar || user.photoURL) ? (
                     <img src={formatAvatarUrl(mongoUser?.avatar || user.photoURL)!} alt={user.displayName || 'User'} className="w-full h-full object-cover" />
@@ -215,7 +215,7 @@ export default function Header() {
                   )}
                 </button>
               ) : (
-                <Link to="/login" title="Sign In" className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:border-[#2ee661] hover:bg-[#2ee661]/10 transition-colors">
+                <Link to="/login" title="Sign In" className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors">
                   <User size={20} />
                 </Link>
               )}
@@ -274,13 +274,13 @@ export default function Header() {
 
             <button
               onClick={() => setIsCompareModalOpen(true)}
-              className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:border-[#2ee661] hover:bg-[#2ee661]/10 transition-colors relative"
+              className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors relative"
             >
               <Shuffle size={18} className={compareList.length > 0 ? "text-[#2ee661]" : ""} />
               <span className="absolute -top-2 -right-2 bg-[#2ee661] border-none text-black text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">{compareList.length}</span>
             </button>
 
-            <button onClick={() => setIsWishlistOpen(true)} className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:border-[#2ee661] hover:bg-[#2ee661]/10 transition-colors relative">
+            <button onClick={() => setIsWishlistOpen(true)} className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors relative">
               <Heart size={20} className={wishlist.length > 0 ? "fill-[#2ee661] text-[#2ee661]" : ""} />
               <span className="absolute -top-2 -right-2 bg-[#2ee661] border-none text-black text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">{wishlist.length}</span>
             </button>

@@ -9,16 +9,10 @@ import { Truck, Smile, ShieldCheck, Award, CheckCircle, ChevronLeft, ChevronRigh
 import { motion } from 'motion/react';
 
 
-const AnimatedSection = ({ children, className, delay = 0 }: { children: React.ReactNode, className?: string, delay?: number }) => (
-  <motion.section
-    initial={{ opacity: 0, y: 40 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, margin: "-50px" }}
-    transition={{ duration: 0.6, delay, ease: "easeOut" }}
-    className={className}
-  >
+const AnimatedSection = ({ children, className }: { children: React.ReactNode, className?: string, delay?: number }) => (
+  <section className={className}>
     {children}
-  </motion.section>
+  </section>
 );
 
 const FALLBACK_HOME_IMAGE = 'https://images.unsplash.com/photo-1587202372634-32705e3bf49c?auto=format&fit=crop&q=80&w=1200';
@@ -73,7 +67,7 @@ const getYouTubeEmbedUrl = (value: string) => {
       : url.searchParams.get('v') || url.pathname.match(/\/embed\/([^/?]+)/)?.[1];
 
     return url.hostname.includes('youtube.com') || url.hostname === 'youtu.be'
-      ? videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}` : null
+      ? videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&disablekb=1&modestbranding=1&rel=0&iv_load_policy=3&showinfo=0` : null
       : null;
   } catch {
     return null;
@@ -95,7 +89,7 @@ export default function Home() {
   const { videoUrl, heroImages, accessories, featuredImages, pcBuildCards, homePromoCards, brands, categories, products, bestSellerIds, whatsappNumber, storeAddress, refreshHomeSettings, homeSettingsReady } = useAdmin();
   const [isMuted, setIsMuted] = useState(true);
   const [videoFailed, setVideoFailed] = useState(false);
-  const [showVideoText, setShowVideoText] = useState(true);
+  const [showVideoText, setShowVideoText] = useState(false);
   const imageSettingsKey = JSON.stringify([heroImages, featuredImages, pcBuildCards, homePromoCards, accessories]);
 
   useEffect(() => {
@@ -412,20 +406,21 @@ export default function Home() {
           <div
             className="w-full aspect-[21/9] md:aspect-video rounded-2xl overflow-hidden relative shadow-2xl bg-black group"
             onMouseEnter={() => setShowVideoText(true)}
+            onMouseLeave={() => setShowVideoText(false)}
           >
             {youtubeEmbedUrl ? (
               <iframe
                 src={youtubeEmbedUrl}
                 title="Hardware Spotlight video"
-                className="w-full h-full border-0"
-                allow="autoplay; encrypted-media; picture-in-picture "
+                className="w-full h-full border-0 pointer-events-none scale-105"
+                allow="autoplay; encrypted-media; picture-in-picture"
                 allowFullScreen
               />
             ) : (
               <video
                 ref={videoRef}
                 src={videoFailed ? FALLBACK_VIDEO_URL : videoUrl}
-                className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700"
+                className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"
                 autoPlay
                 muted={isMuted}
                 loop
@@ -434,22 +429,22 @@ export default function Home() {
               />
             )}
 
-            {/* Overlay Gradient */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none"></div>
+            {/* Overlay Gradient - only visible when hovering */}
+            <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none transition-opacity duration-300 ${showVideoText ? 'opacity-100' : 'opacity-0'}`}></div>
 
             {/* Sound Toggle */}
             {!youtubeEmbedUrl && (
               <button
                 onClick={(e) => { e.preventDefault(); setIsMuted(!isMuted); }}
-                className="absolute top-6 right-6 bg-black/40 hover:bg-black/80 backdrop-blur-md text-white p-3 rounded-full transition-all z-20"
+                className={`absolute top-6 right-6 bg-black/40 hover:bg-black/80 backdrop-blur-md text-white p-3 rounded-full transition-all z-20 ${showVideoText ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
                 aria-label={isMuted ? 'Unmute video' : 'Mute video'}
               >
                 {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
               </button>
             )}
 
-            {/* Product Link Overlay */}
-            <div className={`absolute bottom-6 left-6 md:bottom-10 md:left-10 z-20 max-w-sm transition-opacity duration-500 ${showVideoText ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+            {/* Product Link Overlay - only visible on hover */}
+            <div className={`absolute bottom-6 left-6 md:bottom-10 md:left-10 z-20 max-w-sm transition-all duration-300 ${showVideoText ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
               <span className="bg-[#2ee661] text-black text-[10px] font-black px-2 py-1 rounded uppercase tracking-widest mb-3 inline-block">Featured</span>
               <h3 className="text-2xl md:text-4xl font-black text-white mb-2 leading-tight">NVIDIA RTX 4090<br />Founders Edition</h3>
               <p className="text-gray-300 text-sm mb-6 line-clamp-2">Beyond fast. Experience AI-powered graphics and lifelike virtual worlds.</p>

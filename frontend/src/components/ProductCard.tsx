@@ -24,11 +24,7 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
   const displayImages = images.length > 0 ? images : [FALLBACK_PRODUCT_IMAGE];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-40px" }}
-      transition={{ duration: 0.5, delay: Math.min(index * 0.1, 0.5) }}
+    <div
       className="group bg-white rounded-xl overflow-hidden hover:shadow-sm transition-all duration-300 flex flex-col h-fit relative p-4"
     >
 
@@ -176,7 +172,7 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
           </button>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
