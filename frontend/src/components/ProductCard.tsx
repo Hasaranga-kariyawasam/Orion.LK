@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Search, Shuffle, Heart, Star, Wrench } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
@@ -11,6 +11,7 @@ const FALLBACK_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1591488320449-
 
 const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, index = 0 }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
   const { addToCart, toggleWishlist, isInWishlist, toggleCompare, isInCompare, addToBuild } = useShop();
   const inWishlist = isInWishlist(product.id);
   const inCompare = isInCompare(product.id);
@@ -23,8 +24,21 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
     .filter(Boolean);
   const displayImages = images.length > 0 ? images : [FALLBACK_PRODUCT_IMAGE];
 
+  useEffect(() => {
+    if (!isHovered || displayImages.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentImageIndex(prev => (prev + 1) % displayImages.length);
+    }, 1200);
+    return () => clearInterval(interval);
+  }, [isHovered, displayImages.length]);
+
   return (
     <div
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => {
+        setIsHovered(false);
+        setCurrentImageIndex(0);
+      }}
       className="group bg-white rounded-xl overflow-hidden hover:shadow-sm transition-all duration-300 flex flex-col h-fit relative p-4"
     >
 

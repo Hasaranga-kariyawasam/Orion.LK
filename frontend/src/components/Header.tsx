@@ -42,6 +42,14 @@ export default function Header() {
     navigate(`/product/${id}`);
   };
 
+  const handleSearchSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (searchQuery.trim()) {
+      setShowSearchResults(false);
+      navigate(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
   const { cart, wishlist, setIsCartOpen, setIsWishlistOpen, cartTotal, compareList, setIsCompareModalOpen, notifications, removeNotification } = useShop();
   const { user, mongoUser, logout } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
@@ -88,7 +96,10 @@ export default function Header() {
           </a>
 
           {/* Search */}
-          <div className="hidden md:flex flex-1 max-w-2xl relative group">
+          <form
+            onSubmit={handleSearchSubmit}
+            className="hidden md:flex flex-1 max-w-2xl relative group"
+          >
             <input
               type="text"
               placeholder="Search for products"
@@ -99,26 +110,36 @@ export default function Header() {
               }}
               onFocus={() => setShowSearchResults(true)}
               onBlur={() => setTimeout(() => setShowSearchResults(false), 200)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleSearchSubmit(e);
+                }
+              }}
               className="w-full bg-[#0D1117] text-white placeholder-[#8B949E] border border-[#30363D] rounded-full py-2.5 pl-6 pr-14 focus:outline-none focus:border-[#2ee661] focus:bg-[#0D1117]/80 transition-all shadow-inner"
             />
-            <button className="absolute right-0 top-0 h-full w-12 bg-[#2ee661] text-black flex items-center justify-center rounded-r-full hover:bg-[#24c24e] transition-colors">
+            <button
+              type="submit"
+              aria-label="Search products"
+              className="absolute right-0 top-0 h-full w-12 bg-[#2ee661] text-black flex items-center justify-center rounded-r-full hover:bg-[#24c24e] transition-colors cursor-pointer"
+            >
               <Search size={18} strokeWidth={2.5} />
             </button>
 
-            {/* Search Dropdown */}
+            {/* Search Dropdown - positioned below Sub Header */}
             <AnimatePresence>
               {showSearchResults && (
                 <motion.div
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[100] before:content-[''] before:absolute before:-top-3 before:left-0 before:right-0 before:h-3"
+                  exit={{ opacity: 0, y: 8 }}
+                  onMouseDown={(e) => e.preventDefault()}
+                  className="absolute top-full left-0 right-0 mt-[68px] bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-[100]"
                 >
                   <div className="p-3 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
                     <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                       {searchQuery.trim() === '' ? 'Trending Products' : 'Search Results'}
                     </span>
-                    </div>
+                  </div>
                   <div className="max-h-96 overflow-y-auto">
                     {searchResults.length > 0 ? (
                       searchResults.map(product => (
@@ -145,10 +166,19 @@ export default function Header() {
                       </div>
                     )}
                   </div>
+                  {searchQuery.trim() !== '' && (
+                    <div
+                      onClick={handleSearchSubmit}
+                      className="p-3 bg-gray-50 hover:bg-[#2ee661]/10 text-center text-xs font-bold text-gray-700 hover:text-black cursor-pointer transition-colors border-t border-gray-100 flex items-center justify-center gap-1.5"
+                    >
+                      <span>View all results for "{searchQuery}"</span>
+                      <ChevronRight size={14} className="text-[#2ee661]" />
+                    </div>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
-          </div>
+          </form>
 
           {/* Action Icons */}
           <div className="flex items-center gap-4 shrink-0">

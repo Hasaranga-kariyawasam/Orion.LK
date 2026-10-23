@@ -104,7 +104,6 @@ export default function Home() {
     };
   }, [refreshHomeSettings]);
   const [bestSellerCategory, setBestSellerCategory] = useState('Processors');
-  const [pageLoading, setPageLoading] = useState(true);
   const [heroImageReady, setHeroImageReady] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const categorySliderRef = useRef<HTMLDivElement>(null);
@@ -176,62 +175,11 @@ export default function Home() {
   const displayLaptops = laptopProducts.length > 0 ? laptopProducts : products.slice(0, 4);
 
   useEffect(() => {
-    setPageLoading(true);
-    if (!homeSettingsReady || !heroImageReady) return;
-    const waitForImages = () => {
-      const images = Array.from(document.images).filter(image => {
-        const bounds = image.getBoundingClientRect();
-        return bounds.top < window.innerHeight * 1.25;
-      });
-      if (images.length === 0) {
-        setPageLoading(false);
-        return;
-      }
-      Promise.all(images.map(image => image.complete
-        ? Promise.resolve()
-        : new Promise<void>(resolve => {
-          image.addEventListener('load', () => resolve(), { once: true });
-          image.addEventListener('error', () => resolve(), { once: true });
-        })
-      )).then(() => setPageLoading(false));
-    };
-    const frame = window.requestAnimationFrame(waitForImages);
-    return () => window.cancelAnimationFrame(frame);
-  }, [imageSettingsKey, homeSettingsReady, heroImageReady]);
-
-  useEffect(() => {
     const hideTextTimer = window.setTimeout(() => setShowVideoText(false), 5000);
     return () => window.clearTimeout(hideTextTimer);
   }, []);
   return (
-    //add littel bit space on top
     <>
-      {pageLoading && (
-        <div className="fixed inset-0 z-[100] flex min-h-screen items-center justify-center bg-white">
-          <div className="flex flex-col items-center gap-3">
-            <div className="home-loader" aria-label="Loading Orion LK" />
-            <p className="text-sm font-black tracking-tight text-gray-900">ORION<span className="text-[#2ee661]">.LK</span></p>
-          </div>
-        </div>
-      )}
-      <style>{`
-        .home-loader {
-          width: 50px;
-          aspect-ratio: 1;
-          background: #1f2937;
-          border-radius: 50%;
-          animation: home-loader-morph 3s infinite linear;
-        }
-        @keyframes home-loader-morph {
-          12.5% { border-radius: 37% 63% 70% 30% / 30% 62% 38% 70%; }
-          25% { border-radius: 50% 50% 70% 30% / 52% 62% 38% 48%; }
-          37.5% { border-radius: 33% 67% 18% 82% / 52% 75% 25% 48%; }
-          50% { border-radius: 73% 27% 18% 82% / 52% 32% 68% 48%; }
-          62.5% { border-radius: 73% 27% 74% 26% / 64% 32% 68% 36%; }
-          75% { border-radius: 84% 16% 15% 85% / 55% 79% 21% 45%; }
-          87.5% { border-radius: 12% 88% 69% 31% / 10% 66% 34% 90%; }
-        }
-      `}</style>
       <div className="h-10 w-full bg-white"></div>
       <div className="min-h-screen bg-gray-50 pb-12">
 
@@ -726,7 +674,7 @@ export default function Home() {
 
 
         {/* 10. Why Choose */}
-        <AnimatedSection className="max-w-7xl mx-auto px-4 mt-12 md:mt-16 mb-12 md:mb-16 bg-[#f8f9fa] py-10 md:py-14 rounded-[1.5rem] md:rounded-[2rem] relative overflow-hidden">
+        <AnimatedSection className="max-w-7xl mx-auto px-4 mt-12 md:mt-16 mb-12 md:mb-16 bg-[#f8f9fa] py-10 md:py-14 rounded-2xl relative overflow-hidden">
           {/* Subtle background pattern */}
           <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 

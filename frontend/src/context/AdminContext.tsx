@@ -296,10 +296,10 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [pcBuildCards, setPcBuildCards] = useState<PcBuildCard[]>(DEFAULT_PC_BUILD_CARDS);
   const [homePromoCards, setHomePromoCards] = useState<HomePromoCard[]>(DEFAULT_HOME_PROMO_CARDS);
   const [brands, setBrands] = useState<Brand[]>(() => loadState('admin_brands', []));
-  const [products, setProducts] = useState<AdminProductItem[]>([]);
+  const [products, setProducts] = useState<AdminProductItem[]>(() => loadState('admin_products', MOCK_PRODUCTS));
   const [orders, setOrders] = useState<AdminOrder[]>(() => loadState('admin_orders', DEFAULT_ORDERS));
   const [users, setUsers] = useState<AdminUser[]>(() => loadState('admin_users', DEFAULT_USERS));
-  const [categories, setCategories] = useState<AdminCategory[]>(() => loadState('admin_categories', []));
+  const [categories, setCategories] = useState<AdminCategory[]>(() => loadState('admin_categories', [...BRAND_NEW_CATEGORIES, ...USED_CATEGORIES]));
   const [paymentOptions, setPaymentOptions] = useState<PaymentOption[]>(() => loadState('admin_payments', DEFAULT_PAYMENTS));
   const [specialOffers, setSpecialOffers] = useState<SpecialOffer[]>(() => loadState('admin_offers', DEFAULT_SPECIAL_OFFERS));
   const [specialOffersDeadline, setSpecialOffersDeadline] = useState<string>(() => loadState('admin_offers_deadline', ''));
