@@ -75,7 +75,7 @@ export default function Header() {
     <>
       <header className={`w-full bg-[#e8eef7] fixed top-0 left-0 right-0 z-40 transition-transform duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
         {/* Top Header */}
-        <div className="bg-[#161B22]/90 backdrop-blur-md">
+        <div className="bg-[#161B22]/90 backdrop-blur-md relative z-30">
           <div className="relative z-10 container mx-auto max-w-7xl px-4 h-20 flex items-center justify-between gap-6">
 
           {/* Logo */}
@@ -112,7 +112,7 @@ export default function Header() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
-                  className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[100]"
+                  className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[100] before:content-[''] before:absolute before:-top-3 before:left-0 before:right-0 before:h-3"
                 >
                   <div className="p-3 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
                     <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
@@ -157,7 +157,10 @@ export default function Header() {
             </Link>
 
             <div className="relative group" onMouseEnter={() => setShowNotifications(true)} onMouseLeave={() => setShowNotifications(false)}>
-              <button className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:border-[#2ee661] hover:bg-[#2ee661]/10 transition-colors relative">
+              <button
+                onClick={() => setShowNotifications(prev => !prev)}
+                className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:border-[#2ee661] hover:bg-[#2ee661]/10 transition-colors relative cursor-pointer"
+              >
                 <Bell size={20} />
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-[#f0364c] border-none text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center animate-pulse">{unreadCount}</span>
@@ -169,7 +172,7 @@ export default function Header() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
-                    className="absolute top-full right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[100]"
+                    className="absolute top-full right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[100] before:content-[''] before:absolute before:-top-3 before:left-0 before:right-0 before:h-3"
                   >
                     <div className="p-3 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
                       <span className="text-sm font-bold text-gray-900">Notifications</span>
@@ -195,9 +198,16 @@ export default function Header() {
               </AnimatePresence>
             </div>
 
-            <div className="relative group" onMouseEnter={() => setShowProfileDropdown(true)} onMouseLeave={() => setShowProfileDropdown(false)}>
+            <div
+              className="relative group"
+              onMouseEnter={() => setShowProfileDropdown(true)}
+              onMouseLeave={() => setShowProfileDropdown(false)}
+            >
               {user ? (
-                <button className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center overflow-hidden hover:border-[#2ee661] transition-colors">
+                <button
+                  onClick={() => setShowProfileDropdown(prev => !prev)}
+                  className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center overflow-hidden hover:border-[#2ee661] transition-colors cursor-pointer"
+                >
                   {formatAvatarUrl(mongoUser?.avatar || user.photoURL) ? (
                     <img src={formatAvatarUrl(mongoUser?.avatar || user.photoURL)!} alt={user.displayName || 'User'} className="w-full h-full object-cover" />
                   ) : (
@@ -216,7 +226,7 @@ export default function Header() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
-                    className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[100]"
+                    className="absolute top-full right-0 mt-2 w-60 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[100] before:content-[''] before:absolute before:-top-3 before:left-0 before:right-0 before:h-3"
                   >
                     <div className="p-3 bg-gradient-to-r from-gray-50 to-amber-50/60 border-b border-gray-100 flex items-center justify-between">
                       <div className="min-w-0 pr-2">
@@ -228,15 +238,29 @@ export default function Header() {
                       </span>
                     </div>
                     <div className="py-2">
-                      <Link to="/profile" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-600 hover:text-black hover:bg-gray-50 transition-colors">
+                      <Link
+                        to="/profile"
+                        onClick={() => setShowProfileDropdown(false)}
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-600 hover:text-black hover:bg-gray-50 transition-colors"
+                      >
                         <User size={16} /> My Profile
                       </Link>
-                      <Link to="/profile?tab=orders" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-600 hover:text-black hover:bg-gray-50 transition-colors">
+                      <Link
+                        to="/profile?tab=orders"
+                        onClick={() => setShowProfileDropdown(false)}
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-600 hover:text-black hover:bg-gray-50 transition-colors"
+                      >
                         <Package size={16} /> My Orders
                       </Link>
-                      <Link to="/admin" className="flex items-center gap-3 px-4 py-2 text-sm text-[#2ee661] font-bold hover:bg-[#2ee661]/10 transition-colors">
-                        <Settings size={16} /> Admin Dashboard
-                      </Link>
+                      {(user.email === 'orian@admin.lk' || user.email === 'orion@admin.lk' || mongoUser?.isAdmin) && (
+                        <Link
+                          to="/admin"
+                          onClick={() => setShowProfileDropdown(false)}
+                          className="flex items-center gap-3 px-4 py-2 text-sm text-[#2ee661] font-bold hover:bg-[#2ee661]/10 transition-colors"
+                        >
+                          <Settings size={16} /> Admin Dashboard
+                        </Link>
+                      )}
                     </div>
                     <div className="py-2 border-t border-gray-100">
                       <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors text-left font-bold cursor-pointer">
@@ -282,7 +306,10 @@ export default function Header() {
         </div>
 
         {/* Sub Header */}
-        <div className="bg-[#e8eef7] relative border-0" onMouseLeave={() => setActiveDropdown(null)}>
+        <div
+          className={`bg-[#e8eef7] relative border-0 ${activeDropdown ? 'z-50' : 'z-20'}`}
+          onMouseLeave={() => setActiveDropdown(null)}
+        >
           <div className="container mx-auto max-w-7xl px-4 h-12 flex items-center justify-between">
             <div className="flex items-center gap-6 h-full">
               {/* Links */}
