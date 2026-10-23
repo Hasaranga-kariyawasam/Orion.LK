@@ -69,14 +69,14 @@ export default function SpecialOffers() {
       {/* Hero Banner */}
       <div className="bg-gradient-to-r from-[#161B22] to-black py-16 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#f0364c] rounded-full blur-[120px] opacity-20 pointer-events-none"></div>
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#2ee661] rounded-full blur-[120px] opacity-10 pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#15803d] rounded-full blur-[120px] opacity-10 pointer-events-none"></div>
         
         <div className="max-w-7xl mx-auto px-4 relative z-10 flex flex-col items-center text-center">
           <div className="inline-flex items-center gap-2 bg-[#f0364c]/20 text-[#f0364c] border border-[#f0364c]/30 px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider mb-6">
             <Flame size={16} /> Limited Time Only
           </div>
           <h1 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tight mb-4">
-            Special <span className="text-[#2ee661]">Offers</span>
+            Special <span className="text-[#16a34a]">Offers</span>
           </h1>
           <p className="text-gray-400 max-w-2xl text-lg mb-8">
             Grab incredible deals on premium hardware and accessories. These exclusive discounts won't last long, so upgrade your setup today!
@@ -107,7 +107,7 @@ export default function SpecialOffers() {
       <div className="max-w-7xl mx-auto px-4 mt-12">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight flex items-center gap-3">
-            <Sparkles size={24} className="text-[#2ee661]" /> Exclusive Deals
+            <Sparkles size={24} className="text-[#15803d]" /> Exclusive Deals
           </h2>
           <span className="text-sm font-bold text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200">
             {discountedProducts.length} Items
@@ -116,7 +116,12 @@ export default function SpecialOffers() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
           {isLoading 
-            ? [...Array(8)].map((_, i) => <ProductCardSkeleton key={i} />)
+            ? (
+              <div className="col-span-full bg-white rounded-2xl border border-gray-100 shadow-xs flex flex-col items-center justify-center py-24 min-h-[350px]">
+                <div className="loader mb-4 text-[#161B22]" />
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Loading Special Offers...</p>
+              </div>
+            )
             : discountedProducts.length > 0 
               ? discountedProducts.map(({ product, offer }, idx) => (
                   <div key={product.id} className="relative">

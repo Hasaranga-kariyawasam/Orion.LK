@@ -26,7 +26,10 @@ const ProductDetailSkeleton: React.FC = () => {
               ))}
               <div className="w-full h-8 bg-gray-200 rounded-md hidden md:block"></div>
             </div>
-            <div className="flex-1 bg-gray-100 rounded-3xl w-full aspect-square md:aspect-[4/3]"></div>
+            <div className="flex-1 bg-gray-100 rounded-3xl w-full aspect-square md:aspect-[4/3] flex flex-col items-center justify-center">
+              <div className="loader mb-2"></div>
+              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Loading Product</span>
+            </div>
           </div>
 
           {/* Right: Product Info placeholder */}

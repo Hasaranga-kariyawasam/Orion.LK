@@ -59,7 +59,7 @@ export default function AIAssistant() {
         animate={{ scale: 1 }}
         whileHover={{ scale: 1.1 }}
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full shadow-2xl flex items-center justify-center text-white z-40 transition-transform ${isOpen ? 'scale-0 pointer-events-none' : ''}`}
+        className={`fixed bottom-20 md:bottom-6 left-6 w-14 h-14 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full shadow-2xl flex items-center justify-center text-white z-40 transition-transform cursor-pointer ${isOpen ? 'scale-0 pointer-events-none' : ''}`}
       >
         <Sparkles size={24} />
       </motion.button>
@@ -71,7 +71,7 @@ export default function AIAssistant() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-6 right-6 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 z-50 overflow-hidden flex flex-col"
+            className="fixed bottom-20 md:bottom-6 left-6 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 z-50 overflow-hidden flex flex-col"
             style={{ height: '500px', maxHeight: '80vh' }}
           >
             {/* Header */}
@@ -85,7 +85,7 @@ export default function AIAssistant() {
                   <p className="text-[10px] text-blue-100 uppercase tracking-widest">Assistant</p>
                 </div>
               </div>
-              <button onClick={() => setIsOpen(false)} className="hover:bg-white/20 p-2 rounded-full transition-colors">
+              <button onClick={() => setIsOpen(false)} className="hover:bg-white/20 p-2 rounded-full transition-colors cursor-pointer">
                 <X size={18} />
               </button>
             </div>
@@ -94,10 +94,10 @@ export default function AIAssistant() {
             <div className="flex-1 p-4 overflow-y-auto bg-gray-50 flex flex-col gap-4">
               {messages.map((msg, i) => (
                 <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[80%] p-3 rounded-2xl text-sm shadow-sm ${msg.role === 'user' ? 'bg-[#2ee661] text-black rounded-br-sm font-medium' : 'bg-white border border-gray-100 text-gray-700 rounded-bl-sm'}`}>
+                  <div className={`max-w-[80%] p-3 rounded-2xl text-sm shadow-sm ${msg.role === 'user' ? 'bg-[#15803d] text-white rounded-br-sm font-medium' : 'bg-white border border-gray-100 text-gray-700 rounded-bl-sm'}`}>
                     {msg.text}
                     {msg.role === 'ai' && msg.text.includes('click here') && (
-                      <button onClick={() => { setIsOpen(false); navigate('/build'); }} className="mt-2 text-xs font-bold bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg border border-blue-100 hover:bg-blue-100 w-full flex items-center justify-center gap-1">
+                      <button onClick={() => { setIsOpen(false); navigate('/build'); }} className="mt-2 text-xs font-bold bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg border border-blue-100 hover:bg-blue-100 w-full flex items-center justify-center gap-1 cursor-pointer">
                         <Cpu size={14} /> Go to PC Builder
                       </button>
                     )}

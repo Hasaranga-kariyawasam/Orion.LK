@@ -80,8 +80,8 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
 
           <button onClick={(e) => { e.preventDefault(); addToCart(product); }} className="hover:text-black transition-colors p-1" title="Add to Cart"><ShoppingCart size={18} strokeWidth={1.5} /></button>
 
-          <button onClick={(e) => { e.preventDefault(); toggleCompare(product); }} className={`transition-colors p-1 ${inCompare ? 'text-[#2ee661]' : 'hover:text-black'}`} title="Compare"><Shuffle size={18} strokeWidth={1.5} /></button>
-          <button onClick={(e) => { e.preventDefault(); addToBuild(product); }} className="hover:text-black transition-colors p-1 text-[#2ee661]" title="Add to My Build"><Wrench size={18} strokeWidth={1.5} /></button>
+          <button onClick={(e) => { e.preventDefault(); toggleCompare(product); }} className={`transition-colors p-1 ${inCompare ? 'text-[#15803d]' : 'hover:text-black'}`} title="Compare"><Shuffle size={18} strokeWidth={1.5} /></button>
+          <button onClick={(e) => { e.preventDefault(); addToBuild(product); }} className="hover:text-black transition-colors p-1 text-[#15803d]" title="Add to My Build"><Wrench size={18} strokeWidth={1.5} /></button>
         </div>
       </div>
 
@@ -114,7 +114,7 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
         {displayImages.length > 1 && (
           <div className="absolute bottom-1 left-0 right-0 flex justify-center gap-1.5 opacity-0 group-hover/image:opacity-100 transition-opacity">
             {displayImages.map((_, idx) => (
-              <div key={idx} className={`h-1 rounded-sm transition-all ${idx === currentImageIndex ? 'bg-gray-800 w-4' : 'bg-gray-300 w-2'}`} />
+              <div key={idx} className={`h-1 rounded-sm transition-all ${idx === currentImageIndex ? 'bg-[#161B22] w-4' : 'bg-gray-300 w-2'}`} />
             ))}
           </div>
         )}
@@ -138,7 +138,7 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
         <div className="flex items-center justify-between mb-2 mt-1">
           <div className="flex  gap-1.5">
             {product.originalPrice && (
-              <span className="text-[20px] font-black text-[#222222ff] tracking-tight leading-none">
+              <span className="text-[20px] font-black text-[#161B22] tracking-tight leading-none">
                 {formatLKR(product.price)}
               </span>
             )}
@@ -166,21 +166,17 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
           </div>
         </div>
 
-
-
-
-
         {/* Action Buttons */}
         <div className="flex items-center gap-2 mt-auto">
           <button
             onClick={(e) => { e.preventDefault(); addToCart(product); }}
-            className="flex-1 bg-black text-white font-black uppercase tracking-wider text-sm py-2.5 rounded-xl hover:bg-gray-900 transition-colors duration-300"
+            className="flex-1 bg-[#161B22] text-white font-black uppercase tracking-wider text-sm py-2.5 rounded-xl hover:bg-[#0D1117] transition-colors duration-300 shadow-sm cursor-pointer"
           >
             Buy Now
           </button>
           <button
             onClick={(e) => { e.preventDefault(); addToCart(product); }}
-            className="w-11 h-11 bg-black rounded-xl flex items-center justify-center text-white hover:bg-gray-900 transition-colors duration-300 shrink-0 group/cartbtn"
+            className="w-11 h-11 bg-[#161B22] rounded-xl flex items-center justify-center text-white hover:bg-[#0D1117] transition-colors duration-300 shrink-0 group/cartbtn shadow-sm cursor-pointer"
           >
             <ShoppingCart size={16} strokeWidth={2.5} className="group-hover/cartbtn:scale-110 transition-transform" />
           </button>

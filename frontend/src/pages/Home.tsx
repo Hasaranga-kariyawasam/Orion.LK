@@ -393,7 +393,7 @@ export default function Home() {
 
             {/* Product Link Overlay - only visible on hover */}
             <div className={`absolute bottom-6 left-6 md:bottom-10 md:left-10 z-20 max-w-sm transition-all duration-300 ${showVideoText ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
-              <span className="bg-[#2ee661] text-black text-[10px] font-black px-2 py-1 rounded uppercase tracking-widest mb-3 inline-block">Featured</span>
+              <span className="bg-[#15803d] text-white text-[10px] font-black px-2.5 py-1 rounded uppercase tracking-widest mb-3 inline-block shadow-sm">Featured</span>
               <h3 className="text-2xl md:text-4xl font-black text-white mb-2 leading-tight">NVIDIA RTX 4090<br />Founders Edition</h3>
               <p className="text-gray-300 text-sm mb-6 line-clamp-2">Beyond fast. Experience AI-powered graphics and lifelike virtual worlds.</p>
               <Link to="/product/1" className="inline-flex items-center gap-2 bg-white text-black px-6 py-3 rounded-xl font-bold hover:bg-gray-200 transition-colors">
@@ -481,7 +481,7 @@ export default function Home() {
                 <div className="absolute top-1/2 -right-8 w-12 h-24 bg-[#1a1a24] -translate-y-1/2 rounded-r-xl z-[-2]"></div>
               </div>
 
-              <button className="bg-[#2ee661] hover:bg-[#24c24e] text-white font-bold py-2.5 px-8 rounded absolute bottom-6 md:bottom-10 z-20 shadow-[0_4px_20px_rgba(0,0,0,0.5)] transition-transform hover:scale-105 text-sm border border-green-400/50">
+              <button className="bg-[#15803d] hover:bg-[#166534] text-white font-bold py-2.5 px-8 rounded absolute bottom-6 md:bottom-10 z-20 shadow-[0_4px_20px_rgba(0,0,0,0.5)] transition-transform hover:scale-105 text-sm border border-green-600/50 cursor-pointer">
                 Buy Now
               </button>
             </div>
@@ -510,7 +510,7 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-r from-[#030816] to-transparent"></div>
           <div className="relative z-10 mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
             <div>
-              <h2 className="text-3xl font-black text-[#2ee661] uppercase tracking-wider mb-2 drop-shadow-md">Clearance Sale</h2>
+              <h2 className="text-3xl font-black text-[#15803d] uppercase tracking-wider mb-2 drop-shadow-md">Clearance Sale</h2>
               <h3 className="text-4xl font-black text-white uppercase tracking-wider mb-4 drop-shadow-lg">Up to 50% Off</h3>
               <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6">Trusted by Pros. Made for Winners.</p>
 

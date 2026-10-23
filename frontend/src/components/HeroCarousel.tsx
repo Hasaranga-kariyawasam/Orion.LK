@@ -6,16 +6,27 @@ import { resolveMediaUrl } from '../lib/api';
 const HeroCarousel = () => {
   const { heroImages, products, categories } = useAdmin();
   const [currentIndex, setCurrentIndex] = useState(0);
+
   const validHeroImages = useMemo(() => {
-    const configuredImages = heroImages.map(resolveMediaUrl).filter(Boolean);
-    if (configuredImages.length > 0) return configuredImages;
+    // Gather all real DB product images
+    const dbProductImages = products
+      .flatMap(product => product.images && product.images.length > 0 ? product.images : [product.image])
+      .map(resolveMediaUrl)
+      .filter(Boolean);
 
-    const databaseImages = [
-      ...products.flatMap(product => product.images || [product.image]),
-      ...categories.map(category => category.img),
-    ].map(resolveMediaUrl).filter(Boolean);
+    // Prioritize store-uploaded DB images
+    const storeUploadedImages = dbProductImages.filter(img => !img.includes('images.unsplash.com'));
 
-    return Array.from(new Set(databaseImages)).slice(0, 8);
+    // Custom admin configured images (if user configured them in admin)
+    const customConfigured = heroImages
+      .map(resolveMediaUrl)
+      .filter(url => Boolean(url) && !url.includes('images.unsplash.com'));
+
+    if (customConfigured.length > 0) return customConfigured;
+    if (storeUploadedImages.length > 0) return Array.from(new Set(storeUploadedImages)).slice(0, 8);
+    if (dbProductImages.length > 0) return Array.from(new Set(dbProductImages)).slice(0, 8);
+
+    return heroImages.map(resolveMediaUrl).filter(Boolean);
   }, [heroImages, products, categories]);
 
   useEffect(() => {
@@ -56,7 +67,7 @@ const HeroCarousel = () => {
           loading={idx === 0 ? 'eager' : 'lazy'}
           fetchPriority={idx === 0 ? 'high' : 'low'}
           decoding="async"
-          alt="Premium PC Build" 
+          alt="Featured Hardware" 
           className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
             idx === currentIndex ? 'opacity-100' : 'opacity-0'
           }`} 
@@ -65,10 +76,10 @@ const HeroCarousel = () => {
       
       {/* Controls */}
       <div className="absolute inset-0 flex items-center justify-between p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10">
-        <button onClick={prevSlide} className="bg-black/50 hover:bg-black/80 backdrop-blur p-2 rounded-full text-white transition-colors pointer-events-auto">
+        <button onClick={prevSlide} className="bg-black/50 hover:bg-black/80 backdrop-blur p-2 rounded-full text-white transition-colors pointer-events-auto cursor-pointer">
           <ChevronLeft size={24} />
         </button>
-        <button onClick={nextSlide} className="bg-black/50 hover:bg-black/80 backdrop-blur p-2 rounded-full text-white transition-colors pointer-events-auto">
+        <button onClick={nextSlide} className="bg-black/50 hover:bg-black/80 backdrop-blur p-2 rounded-full text-white transition-colors pointer-events-auto cursor-pointer">
           <ChevronRight size={24} />
         </button>
       </div>
@@ -76,7 +87,7 @@ const HeroCarousel = () => {
       <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
       
       <div className="absolute bottom-6 left-6 z-20 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
-         <button className="bg-[#2ee661] text-black font-black uppercase tracking-wider py-3 px-10 rounded-full hover:bg-white transition-all shadow-[0_10px_30px_rgba(0,0,0,0.3)]">
+         <button className="bg-[#15803d] hover:bg-[#166534] text-white font-black uppercase tracking-wider py-3 px-10 rounded-full transition-all shadow-[0_10px_30px_rgba(0,0,0,0.3)] cursor-pointer">
            Shop Now
          </button>
       </div>

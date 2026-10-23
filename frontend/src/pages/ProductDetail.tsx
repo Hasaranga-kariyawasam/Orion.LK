@@ -354,7 +354,7 @@ export default function ProductDetail() {
                 <button
                   type="button"
                   onClick={handleBuyNow}
-                  className="flex-1 bg-black text-white font-black uppercase tracking-wider text-xs sm:text-sm h-12 sm:h-14 rounded-xl hover:bg-gray-800 active:scale-[0.99] transition-all shadow-sm cursor-pointer"
+                  className="flex-1 bg-[#161B22] text-white font-black uppercase tracking-wider text-xs sm:text-sm h-12 sm:h-14 rounded-xl hover:bg-[#0D1117] active:scale-[0.99] transition-all shadow-sm cursor-pointer"
                 >
                   BUY NOW
                 </button>
@@ -362,7 +362,7 @@ export default function ProductDetail() {
                 <button
                   type="button"
                   onClick={() => addToCart({ ...product, price: product.price * quantity })}
-                  className="w-12 sm:w-14 h-12 sm:h-14 bg-black text-white rounded-xl flex items-center justify-center hover:bg-gray-800 active:scale-[0.99] transition-all shrink-0 shadow-sm group cursor-pointer"
+                  className="w-12 sm:w-14 h-12 sm:h-14 bg-[#161B22] text-white rounded-xl flex items-center justify-center hover:bg-[#0D1117] active:scale-[0.99] transition-all shrink-0 shadow-sm group cursor-pointer"
                   title="Add to Cart"
                 >
                   <ShoppingCart size={20} strokeWidth={2.2} className="group-hover:scale-110 transition-transform" />
@@ -397,7 +397,7 @@ export default function ProductDetail() {
                   type="button"
                   onClick={() => toggleCompare(product)}
                   className={`flex items-center gap-1.5 text-xs font-bold transition-colors ${
-                    inCompare ? 'text-[#2ee661]' : 'text-gray-600 hover:text-black'
+                    inCompare ? 'text-[#15803d]' : 'text-gray-600 hover:text-black'
                   }`}
                 >
                   <Scale size={16} /> Compare
@@ -456,21 +456,21 @@ export default function ProductDetail() {
               className={`pb-3 font-bold text-sm uppercase tracking-wider transition-colors relative ${activeTab === 'description' ? 'text-black font-black' : 'text-gray-400 hover:text-gray-700'}`}
             >
               Description
-              {activeTab === 'description' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-black"></span>}
+              {activeTab === 'description' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#161B22]"></span>}
             </button>
             <button
               onClick={() => setActiveTab('shipping')}
               className={`pb-3 font-bold text-sm uppercase tracking-wider transition-colors relative ${activeTab === 'shipping' ? 'text-black font-black' : 'text-gray-400 hover:text-gray-700'}`}
             >
               Shipping & Delivery
-              {activeTab === 'shipping' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-black"></span>}
+              {activeTab === 'shipping' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#161B22]"></span>}
             </button>
             <button
               onClick={() => setActiveTab('reviews')}
               className={`pb-3 font-bold text-sm uppercase tracking-wider transition-colors relative ${activeTab === 'reviews' ? 'text-black font-black' : 'text-gray-400 hover:text-gray-700'}`}
             >
               Reviews ({reviewsList.length})
-              {activeTab === 'reviews' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-black"></span>}
+              {activeTab === 'reviews' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#161B22]"></span>}
             </button>
           </div>
 
@@ -638,7 +638,7 @@ export default function ProductDetail() {
 
                       <button
                         type="submit"
-                        className="w-full bg-black text-white font-black uppercase tracking-wider text-xs py-2.5 rounded-xl hover:bg-gray-800 transition-colors shadow-sm"
+                        className="w-full bg-[#161B22] text-white font-black uppercase tracking-wider text-xs py-2.5 rounded-xl hover:bg-[#0D1117] transition-colors shadow-sm cursor-pointer"
                       >
                         Submit Review
                       </button>

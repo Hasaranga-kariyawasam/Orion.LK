@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Heart, Search, Menu, X, User, Phone, Globe, ChevronRight, Shuffle, Watch, Headphones, Square, Keyboard, HardDrive, Headset, BatteryCharging, Smartphone, Speaker, Cable, Car, Camera, Monitor, MoreHorizontal, Home, LayoutGrid, RefreshCw, Wind, Store, MapPin, Package, Bell, LogOut, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { BRAND_NEW_CATEGORIES, USED_CATEGORIES, MOCK_PRODUCTS, BRAND_LOGO_URL } from '../data';
 import { useShop } from '../context/ShopContext';
 import { useAdmin } from '../context/AdminContext';
@@ -19,6 +19,29 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Close menus on page navigation
+  useEffect(() => {
+    setActiveDropdown(null);
+    setShowSearchResults(false);
+    setShowProfileDropdown(false);
+    setShowNotifications(false);
+  }, [location.pathname, location.search]);
+
+  // Close dropdowns on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setActiveDropdown(null);
+        setShowSearchResults(false);
+        setShowProfileDropdown(false);
+        setShowNotifications(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const brandNewCategories = categories.length > 0
     ? categories.filter(c => c.type === 'brand-new')
@@ -62,28 +85,39 @@ export default function Header() {
   };
 
   useEffect(() => {
+    let ticking = false;
+
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
 
-      // If we scroll down, hide. If we scroll up, show.
-      if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        setIsVisible(false);
-      } else {
-        setIsVisible(true);
+          // Hide header as soon as user scrolls down
+          // Do not reveal on small scroll up, only show when scrolled all the way to top
+          if (currentScrollY > 80) {
+            setIsVisible(false);
+          } else {
+            setIsVisible(true);
+          }
+
+          ticking = false;
+        });
+        ticking = true;
       }
-
-      setLastScrollY(currentScrollY);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
+  }, []);
 
   return (
     <>
-      <header className={`w-full bg-[#e8eef7] fixed top-0 left-0 right-0 z-40 transition-transform duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+      <header className={`w-full bg-[#e8eef7] fixed top-0 left-0 right-0 z-40 transition-transform duration-300 ease-in-out will-change-transform ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
         {/* Top Header */}
-        <div className="bg-[#161B22]/90 backdrop-blur-md relative z-30">
+        <div 
+          onMouseEnter={() => setActiveDropdown(null)}
+          className="bg-[#161B22]/90 backdrop-blur-md relative z-30"
+        >
           <div className="relative z-10 container mx-auto max-w-7xl px-4 h-20 flex items-center justify-between gap-6">
 
           {/* Logo */}
@@ -91,7 +125,7 @@ export default function Header() {
             <span className="text-3xl font-black tracking-tight flex items-baseline" style={{ fontFamily: "'Orbitron', sans-serif" }}>
               <span className="text-white">O</span>
               <span className="text-white">RION</span>
-              <span className="text-[#2ee661] ml-1 text-2xl" style={{ textShadow: '0 0 10px rgba(46, 230, 97, 0.5)' }}>.lk</span>
+              <span className="text-[#16a34a] ml-1 text-2xl" style={{ textShadow: '0 0 10px rgba(22, 163, 74, 0.4)' }}>.lk</span>
             </span>
           </a>
 
@@ -115,12 +149,12 @@ export default function Header() {
                   handleSearchSubmit(e);
                 }
               }}
-              className="w-full bg-[#0D1117] text-white placeholder-[#8B949E] border border-[#30363D] rounded-full py-2.5 pl-6 pr-14 focus:outline-none focus:border-[#2ee661] focus:bg-[#0D1117]/80 transition-all shadow-inner"
+              className="w-full bg-[#0D1117] text-white placeholder-[#8B949E] border border-[#30363D] rounded-full py-2.5 pl-6 pr-14 focus:outline-none focus:border-[#16a34a] focus:bg-[#0D1117]/80 transition-all shadow-inner"
             />
             <button
               type="submit"
               aria-label="Search products"
-              className="absolute right-0 top-0 h-full w-12 bg-[#2ee661] text-black flex items-center justify-center rounded-r-full hover:bg-[#24c24e] transition-colors cursor-pointer"
+              className="absolute right-0 top-0 h-full w-12 bg-[#16a34a] text-white flex items-center justify-center rounded-r-full hover:bg-[#15803d] transition-colors cursor-pointer"
             >
               <Search size={18} strokeWidth={2.5} />
             </button>
@@ -156,7 +190,7 @@ export default function Header() {
                             <p className="text-xs text-gray-500 mt-0.5">{product.category}</p>
                           </div>
                           <div className="text-right shrink-0">
-                            <span className="text-sm font-black text-[#1cd75b]">{formatLKR(product.price)}</span>
+                            <span className="text-sm font-black text-[#15803d]">{formatLKR(product.price)}</span>
                           </div>
                         </div>
                       ))
@@ -169,10 +203,10 @@ export default function Header() {
                   {searchQuery.trim() !== '' && (
                     <div
                       onClick={handleSearchSubmit}
-                      className="p-3 bg-gray-50 hover:bg-[#2ee661]/10 text-center text-xs font-bold text-gray-700 hover:text-black cursor-pointer transition-colors border-t border-gray-100 flex items-center justify-center gap-1.5"
+                      className="p-3 bg-gray-50 hover:bg-[#15803d]/10 text-center text-xs font-bold text-gray-700 hover:text-black cursor-pointer transition-colors border-t border-gray-100 flex items-center justify-center gap-1.5"
                     >
                       <span>View all results for "{searchQuery}"</span>
-                      <ChevronRight size={14} className="text-[#2ee661]" />
+                      <ChevronRight size={14} className="text-[#15803d]" />
                     </div>
                   )}
                 </motion.div>
@@ -286,7 +320,7 @@ export default function Header() {
                         <Link
                           to="/admin"
                           onClick={() => setShowProfileDropdown(false)}
-                          className="flex items-center gap-3 px-4 py-2 text-sm text-[#2ee661] font-bold hover:bg-[#2ee661]/10 transition-colors"
+                          className="flex items-center gap-3 px-4 py-2 text-sm text-[#15803d] font-bold hover:bg-[#15803d]/10 transition-colors"
                         >
                           <Settings size={16} /> Admin Dashboard
                         </Link>
@@ -304,27 +338,27 @@ export default function Header() {
 
             <button
               onClick={() => setIsCompareModalOpen(true)}
-              className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors relative"
+              className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors relative cursor-pointer"
             >
-              <Shuffle size={18} className={compareList.length > 0 ? "text-[#2ee661]" : ""} />
-              <span className="absolute -top-2 -right-2 bg-[#2ee661] border-none text-black text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">{compareList.length}</span>
+              <Shuffle size={18} className={compareList.length > 0 ? "text-[#15803d]" : ""} />
+              <span className="absolute -top-2 -right-2 bg-[#15803d] border-none text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">{compareList.length}</span>
             </button>
 
-            <button onClick={() => setIsWishlistOpen(true)} className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors relative">
-              <Heart size={20} className={wishlist.length > 0 ? "fill-[#2ee661] text-[#2ee661]" : ""} />
-              <span className="absolute -top-2 -right-2 bg-[#2ee661] border-none text-black text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">{wishlist.length}</span>
+            <button onClick={() => setIsWishlistOpen(true)} className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors relative cursor-pointer">
+              <Heart size={20} className={wishlist.length > 0 ? "fill-[#15803d] text-[#15803d]" : ""} />
+              <span className="absolute -top-2 -right-2 bg-[#15803d] border-none text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">{wishlist.length}</span>
             </button>
 
             {/* Cart Pill Button matching custom design */}
             <button
               onClick={() => setIsCartOpen(true)}
-              className="h-10 pl-1.5 pr-4 rounded-full bg-[#2ee661] hover:bg-[#2ee661]/80 transition-all duration-200 flex items-center gap-2.5 relative ml-2 shadow-sm hover:shadow-md cursor-pointer group"
+              className="h-10 pl-1.5 pr-4 rounded-full bg-[#15803d] hover:bg-[#166534] transition-all duration-200 flex items-center gap-2.5 relative ml-2 shadow-sm hover:shadow-md cursor-pointer group"
               aria-label="Shopping Cart"
             >
               <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center shadow-sm shrink-0 group-hover:scale-105 transition-transform">
                 <ShoppingCart size={15} strokeWidth={2.2} className="text-gray-900 ml-[-1px]" />
               </div>
-              <span className="font-black text-[13px] md:text-sm text-black tracking-tight whitespace-nowrap">
+              <span className="font-black text-[13px] md:text-sm text-white tracking-tight whitespace-nowrap">
                 LKR {cartTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
               <span className="absolute -top-1.5 -right-1.5 bg-white text-black text-[10px] font-black min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center shadow-[0_2px_6px_rgba(0,0,0,0.15)] border border-gray-100/80">
@@ -346,26 +380,44 @@ export default function Header() {
               <nav className="hidden lg:flex items-center gap-4 xl:gap-6 font-bold text-slate-700 text-[12px] xl:text-[13px] uppercase tracking-wide h-full whitespace-nowrap">
                 <button
                   onMouseEnter={() => setActiveDropdown('brandNew')}
-                  className={`flex items-center gap-1 transition-colors h-full outline-none ${activeDropdown === 'brandNew' ? 'text-[#2ee661]' : 'hover:text-slate-950'}`}
+                  onClick={() => setActiveDropdown(activeDropdown === 'brandNew' ? null : 'brandNew')}
+                  className={`flex items-center gap-1 transition-colors h-full outline-none cursor-pointer ${activeDropdown === 'brandNew' ? 'text-[#15803d]' : 'hover:text-[#15803d]'}`}
                 >
                   BRAND NEW PRODUCTS <ChevronRight size={14} className={`transition-transform duration-300 ${activeDropdown === 'brandNew' ? '-rotate-90' : 'rotate-90'}`} />
                 </button>
                 <button
                   onMouseEnter={() => setActiveDropdown('used')}
-                  className={`flex items-center gap-1 transition-colors h-full outline-none ${activeDropdown === 'used' ? 'text-[#2ee661]' : 'hover:text-slate-950'}`}
+                  onClick={() => setActiveDropdown(activeDropdown === 'used' ? null : 'used')}
+                  className={`flex items-center gap-1 transition-colors h-full outline-none cursor-pointer ${activeDropdown === 'used' ? 'text-[#15803d]' : 'hover:text-[#15803d]'}`}
                 >
                   USED PRODUCTS <ChevronRight size={14} className={`transition-transform duration-300 ${activeDropdown === 'used' ? '-rotate-90' : 'rotate-90'}`} />
                 </button>
-                <a href="/shop" className="hover:text-slate-950 transition-colors">
+                <a
+                  href="/shop"
+                  onMouseEnter={() => setActiveDropdown(null)}
+                  className="hover:text-slate-950 transition-colors"
+                >
                   ALL PRODUCTS
                 </a>
-                <Link to="/offers" className="text-[#f0364c] hover:text-red-700 transition-colors flex items-center gap-1">
+                <Link
+                  to="/offers"
+                  onMouseEnter={() => setActiveDropdown(null)}
+                  className="text-[#f0364c] hover:text-red-700 transition-colors flex items-center gap-1"
+                >
                   <Heart size={14} className="fill-current" /> SPECIAL OFFERS
                 </Link>
-                <Link to="/orders" className="hover:text-slate-950 transition-colors">
+                <Link
+                  to="/orders"
+                  onMouseEnter={() => setActiveDropdown(null)}
+                  className="hover:text-slate-950 transition-colors"
+                >
                   TRACK YOUR DELIVERY
                 </Link>
-                <Link to="/build" className="text-slate-900 font-black hover:text-black transition-colors flex items-center gap-1">
+                <Link
+                  to="/build"
+                  onMouseEnter={() => setActiveDropdown(null)}
+                  className="text-slate-900 font-black hover:text-black transition-colors flex items-center gap-1"
+                >
                   <Package size={14} /> BUILD MY PC
                 </Link>
               </nav>
@@ -401,52 +453,68 @@ export default function Header() {
               {/* Full-width Mega Menu */}
               <AnimatePresence>
                 {activeDropdown && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    transition={{ duration: 0.2 }}
-                    className="fixed inset-y-0 left-0 w-[86vw] max-w-sm bg-white shadow-2xl z-[80] py-5 px-4 overflow-y-auto lg:absolute lg:inset-y-auto lg:top-[100%] lg:left-0 lg:w-full lg:max-w-none lg:shadow-2xl lg:border-t lg:border-gray-100 lg:py-10"
-                  >
-                    <div className="flex items-center justify-between mb-6 lg:hidden">
-                      <div>
-                        <p className="text-xs font-black uppercase tracking-wider text-gray-400">Browse</p>
-                        <h3 className="text-lg font-black text-gray-900">
-                          {activeDropdown === 'brandNew' ? 'Brand New Products' : 'Used Products'}
-                        </h3>
-                      </div>
-                      <button
-                        onClick={() => setActiveDropdown(null)}
-                        aria-label="Close category menu"
-                        className="rounded-full bg-gray-100 p-2 text-gray-500 hover:bg-gray-200 hover:text-gray-900"
-                      >
-                        <X size={18} />
-                      </button>
-                    </div>
-                    <div className="container mx-auto max-w-7xl grid grid-cols-2 md:grid-cols-5 lg:grid-cols-8 gap-x-4 gap-y-8 lg:gap-y-12">
-                      {(activeDropdown === 'brandNew' ? brandNewCategories : usedCategories).map((cat: any, idx) => (
-                        <Link
-                          key={cat.id || idx}
-                          to={`/shop?category=${encodeURIComponent(cat.name)}&type=${activeDropdown === 'brandNew' ? 'brand-new' : 'used'}`}
+                  <>
+                    {/* Dimmed backdrop - clicking it closes dropdown */}
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.15 }}
+                      onClick={() => setActiveDropdown(null)}
+                      className="fixed inset-0 top-[128px] bg-black/40 backdrop-blur-[2px] z-[40]"
+                    />
+
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 8 }}
+                      transition={{ duration: 0.18 }}
+                      onMouseLeave={() => setActiveDropdown(null)}
+                      className="fixed inset-y-0 left-0 w-[86vw] max-w-sm bg-white shadow-2xl z-[80] py-5 px-4 overflow-y-auto lg:absolute lg:inset-y-auto lg:top-[100%] lg:left-0 lg:w-full lg:max-w-none lg:shadow-2xl lg:border-t lg:border-gray-100 lg:py-10 before:content-[''] before:absolute before:-top-3 before:left-0 before:right-0 before:h-3"
+                    >
+                      <div className="flex items-center justify-between mb-6 lg:hidden">
+                        <div>
+                          <p className="text-xs font-black uppercase tracking-wider text-gray-400">Browse</p>
+                          <h3 className="text-lg font-black text-gray-900">
+                            {activeDropdown === 'brandNew' ? 'Brand New Products' : 'Used Products'}
+                          </h3>
+                        </div>
+                        <button
                           onClick={() => setActiveDropdown(null)}
-                          className="flex flex-col items-center text-center group cursor-pointer rounded-xl p-2 hover:bg-gray-50"
+                          aria-label="Close category menu"
+                          className="rounded-full bg-gray-100 p-2 text-gray-500 hover:bg-gray-200 hover:text-gray-900 cursor-pointer"
                         >
-                          <div className="h-16 flex items-center justify-center transform group-hover:-translate-y-1 group-hover:scale-105 transition-all duration-300 mb-3 w-full p-2">
-                            <img src={cat.img} alt={cat.name} className="max-w-full max-h-full object-contain" />
-                          </div>
-                          <span className="text-[12px] font-bold text-gray-800 group-hover:text-[#2ee661] leading-tight transition-colors line-clamp-2">
-                            {cat.name} <span className="text-gray-400 font-normal">({cat.count})</span>
-                          </span>
-                        </Link>
-                      ))}
-                    </div>
-                  </motion.div>
+                          <X size={18} />
+                        </button>
+                      </div>
+                      <div className="container mx-auto max-w-7xl grid grid-cols-2 md:grid-cols-5 lg:grid-cols-8 gap-x-4 gap-y-8 lg:gap-y-12">
+                        {(activeDropdown === 'brandNew' ? brandNewCategories : usedCategories).map((cat: any, idx) => (
+                          <Link
+                            key={cat.id || idx}
+                            to={`/shop?category=${encodeURIComponent(cat.name)}&type=${activeDropdown === 'brandNew' ? 'brand-new' : 'used'}`}
+                            onClick={() => setActiveDropdown(null)}
+                            className="flex flex-col items-center text-center group cursor-pointer rounded-xl p-2 hover:bg-gray-50"
+                          >
+                            <div className="h-16 flex items-center justify-center transform group-hover:-translate-y-1 group-hover:scale-105 transition-all duration-300 mb-3 w-full p-2">
+                              <img src={cat.img} alt={cat.name} className="max-w-full max-h-full object-contain" />
+                            </div>
+                            <span className="text-[12px] font-bold text-gray-800 group-hover:text-[#15803d] leading-tight transition-colors line-clamp-2">
+                              {cat.name} <span className="text-gray-400 font-normal">({cat.count})</span>
+                            </span>
+                          </Link>
+                        ))}
+                      </div>
+                    </motion.div>
+                  </>
                 )}
               </AnimatePresence>
             </div>
 
             {/* Right Info */}
-            <div className="hidden md:flex items-center gap-8">
+            <div 
+              onMouseEnter={() => setActiveDropdown(null)}
+              className="hidden md:flex items-center gap-8"
+            >
               <div className="flex items-center gap-2">
                 <Globe className="text-gray-400" size={20} />
                 <div className="flex flex-col leading-tight">
@@ -469,18 +537,18 @@ export default function Header() {
       {/* Mobile Bottom Navigation Bar */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 px-6 py-2 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
         <div className="flex items-center justify-between">
-          <a href="/" className="flex flex-col items-center gap-1 text-[#2ee661]">
+          <a href="/" className="flex flex-col items-center gap-1 text-[#15803d]">
             <Home size={22} strokeWidth={2} />
             <span className="text-[10px] font-bold">Home</span>
           </a>
-          <button onClick={() => setActiveDropdown(activeDropdown ? null : 'brandNew')} className="flex flex-col items-center gap-1 text-gray-500 hover:text-[#2ee661] transition-colors">
+          <button onClick={() => setActiveDropdown(activeDropdown ? null : 'brandNew')} className="flex flex-col items-center gap-1 text-gray-500 hover:text-[#15803d] transition-colors">
             <Store size={22} strokeWidth={2} />
             <span className="text-[10px] font-bold">Shop</span>
           </button>
-          <button onClick={() => setIsWishlistOpen(true)} className="flex flex-col items-center gap-1 text-gray-500 hover:text-[#2ee661] transition-colors relative">
+          <button onClick={() => setIsWishlistOpen(true)} className="flex flex-col items-center gap-1 text-gray-500 hover:text-[#15803d] transition-colors relative">
             <div className="relative">
-              <Heart size={22} strokeWidth={2} className={wishlist.length > 0 ? "fill-[#2ee661] text-[#2ee661]" : ""} />
-              <span className="absolute -top-1 -right-2 bg-[#2ee661] text-black text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">
+              <Heart size={22} strokeWidth={2} className={wishlist.length > 0 ? "fill-[#15803d] text-[#15803d]" : ""} />
+              <span className="absolute -top-1 -right-2 bg-[#15803d] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">
                 {wishlist.length}
               </span>
             </div>
