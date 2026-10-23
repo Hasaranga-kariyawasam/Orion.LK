@@ -119,6 +119,7 @@ export interface AdminCategory {
   count: number;
   img: string;
   type: 'brand-new' | 'used';
+  group?: 'components' | 'accessories' | 'used';
 }
 
 export interface PaymentOption {
@@ -332,7 +333,7 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   // 1. Refresh Products from MongoDB
   const refreshProducts = async () => {
     try {
-      const res = await fetchProducts({ limit: 1000 });
+      const res = await fetchProducts({ limit: 'all' });
       if (res.products && res.products.length > 0) {
         const mapped = res.products.map(p => ({
           ...p,
@@ -360,6 +361,7 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           count: c.count || 0,
           img: resolveMediaUrl(c.img),
           type: c.type || 'brand-new',
+          group: c.group || (c.type === 'used' ? 'used' : 'components'),
         }));
         setCategories(mapped);
         localStorage.setItem('admin_categories', JSON.stringify(mapped));

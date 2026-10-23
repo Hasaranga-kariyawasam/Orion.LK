@@ -105,10 +105,67 @@ export default function Home() {
   }, [refreshHomeSettings]);
   const [bestSellerCategory, setBestSellerCategory] = useState('Processors');
   const [heroImageReady, setHeroImageReady] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
+  const [isCategoryHovered, setIsCategoryHovered] = useState(false);
+  const [timeLeft, setTimeLeft] = useState({ hours: 22, mins: 47, secs: 2 });
   const videoRef = useRef<HTMLVideoElement>(null);
   const categorySliderRef = useRef<HTMLDivElement>(null);
   const clearanceSliderRef = useRef<HTMLDivElement>(null);
   const youtubeEmbedUrl = getYouTubeEmbedUrl(videoUrl);
+
+  // Fast 500ms initial morph loader
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setPageLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Dynamic Clearance countdown timer
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev.secs > 0) return { ...prev, secs: prev.secs - 1 };
+        if (prev.mins > 0) return { ...prev, mins: prev.mins - 1, secs: 59 };
+        if (prev.hours > 0) return { hours: prev.hours - 1, mins: 59, secs: 59 };
+        return { hours: 23, mins: 59, secs: 59 };
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Top Categories auto-scroll
+  useEffect(() => {
+    if (isCategoryHovered) return;
+    const slider = categorySliderRef.current;
+    if (!slider) return;
+
+    const interval = setInterval(() => {
+      if (slider.scrollLeft + slider.clientWidth >= slider.scrollWidth - 10) {
+        slider.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        slider.scrollBy({ left: 240, behavior: 'smooth' });
+      }
+    }, 2800);
+
+    return () => clearInterval(interval);
+  }, [isCategoryHovered]);
+
+  // Top Categories horizontal scroll via mouse wheel
+  useEffect(() => {
+    const slider = categorySliderRef.current;
+    if (!slider) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (e.deltaY !== 0) {
+        e.preventDefault();
+        slider.scrollLeft += e.deltaY;
+      }
+    };
+
+    slider.addEventListener('wheel', handleWheel, { passive: false });
+    return () => slider.removeEventListener('wheel', handleWheel);
+  }, []);
 
   useEffect(() => {
     setHeroImageReady(false);
@@ -178,8 +235,37 @@ export default function Home() {
     const hideTextTimer = window.setTimeout(() => setShowVideoText(false), 5000);
     return () => window.clearTimeout(hideTextTimer);
   }, []);
+
   return (
     <>
+      {pageLoading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white transition-opacity duration-300">
+          <div className="flex flex-col items-center gap-3">
+            <div className="home-loader" />
+            <p className="text-sm font-black tracking-tight text-gray-900" style={{ fontFamily: "'Orbitron', sans-serif" }}>
+              ORION<span className="text-[#16a34a]">.LK</span>
+            </p>
+          </div>
+        </div>
+      )}
+      <style>{`
+        .home-loader {
+          width: 48px;
+          aspect-ratio: 1;
+          background: #161B22;
+          border-radius: 50%;
+          animation: home-loader-morph 1.8s infinite linear;
+        }
+        @keyframes home-loader-morph {
+          12.5% { border-radius: 37% 63% 70% 30% / 30% 62% 38% 70%; }
+          25% { border-radius: 50% 50% 70% 30% / 52% 62% 38% 48%; }
+          37.5% { border-radius: 33% 67% 18% 82% / 52% 75% 25% 48%; }
+          50% { border-radius: 73% 27% 18% 82% / 52% 32% 68% 48%; }
+          62.5% { border-radius: 73% 27% 74% 26% / 64% 32% 68% 36%; }
+          75% { border-radius: 84% 16% 15% 85% / 55% 79% 21% 45%; }
+          87.5% { border-radius: 12% 88% 69% 31% / 10% 66% 34% 90%; }
+        }
+      `}</style>
       <div className="h-10 w-full bg-white"></div>
       <div className="min-h-screen bg-gray-50 pb-12">
 
@@ -272,7 +358,12 @@ export default function Home() {
             <ChevronLeft size={22} />
           </button>
 
-          <div ref={categorySliderRef} className="flex overflow-x-auto gap-3 md:gap-4 pb-4 scrollbar-hide px-5 md:px-6 scroll-smooth">
+          <div
+            ref={categorySliderRef}
+            onMouseEnter={() => setIsCategoryHovered(true)}
+            onMouseLeave={() => setIsCategoryHovered(false)}
+            className="flex overflow-x-auto gap-3 md:gap-4 pb-4 scrollbar-hide px-5 md:px-6 scroll-smooth"
+          >
             {displayCategories.map((cat, idx) => (
               <Link
                 key={cat.id || idx}
@@ -506,59 +597,79 @@ export default function Home() {
         </AnimatedSection>
 
         {/* 4. Clearance Sale */}
-        <AnimatedSection className="max-w-7xl mx-auto px-4 mt-10 md:mt-14 relative bg-[#030816] rounded-2xl p-8 pt-12 overflow-hidden shadow-xl">
-          <div className="absolute inset-0 bg-gradient-to-r from-[#030816] to-transparent"></div>
-          <div className="relative z-10 mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-            <div>
-              <h2 className="text-3xl font-black text-[#15803d] uppercase tracking-wider mb-2 drop-shadow-md">Clearance Sale</h2>
-              <h3 className="text-4xl font-black text-white uppercase tracking-wider mb-4 drop-shadow-lg">Up to 50% Off</h3>
-              <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6">Trusted by Pros. Made for Winners.</p>
+        <AnimatedSection className="max-w-7xl mx-auto px-3 sm:px-4 mt-10 md:mt-16">
+          <div className="relative bg-[#070b18] border border-blue-950/50 rounded-2xl p-6 sm:p-8 md:p-10 overflow-hidden shadow-2xl">
+            {/* Esports Neon Diagonal Streaks & Glow */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              <div className="absolute -top-24 -left-24 w-96 h-96 bg-red-600/15 rounded-full blur-3xl" />
+              <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-blue-600/15 rounded-full blur-3xl" />
+              <div className="absolute top-0 right-1/4 w-[500px] h-[300px] bg-purple-600/10 rounded-full blur-3xl" />
+              {/* Diagonal accent lines */}
+              <div className="absolute inset-0 opacity-15" style={{
+                backgroundImage: 'repeating-linear-gradient(135deg, rgba(234, 54, 76, 0.4) 0px, rgba(234, 54, 76, 0.4) 1px, transparent 1px, transparent 60px)'
+              }} />
+            </div>
 
-              <div className="flex gap-4">
-                <div className="bg-gray-900 text-white p-3 rounded-lg flex flex-col items-center min-w-[60px] shadow-lg border border-gray-700">
-                  <span className="text-2xl font-black">22</span>
-                  <span className="text-[10px] uppercase font-bold">Days</span>
+            {/* Top Banner Content: Left Info/Timer + Right 3D Controller */}
+            <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-6 border-b border-gray-800/60">
+              <div className="max-w-xl">
+                <span className="text-[#ea364c] font-black text-lg md:text-xl uppercase tracking-wider block mb-1">
+                  CLEARANCE SALE
+                </span>
+                <h3 className="text-3xl sm:text-4xl md:text-5xl font-black text-white uppercase tracking-wider mb-2">
+                  UP TO 50% OFF
+                </h3>
+                <p className="text-xs md:text-sm font-bold text-gray-400 uppercase tracking-widest mb-3">
+                  TRUSTED BY PROS. MADE FOR WINNERS.
+                </p>
+                <div className="w-10 h-1 bg-[#ea364c] rounded-full mb-3" />
+                <p className="text-xs text-gray-400 mb-3 font-medium">The time is running out</p>
+
+                {/* Red Countdown Timer */}
+                <div className="flex items-center gap-2.5">
+                  <div className="bg-[#ea364c] text-white px-3.5 py-2 rounded-lg flex flex-col items-center min-w-[56px] shadow-lg">
+                    <span className="text-2xl font-black leading-none">{String(timeLeft.hours).padStart(2, '0')}</span>
+                    <span className="text-[9px] uppercase font-black tracking-wider mt-1">HOURS</span>
+                  </div>
+                  <div className="bg-[#ea364c] text-white px-3.5 py-2 rounded-lg flex flex-col items-center min-w-[56px] shadow-lg">
+                    <span className="text-2xl font-black leading-none">{String(timeLeft.mins).padStart(2, '0')}</span>
+                    <span className="text-[9px] uppercase font-black tracking-wider mt-1">MINS</span>
+                  </div>
+                  <div className="bg-[#ea364c] text-white px-3.5 py-2 rounded-lg flex flex-col items-center min-w-[56px] shadow-lg">
+                    <span className="text-2xl font-black leading-none">{String(timeLeft.secs).padStart(2, '0')}</span>
+                    <span className="text-[9px] uppercase font-black tracking-wider mt-1">SECS</span>
+                  </div>
                 </div>
-                <div className="bg-gray-900 text-white p-3 rounded-lg flex flex-col items-center min-w-[60px] shadow-lg border border-gray-700">
-                  <span className="text-2xl font-black">01</span>
-                  <span className="text-[10px] uppercase font-bold">Hours</span>
-                </div>
-                <div className="bg-gray-900 text-white p-3 rounded-lg flex flex-col items-center min-w-[60px] shadow-lg border border-gray-700">
-                  <span className="text-2xl font-black">20</span>
-                  <span className="text-[10px] uppercase font-bold">Mins</span>
+              </div>
+
+              {/* 3D Console/Controller Artwork */}
+              <div className="relative w-full md:w-auto flex justify-center md:justify-end shrink-0">
+                <div className="relative w-64 h-52 sm:w-80 sm:h-60 md:w-96 md:h-64">
+                  <div className="absolute inset-0 bg-purple-600/20 blur-3xl rounded-full pointer-events-none" />
+                  <img
+                    src="/assets/clearance-controller.jpg"
+                    alt="Gaming Console Controller"
+                    className="w-full h-full object-contain filter drop-shadow-[0_20px_40px_rgba(0,0,0,0.85)] -rotate-3 hover:rotate-0 transition-transform duration-500 rounded-2xl"
+                  />
                 </div>
               </div>
             </div>
-            <Link to="/offers" className="bg-[#f0364c] text-white px-8 py-3 rounded-xl font-bold uppercase tracking-wider hover:bg-red-700 transition-colors whitespace-nowrap shadow-lg flex items-center gap-2">
-              View All Offers <ChevronRight size={20} />
-            </Link>
-          </div>
 
-          <div className="relative z-10 mt-12 bg-gray rounded-xl p-4 md:p-6 shadow-2xl">
-            {/* Scroll Left Arrow */}
-            <button
-              onClick={() => scrollClearance('left')}
-              className="absolute left-2 md:-left-4 top-1/2 -translate-y-1/2 bg-white/95 p-2.5 md:p-3 rounded-full shadow-xl z-20 hover:bg-white text-gray-800 border border-gray-200 transition-all hover:scale-110 active:scale-95 flex items-center justify-center cursor-pointer"
-              aria-label="Scroll clearance items left"
-            >
-              <ChevronLeft size={22} className="text-gray-800" />
-            </button>
-
-            {/* Scroll Right Arrow */}
-            <button
-              onClick={() => scrollClearance('right')}
-              className="absolute right-2 md:-right-4 top-1/2 -translate-y-1/2 bg-white/95 p-2.5 md:p-3 rounded-full shadow-xl z-20 hover:bg-white text-gray-800 border border-gray-200 transition-all hover:scale-110 active:scale-95 flex items-center justify-center cursor-pointer"
-              aria-label="Scroll clearance items right"
-            >
-              <ChevronRight size={22} className="text-gray-800" />
-            </button>
-
-            <div ref={clearanceSliderRef} className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide px-4 scroll-smooth">
-              {displayClearance.map((product, idx) => (
-                <div className="min-w-[220px] w-1/5 flex-shrink-0" key={product.id}>
-                  <ProductCard product={product} index={idx} />
-                </div>
+            {/* Centered 4 Product Cards Grid */}
+            <div className="relative z-10 mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+              {displayClearance.slice(0, 4).map((product, idx) => (
+                <ProductCard key={product.id || idx} product={product} index={idx} />
               ))}
+            </div>
+
+            {/* Bottom Link */}
+            <div className="mt-8 flex justify-center relative z-10">
+              <Link
+                to="/offers"
+                className="bg-[#ea364c] hover:bg-[#d6283d] text-white px-8 py-3 rounded-xl font-bold uppercase tracking-wider transition-all shadow-lg hover:shadow-red-500/20 flex items-center gap-2 text-sm"
+              >
+                View All Offers <ChevronRight size={18} />
+              </Link>
             </div>
           </div>
         </AnimatedSection>

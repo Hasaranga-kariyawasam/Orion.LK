@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     const sort = searchParams.get('sort') || 'newest';
     const page = parseInt(searchParams.get('page') || '1');
     const limitParam = searchParams.get('limit');
-    const limit = limitParam === 'all' || limitParam === '0' ? 1000 : parseInt(limitParam || '100');
+    const limit = limitParam === 'all' || limitParam === '0' ? 2000 : Math.min(parseInt(limitParam || '100'), 2000);
     const skip = (page - 1) * limit;
 
     const query: Record<string, any> = {};

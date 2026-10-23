@@ -13,7 +13,7 @@ export default function Header() {
   const { categories, products, whatsappNumber } = useAdmin();
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-  const [activeDropdown, setActiveDropdown] = useState<'brandNew' | 'used' | null>(null);
+  const [activeDropdown, setActiveDropdown] = useState<'components' | 'accessories' | 'used' | null>(null);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showBanner, setShowBanner] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -43,13 +43,19 @@ export default function Header() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const brandNewCategories = categories.length > 0
-    ? categories.filter(c => c.type === 'brand-new')
-    : BRAND_NEW_CATEGORIES;
+  const componentCategories = categories.filter(c => c.group === 'components');
+  const accessoryCategories = categories.filter(c => c.group === 'accessories');
+  const usedCategories = categories.filter(c => c.group === 'used' || c.type === 'used');
 
-  const usedCategories = categories.length > 0
-    ? categories.filter(c => c.type === 'used')
-    : USED_CATEGORIES;
+  const currentDropdownCategories =
+    activeDropdown === 'components' ? componentCategories :
+    activeDropdown === 'accessories' ? accessoryCategories :
+    activeDropdown === 'used' ? usedCategories : [];
+
+  const currentDropdownTitle =
+    activeDropdown === 'components' ? 'PC Build Components' :
+    activeDropdown === 'accessories' ? 'Other Accessories' :
+    activeDropdown === 'used' ? 'Used Products' : '';
 
   const searchResults = searchQuery.trim() === ''
     ? products.slice(0, 5)
@@ -379,11 +385,18 @@ export default function Header() {
               {/* Links */}
               <nav className="hidden lg:flex items-center gap-4 xl:gap-6 font-bold text-slate-700 text-[12px] xl:text-[13px] uppercase tracking-wide h-full whitespace-nowrap">
                 <button
-                  onMouseEnter={() => setActiveDropdown('brandNew')}
-                  onClick={() => setActiveDropdown(activeDropdown === 'brandNew' ? null : 'brandNew')}
-                  className={`flex items-center gap-1 transition-colors h-full outline-none cursor-pointer ${activeDropdown === 'brandNew' ? 'text-[#15803d]' : 'hover:text-[#15803d]'}`}
+                  onMouseEnter={() => setActiveDropdown('components')}
+                  onClick={() => setActiveDropdown(activeDropdown === 'components' ? null : 'components')}
+                  className={`flex items-center gap-1 transition-colors h-full outline-none cursor-pointer ${activeDropdown === 'components' ? 'text-[#15803d]' : 'hover:text-[#15803d]'}`}
                 >
-                  BRAND NEW PRODUCTS <ChevronRight size={14} className={`transition-transform duration-300 ${activeDropdown === 'brandNew' ? '-rotate-90' : 'rotate-90'}`} />
+                  PC BUILD COMPONENTS <ChevronRight size={14} className={`transition-transform duration-300 ${activeDropdown === 'components' ? '-rotate-90' : 'rotate-90'}`} />
+                </button>
+                <button
+                  onMouseEnter={() => setActiveDropdown('accessories')}
+                  onClick={() => setActiveDropdown(activeDropdown === 'accessories' ? null : 'accessories')}
+                  className={`flex items-center gap-1 transition-colors h-full outline-none cursor-pointer ${activeDropdown === 'accessories' ? 'text-[#15803d]' : 'hover:text-[#15803d]'}`}
+                >
+                  OTHER ACCESSORIES <ChevronRight size={14} className={`transition-transform duration-300 ${activeDropdown === 'accessories' ? '-rotate-90' : 'rotate-90'}`} />
                 </button>
                 <button
                   onMouseEnter={() => setActiveDropdown('used')}
@@ -425,10 +438,16 @@ export default function Header() {
               {/* Compact navigation for mobile and tablet screens */}
               <nav className="lg:hidden flex items-center gap-1.5 h-full w-full overflow-x-auto scrollbar-hide whitespace-nowrap pr-2 text-[10px] sm:text-[11px] font-black uppercase tracking-wide">
                 <button
-                  onClick={() => setActiveDropdown(activeDropdown === 'brandNew' ? null : 'brandNew')}
-                  className={`shrink-0 rounded-full px-3 py-1.5 transition-colors ${activeDropdown === 'brandNew' ? 'bg-slate-900 text-white' : 'bg-white/70 text-slate-700 hover:bg-white'}`}
+                  onClick={() => setActiveDropdown(activeDropdown === 'components' ? null : 'components')}
+                  className={`shrink-0 rounded-full px-3 py-1.5 transition-colors ${activeDropdown === 'components' ? 'bg-slate-900 text-white' : 'bg-white/70 text-slate-700 hover:bg-white'}`}
                 >
-                  New
+                  Components
+                </button>
+                <button
+                  onClick={() => setActiveDropdown(activeDropdown === 'accessories' ? null : 'accessories')}
+                  className={`shrink-0 rounded-full px-3 py-1.5 transition-colors ${activeDropdown === 'accessories' ? 'bg-slate-900 text-white' : 'bg-white/70 text-slate-700 hover:bg-white'}`}
+                >
+                  Accessories
                 </button>
                 <button
                   onClick={() => setActiveDropdown(activeDropdown === 'used' ? null : 'used')}
@@ -470,13 +489,13 @@ export default function Header() {
                       exit={{ opacity: 0, y: 8 }}
                       transition={{ duration: 0.18 }}
                       onMouseLeave={() => setActiveDropdown(null)}
-                      className="fixed inset-y-0 left-0 w-[86vw] max-w-sm bg-white shadow-2xl z-[80] py-5 px-4 overflow-y-auto lg:absolute lg:inset-y-auto lg:top-[100%] lg:left-0 lg:w-full lg:max-w-none lg:shadow-2xl lg:border-t lg:border-gray-100 lg:py-10 before:content-[''] before:absolute before:-top-3 before:left-0 before:right-0 before:h-3"
+                      className="fixed inset-y-0 left-0 w-[86vw] max-w-sm bg-white shadow-2xl z-[80] py-5 px-4 overflow-y-auto lg:absolute lg:inset-y-auto lg:top-[100%] lg:left-0 lg:w-full lg:max-w-none lg:shadow-2xl lg:border-t lg:border-gray-100 lg:py-8 lg:px-6 before:content-[''] before:absolute before:-top-3 before:left-0 before:right-0 before:h-3"
                     >
                       <div className="flex items-center justify-between mb-6 lg:hidden">
                         <div>
                           <p className="text-xs font-black uppercase tracking-wider text-gray-400">Browse</p>
                           <h3 className="text-lg font-black text-gray-900">
-                            {activeDropdown === 'brandNew' ? 'Brand New Products' : 'Used Products'}
+                            {currentDropdownTitle}
                           </h3>
                         </div>
                         <button
@@ -487,22 +506,44 @@ export default function Header() {
                           <X size={18} />
                         </button>
                       </div>
-                      <div className="container mx-auto max-w-7xl grid grid-cols-2 md:grid-cols-5 lg:grid-cols-8 gap-x-4 gap-y-8 lg:gap-y-12">
-                        {(activeDropdown === 'brandNew' ? brandNewCategories : usedCategories).map((cat: any, idx) => (
+                      <div className="container mx-auto max-w-7xl">
+                        <div className="hidden lg:flex items-center justify-between pb-4 mb-6 border-b border-gray-100">
+                          <div>
+                            <span className="text-xs font-black uppercase tracking-widest text-[#15803d]">Category Directory</span>
+                            <h3 className="text-xl font-black text-gray-900">{currentDropdownTitle}</h3>
+                          </div>
                           <Link
-                            key={cat.id || idx}
-                            to={`/shop?category=${encodeURIComponent(cat.name)}&type=${activeDropdown === 'brandNew' ? 'brand-new' : 'used'}`}
+                            to="/shop"
                             onClick={() => setActiveDropdown(null)}
-                            className="flex flex-col items-center text-center group cursor-pointer rounded-xl p-2 hover:bg-gray-50"
+                            className="text-xs font-bold text-gray-600 hover:text-black flex items-center gap-1"
                           >
-                            <div className="h-16 flex items-center justify-center transform group-hover:-translate-y-1 group-hover:scale-105 transition-all duration-300 mb-3 w-full p-2">
-                              <img src={cat.img} alt={cat.name} className="max-w-full max-h-full object-contain" />
-                            </div>
-                            <span className="text-[12px] font-bold text-gray-800 group-hover:text-[#15803d] leading-tight transition-colors line-clamp-2">
-                              {cat.name} <span className="text-gray-400 font-normal">({cat.count})</span>
-                            </span>
+                            Browse All in Shop <ChevronRight size={14} />
                           </Link>
-                        ))}
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-x-4 gap-y-6 max-h-[65vh] overflow-y-auto pr-2">
+                          {currentDropdownCategories.map((cat: any, idx) => (
+                            <Link
+                              key={cat.id || idx}
+                              to={`/shop?category=${encodeURIComponent(cat.name)}`}
+                              onClick={() => setActiveDropdown(null)}
+                              className="flex flex-col items-center text-center group cursor-pointer rounded-xl p-2.5 hover:bg-gray-50 transition-all border border-transparent hover:border-gray-100"
+                            >
+                              <div className="h-16 w-16 bg-white rounded-xl shadow-xs flex items-center justify-center transform group-hover:-translate-y-1 group-hover:scale-105 transition-all duration-300 mb-2 p-2">
+                                <img
+                                  src={cat.img}
+                                  alt={cat.name}
+                                  className="max-w-full max-h-full object-contain mix-blend-multiply"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                  }}
+                                />
+                              </div>
+                              <span className="text-[12px] font-bold text-gray-800 group-hover:text-[#15803d] leading-tight transition-colors line-clamp-2">
+                                {cat.name} <span className="text-gray-400 font-normal">({cat.count})</span>
+                              </span>
+                            </Link>
+                          ))}
+                        </div>
                       </div>
                     </motion.div>
                   </>

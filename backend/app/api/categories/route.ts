@@ -11,10 +11,14 @@ export async function GET(req: NextRequest) {
     await connectDB();
     const { searchParams } = new URL(req.url);
     const type = searchParams.get('type');
+    const group = searchParams.get('group');
 
     const filter: Record<string, any> = {};
     if (type && type !== 'all') {
       filter.type = type;
+    }
+    if (group && group !== 'all') {
+      filter.group = group;
     }
 
     const categories = await Category.find(filter).sort({ name: 1 });

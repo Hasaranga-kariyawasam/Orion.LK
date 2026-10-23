@@ -4,6 +4,7 @@ export interface ICategory extends Document {
   name: string;
   slug: string;
   type: 'brand-new' | 'used';
+  group?: 'components' | 'accessories' | 'used';
   count: number;
   img: string;
   createdAt: Date;
@@ -19,6 +20,11 @@ const CategorySchema = new Schema<ICategory>(
       enum: ['brand-new', 'used'],
       default: 'brand-new',
     },
+    group: {
+      type: String,
+      enum: ['components', 'accessories', 'used'],
+      default: 'components',
+    },
     count: { type: Number, default: 0 },
     img: { type: String, default: '' },
   },
@@ -26,6 +32,7 @@ const CategorySchema = new Schema<ICategory>(
 );
 
 CategorySchema.index({ type: 1 });
+CategorySchema.index({ group: 1 });
 
 const Category: Model<ICategory> =
   mongoose.models.Category || mongoose.model<ICategory>('Category', CategorySchema);
