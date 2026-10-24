@@ -1,12 +1,19 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface IAddress {
-  label: string;
+  _id?: string;
+  id?: string;
+  label?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
   street: string;
   city: string;
-  province: string;
-  postalCode: string;
-  isDefault: boolean;
+  district?: string;
+  province?: string;
+  postalCode?: string;
+  isDefault?: boolean;
 }
 
 export interface IUserCartItem {
@@ -48,10 +55,15 @@ export interface IUser extends Document {
 
 const AddressSchema = new Schema<IAddress>({
   label: { type: String, default: 'Home' },
+  firstName: { type: String, default: '' },
+  lastName: { type: String, default: '' },
+  email: { type: String, default: '' },
+  phone: { type: String, default: '' },
   street: { type: String, required: true },
   city: { type: String, required: true },
-  province: { type: String, required: true },
-  postalCode: { type: String, required: true },
+  district: { type: String, default: '' },
+  province: { type: String, default: '' },
+  postalCode: { type: String, default: '' },
   isDefault: { type: Boolean, default: false },
 });
 

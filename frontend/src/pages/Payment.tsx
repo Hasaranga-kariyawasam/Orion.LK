@@ -483,7 +483,7 @@ export default function Payment() {
               <div className="border-t border-gray-100 pt-4 mb-4">
                 <div className="flex justify-between items-center">
                   <span className="text-base font-black text-gray-900 uppercase">Total to Pay</span>
-                  <span className="text-2xl font-black text-red-600">{formatLKR(finalTotal)}</span>
+                  <span className="text-2xl font-black text-black">{formatLKR(finalTotal)}</span>
                 </div>
               </div>
 
@@ -498,7 +498,7 @@ export default function Payment() {
               <button 
                 onClick={handlePayment}
                 disabled={isProcessing}
-                className="w-full bg-[#1cd75b] text-black font-black uppercase tracking-wider py-4 rounded-xl hover:bg-[#18c251] transition-colors shadow-lg flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
+                className="w-full bg-black hover:bg-gray-900 text-white font-black uppercase tracking-wider py-4 rounded-xl transition-colors shadow-lg flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
               >
                 {isProcessing ? (
                   <>
@@ -512,8 +512,8 @@ export default function Payment() {
                 )}
               </button>
 
-              <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-500 font-bold text-center">
-                <ShieldCheck size={16} className="text-[#1cd75b]" /> 
+              <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-600 font-bold text-center">
+                <ShieldCheck size={16} className="text-gray-900" /> 
                 Payments are securely encrypted and processed.
               </div>
             </div>

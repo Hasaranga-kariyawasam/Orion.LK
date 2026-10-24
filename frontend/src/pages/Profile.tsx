@@ -64,10 +64,15 @@ export default function Profile() {
 
   // Address Form States
   const [showAddAddress, setShowAddAddress] = useState(false);
+  const [editingAddressIndex, setEditingAddressIndex] = useState<number | null>(null);
   const [newAddrLabel, setNewAddrLabel] = useState('Home');
+  const [newAddrFirstName, setNewAddrFirstName] = useState('');
+  const [newAddrLastName, setNewAddrLastName] = useState('');
+  const [newAddrEmail, setNewAddrEmail] = useState('');
+  const [newAddrPhone, setNewAddrPhone] = useState('');
   const [newAddrStreet, setNewAddrStreet] = useState('');
   const [newAddrCity, setNewAddrCity] = useState('');
-  const [newAddrProvince, setNewAddrProvince] = useState('');
+  const [newAddrDistrict, setNewAddrDistrict] = useState('Colombo');
   const [newAddrPostal, setNewAddrPostal] = useState('');
   const [addrSaving, setAddrSaving] = useState(false);
 
@@ -203,33 +208,74 @@ export default function Profile() {
     }
   };
 
-  const handleAddAddress = async (e: React.FormEvent) => {
+  const handleOpenAddAddress = () => {
+    setEditingAddressIndex(null);
+    setNewAddrLabel('Home');
+    const fullName = mongoUser?.name || user?.displayName || '';
+    const parts = fullName.trim().split(' ');
+    setNewAddrFirstName(parts[0] || '');
+    setNewAddrLastName(parts.slice(1).join(' ') || '');
+    setNewAddrEmail(mongoUser?.email || user?.email || '');
+    setNewAddrPhone(mongoUser?.phone || '');
+    setNewAddrStreet('');
+    setNewAddrCity('');
+    setNewAddrDistrict('Colombo');
+    setNewAddrPostal('');
+    setShowAddAddress(true);
+  };
+
+  const handleEditAddress = (index: number) => {
+    const addr = addresses[index];
+    if (!addr) return;
+    setEditingAddressIndex(index);
+    setNewAddrLabel(addr.label || 'Home');
+    setNewAddrFirstName(addr.firstName || firstName || '');
+    setNewAddrLastName(addr.lastName || lastName || '');
+    setNewAddrEmail(addr.email || userEmail || '');
+    setNewAddrPhone(addr.phone || phone || '');
+    setNewAddrStreet(addr.street || '');
+    setNewAddrCity(addr.city || '');
+    setNewAddrDistrict(addr.district || addr.province || 'Colombo');
+    setNewAddrPostal(addr.postalCode || '');
+    setShowAddAddress(true);
+  };
+
+  const handleSaveAddress = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newAddrStreet || !newAddrCity) return;
+    if (!newAddrStreet.trim() || !newAddrCity.trim()) return;
 
     setAddrSaving(true);
     try {
       const currentAddresses = mongoUser?.addresses || [];
-      const newAddress: MongoAddress = {
+      const addressData: MongoAddress = {
         label: newAddrLabel,
-        street: newAddrStreet,
-        city: newAddrCity,
-        province: newAddrProvince,
-        postalCode: newAddrPostal,
-        isDefault: currentAddresses.length === 0,
+        firstName: newAddrFirstName.trim(),
+        lastName: newAddrLastName.trim(),
+        email: newAddrEmail.trim(),
+        phone: newAddrPhone.trim(),
+        street: newAddrStreet.trim(),
+        city: newAddrCity.trim(),
+        district: newAddrDistrict,
+        province: newAddrDistrict,
+        postalCode: newAddrPostal.trim(),
+        isDefault: editingAddressIndex !== null ? (currentAddresses[editingAddressIndex]?.isDefault || false) : currentAddresses.length === 0,
       };
 
+      let updatedAddresses: MongoAddress[];
+      if (editingAddressIndex !== null && editingAddressIndex >= 0) {
+        updatedAddresses = currentAddresses.map((addr, idx) => idx === editingAddressIndex ? addressData : addr);
+      } else {
+        updatedAddresses = [...currentAddresses, addressData];
+      }
+
       await updateMongoProfile({
-        addresses: [...currentAddresses, newAddress],
+        addresses: updatedAddresses,
       });
 
       setShowAddAddress(false);
-      setNewAddrStreet('');
-      setNewAddrCity('');
-      setNewAddrProvince('');
-      setNewAddrPostal('');
+      setEditingAddressIndex(null);
     } catch (err) {
-      console.error('Failed to add address:', err);
+      console.error('Failed to save address:', err);
     } finally {
       setAddrSaving(false);
     }
@@ -522,10 +568,10 @@ export default function Profile() {
                             <div className="flex items-center">
                               {ORDER_STEPS.map((step, index) => (
                                 <React.Fragment key={step}>
-                                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-black shrink-0 ${index < progress ? 'bg-[#1cd75b] text-black' : 'bg-gray-100 text-gray-400'}`}>
-                                    {index < progress ? <Check size={12} /> : index + 1}
+                                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-black shrink-0 ${index < progress ? 'bg-[#16a34a] text-white shadow-xs' : 'bg-gray-100 text-gray-400'}`}>
+                                    {index < progress ? <Check size={12} strokeWidth={3} /> : index + 1}
                                   </div>
-                                  {index < ORDER_STEPS.length - 1 && <div className={`h-1 flex-1 mx-1 rounded-full ${index + 1 < progress ? 'bg-[#1cd75b]' : 'bg-gray-100'}`} />}
+                                  {index < ORDER_STEPS.length - 1 && <div className={`h-1 flex-1 mx-1 rounded-full ${index + 1 <= progress ? 'bg-[#16a34a]' : 'bg-gray-100'}`} />}
                                 </React.Fragment>
                               ))}
                             </div>
@@ -721,95 +767,181 @@ export default function Profile() {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight">Saved Addresses</h2>
               <button
-                onClick={() => setShowAddAddress(!showAddAddress)}
-                className="bg-black text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-gray-900 transition-colors flex items-center gap-1.5"
+                onClick={() => {
+                  if (showAddAddress) {
+                    setShowAddAddress(false);
+                    setEditingAddressIndex(null);
+                  } else {
+                    handleOpenAddAddress();
+                  }
+                }}
+                className="bg-black text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-gray-900 transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
               >
                 <Plus size={14} /> {showAddAddress ? 'Cancel' : 'Add New'}
               </button>
             </div>
 
-            {/* Add Address Form Modal / Inline */}
+            {/* Add / Edit Address Form */}
             {showAddAddress && (
-              <div className="relative bg-white p-6 rounded-2xl border border-gray-200 shadow-sm mb-6 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="relative bg-white p-6 md:p-8 rounded-2xl border border-gray-200 shadow-md mb-6 animate-in fade-in slide-in-from-top-2 duration-300">
                 {addrSaving && (
                   <div className="absolute inset-0 z-20 rounded-2xl bg-white/85 backdrop-blur-[2px] flex flex-col items-center justify-center gap-2">
-                    <Loader2 size={28} className="animate-spin text-[#12b94b]" />
-                    <p className="text-xs font-black uppercase tracking-wider text-gray-600">Saving address...</p>
+                    <Loader2 size={28} className="animate-spin text-black" />
+                    <p className="text-xs font-black uppercase tracking-wider text-gray-700">Saving address...</p>
                   </div>
                 )}
-                <h3 className="font-bold text-gray-900 mb-4">Add Shipping Address</h3>
-                <form onSubmit={handleAddAddress} className="space-y-4">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-5">
+                  <h3 className="font-black text-gray-900 uppercase tracking-tight text-base">
+                    {editingAddressIndex !== null ? 'Edit Shipping Address' : 'Add Shipping Address'}
+                  </h3>
+                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Required fields marked with *</span>
+                </div>
+
+                <form onSubmit={handleSaveAddress} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* First Name */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase mb-1">First Name *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="First Name"
+                        value={newAddrFirstName}
+                        onChange={e => setNewAddrFirstName(e.target.value)}
+                        className="w-full p-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:bg-white focus:border-black outline-none transition-all"
+                      />
+                    </div>
+
+                    {/* Last Name */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Last Name *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Last Name"
+                        value={newAddrLastName}
+                        onChange={e => setNewAddrLastName(e.target.value)}
+                        className="w-full p-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:bg-white focus:border-black outline-none transition-all"
+                      />
+                    </div>
+
+                    {/* Email Address */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Email Address *</label>
+                      <input
+                        type="email"
+                        required
+                        placeholder="name@example.com"
+                        value={newAddrEmail}
+                        onChange={e => setNewAddrEmail(e.target.value)}
+                        className="w-full p-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:bg-white focus:border-black outline-none transition-all"
+                      />
+                    </div>
+
+                    {/* Phone Number */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Phone Number *</label>
+                      <input
+                        type="tel"
+                        required
+                        placeholder="0771234567"
+                        value={newAddrPhone}
+                        onChange={e => setNewAddrPhone(e.target.value)}
+                        className="w-full p-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:bg-white focus:border-black outline-none transition-all"
+                      />
+                    </div>
+
+                    {/* Street Address */}
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Street Address *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="House No, Street / Lane"
+                        value={newAddrStreet}
+                        onChange={e => setNewAddrStreet(e.target.value)}
+                        className="w-full p-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:bg-white focus:border-black outline-none transition-all"
+                      />
+                    </div>
+
+                    {/* Town / City */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Town / City *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Galle, Colombo"
+                        value={newAddrCity}
+                        onChange={e => setNewAddrCity(e.target.value)}
+                        className="w-full p-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:bg-white focus:border-black outline-none transition-all"
+                      />
+                    </div>
+
+                    {/* District */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase mb-1">District *</label>
+                      <select
+                        value={newAddrDistrict}
+                        onChange={e => setNewAddrDistrict(e.target.value)}
+                        className="w-full p-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:bg-white focus:border-black outline-none transition-all"
+                      >
+                        {[
+                          'Colombo', 'Gampaha', 'Kalutara', 'Kandy', 'Matale', 'Nuwara Eliya',
+                          'Galle', 'Matara', 'Hambantota', 'Jaffna', 'Kilinochchi', 'Mannar',
+                          'Vavuniya', 'Mullaitivu', 'Batticaloa', 'Ampara', 'Trincomalee',
+                          'Kurunegala', 'Puttalam', 'Anuradhapura', 'Polonnaruwa', 'Badulla',
+                          'Monaragala', 'Ratnapura', 'Kegalle'
+                        ].map(d => (
+                          <option key={d} value={d}>{d}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Postcode / ZIP */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Postcode / ZIP</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 80000"
+                        value={newAddrPostal}
+                        onChange={e => setNewAddrPostal(e.target.value)}
+                        className="w-full p-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:bg-white focus:border-black outline-none transition-all"
+                      />
+                    </div>
+
+                    {/* Address Label */}
                     <div>
                       <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Address Label</label>
                       <select
                         value={newAddrLabel}
                         onChange={e => setNewAddrLabel(e.target.value)}
-                        className="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:bg-white outline-none"
+                        className="w-full p-3 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:bg-white focus:border-black outline-none transition-all"
                       >
                         <option value="Home">Home</option>
                         <option value="Office">Office</option>
                         <option value="Other">Other</option>
                       </select>
                     </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Street Address *</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="123 Galle Road"
-                        value={newAddrStreet}
-                        onChange={e => setNewAddrStreet(e.target.value)}
-                        className="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:bg-white outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 uppercase mb-1">City *</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="Colombo 03"
-                        value={newAddrCity}
-                        onChange={e => setNewAddrCity(e.target.value)}
-                        className="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:bg-white outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Province</label>
-                      <input
-                        type="text"
-                        placeholder="Western Province"
-                        value={newAddrProvince}
-                        onChange={e => setNewAddrProvince(e.target.value)}
-                        className="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:bg-white outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Postal Code</label>
-                      <input
-                        type="text"
-                        placeholder="00300"
-                        value={newAddrPostal}
-                        onChange={e => setNewAddrPostal(e.target.value)}
-                        className="w-full p-2.5 rounded-xl border border-gray-200 text-sm bg-gray-50 focus:bg-white outline-none"
-                      />
-                    </div>
                   </div>
-                  <div className="flex justify-end gap-3 pt-2">
+
+                  <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
                     <button
                       type="button"
-                      onClick={() => setShowAddAddress(false)}
-                      className="px-4 py-2 text-xs font-bold text-gray-600 hover:text-black"
+                      onClick={() => {
+                        setShowAddAddress(false);
+                        setEditingAddressIndex(null);
+                      }}
+                      className="px-5 py-2.5 text-xs font-bold text-gray-600 hover:text-black rounded-xl transition-colors cursor-pointer"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={addrSaving}
-                      className="px-5 py-2 bg-[#1cd75b] text-black text-xs font-black uppercase tracking-wider rounded-xl hover:bg-[#18c251] transition-colors flex items-center gap-1.5"
+                      className="px-6 py-2.5 bg-black hover:bg-gray-900 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-colors flex items-center gap-1.5 shadow-md cursor-pointer"
                     >
                       {addrSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                      Save Address
+                      {editingAddressIndex !== null ? 'Update Address' : 'Save Address'}
                     </button>
                   </div>
                 </form>
@@ -817,31 +949,61 @@ export default function Profile() {
             )}
 
             {addresses.length === 0 ? (
-              <div className="bg-white p-10 rounded-2xl border border-gray-100 text-center">
-                <MapPin size={40} className="mx-auto text-gray-300 mb-2" />
-                <h3 className="font-bold text-gray-900">No saved addresses</h3>
-                <p className="text-xs text-gray-500 mt-1">Add an address to speed up your checkout process.</p>
+              <div className="bg-white p-12 rounded-2xl border border-gray-200 text-center shadow-sm">
+                <MapPin size={44} className="mx-auto text-gray-300 mb-3" />
+                <h3 className="font-black text-gray-900 text-lg uppercase mb-1">No saved addresses</h3>
+                <p className="text-xs text-gray-500 max-w-sm mx-auto mb-6">Add your delivery address to speed up your checkout process.</p>
+                <button
+                  onClick={handleOpenAddAddress}
+                  className="bg-black text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-gray-900 transition-colors inline-flex items-center gap-1.5 shadow-sm"
+                >
+                  <Plus size={14} /> Add Your First Address
+                </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {addresses.map((addr, idx) => (
-                  <div key={`${addr.label}-${addr.street}-${idx}`} className="bg-white p-6 rounded-2xl shadow-md border border-gray-200 ring-1 ring-gray-100 relative group">
+                  <div key={`${addr.label}-${addr.street}-${idx}`} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 ring-1 ring-gray-100/60 relative group hover:border-gray-400 transition-all">
                     {addr.isDefault && (
-                      <div className="absolute top-4 right-4 bg-gray-900 text-white text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded">
+                      <div className="absolute top-4 right-4 bg-black text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded">
                         Default
                       </div>
                     )}
-                    <h3 className="font-black text-gray-900 text-lg mb-1">{addr.label}</h3>
-                    <p className="text-sm text-gray-900 font-bold mb-3">{displayName} • {mongoUser?.phone || 'No phone'}</p>
-                    <p className="text-sm text-gray-600 leading-relaxed">
-                      {addr.street}<br />
-                      {addr.city}{addr.province ? `, ${addr.province}` : ''}<br />
-                      {addr.postalCode}
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xs font-black uppercase tracking-wider text-gray-900 bg-gray-100 px-2 py-0.5 rounded">
+                        {addr.label || 'Address'}
+                      </span>
+                    </div>
+
+                    {/* Name & Phone */}
+                    <p className="text-sm text-gray-900 font-bold mb-1">
+                      {addr.firstName || addr.lastName ? `${addr.firstName || ''} ${addr.lastName || ''}`.trim() : displayName}
+                      {(addr.phone || mongoUser?.phone) && (
+                        <span className="text-gray-500 font-medium"> • {addr.phone || mongoUser?.phone}</span>
+                      )}
                     </p>
-                    <div className="flex gap-4 mt-6 pt-4 border-t border-gray-100">
+
+                    {/* Email */}
+                    {(addr.email || userEmail) && (
+                      <p className="text-xs text-gray-500 mb-2">{addr.email || userEmail}</p>
+                    )}
+
+                    {/* Street, Town/City, District, Zip */}
+                    <p className="text-xs text-gray-700 leading-relaxed font-medium">
+                      {addr.street}<br />
+                      {addr.city}, {addr.district || addr.province || 'Sri Lanka'} {addr.postalCode ? `(${addr.postalCode})` : ''}
+                    </p>
+
+                    <div className="flex items-center justify-between mt-5 pt-4 border-t border-gray-100">
+                      <button
+                        onClick={() => handleEditAddress(idx)}
+                        className="text-xs font-bold text-gray-700 hover:text-black flex items-center gap-1 transition-colors cursor-pointer"
+                      >
+                        <Edit2 size={13} /> Edit Address
+                      </button>
                       <button
                         onClick={() => handleDeleteAddress(idx)}
-                        className="text-xs font-bold text-red-500 hover:text-red-700 flex items-center gap-1"
+                        className="text-xs font-bold text-red-500 hover:text-red-700 flex items-center gap-1 transition-colors cursor-pointer"
                       >
                         <Trash2 size={13} /> Delete
                       </button>

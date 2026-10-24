@@ -111,12 +111,19 @@ export async function createPayHereRecurringPayment(input: {
 }
 
 export interface MongoAddress {
-  label: string;
+  _id?: string;
+  id?: string;
+  label?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
   street: string;
   city: string;
-  province: string;
-  postalCode: string;
-  isDefault: boolean;
+  district?: string;
+  province?: string;
+  postalCode?: string;
+  isDefault?: boolean;
 }
 
 export interface IPointsHistoryItem {

@@ -199,14 +199,14 @@ export default function ProductDetail() {
                 <CheckCircle2 size={13} /> IN STOCK & READY TO SHIP
               </span>
               <span className="bg-gray-100 text-gray-800 text-xs font-black px-2.5 py-1 rounded-md border border-gray-200 flex items-center gap-1">
-                <ShieldCheck size={13} /> 06 MONTHS OFFICIAL WARRANTY
+                <ShieldCheck size={13} /> {product.warranty ? product.warranty.toUpperCase() : '06 MONTHS OFFICIAL WARRANTY'}
               </span>
             </div>
 
             {/* Price Section */}
             <div className="mb-5 pb-5 border-b border-gray-100">
               <div className="flex items-baseline gap-3 mb-1">
-                {product.originalPrice && (
+                {product.originalPrice && product.originalPrice > product.price && (
                   <span className="text-lg md:text-xl text-gray-400 line-through font-semibold">
                     {formatLKR(product.originalPrice)}
                   </span>
@@ -224,12 +224,12 @@ export default function ProductDetail() {
               {/* Installment breakdown */}
               <div className="mt-4 bg-gray-50 p-3.5 rounded-xl border border-gray-100 flex flex-col sm:flex-row gap-3 justify-between">
                 <div className="flex items-center justify-between sm:justify-start gap-2 text-xs font-semibold text-gray-600">
-                  <span>or 3 × <strong className="text-gray-900">{formatLKR(product.price / 3)}</strong> with</span>
-                  <img src="https://qa-merchant.paykoko.com/assets/images/logo.png" alt="Koko" className="h-4 object-contain" />
+                  <span>or 3 × <strong className="text-gray-900">{formatLKR(Math.round(product.price / 3))}</strong> with</span>
+                  <img src="https://mymemorylk.com/wp-content/uploads/2025/11/koko-logo.png" alt="Koko" className="h-4 object-contain" />
                 </div>
                 <div className="flex items-center justify-between sm:justify-start gap-2 text-xs font-semibold text-gray-600">
-                  <span>or 4 × <strong className="text-gray-900">{formatLKR(product.price / 4)}</strong> with</span>
-                  <img src="https://payzy.lk/images/logoWordDark.png" alt="Payzy" className="h-4 object-contain" />
+                  <span>or 4 × <strong className="text-gray-900">{formatLKR(Math.round(product.price / 4))}</strong> with</span>
+                  <img src="https://mymemorylk.com/wp-content/uploads/2025/11/payzy.png" alt="Payzy" className="h-4 object-contain" />
                 </div>
               </div>
 
@@ -480,10 +480,17 @@ export default function ProductDetail() {
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                 <div className="lg:col-span-7 space-y-5">
                   <h3 className="text-xl font-black text-gray-900 tracking-tight">Product Overview</h3>
-                  <div className="text-gray-600 leading-relaxed space-y-4 text-sm">
-                    <p>{product.description || product.shortDescription || "Engineered for high performance, reliability, and maximum durability. Perfect choice for enthusiasts and professional workloads alike."}</p>
-                    <p>Every component is sourced from authorized regional distributors and undergoes inspection before shipment to ensure 100% authentic condition.</p>
-                  </div>
+                  {product.description?.includes('<') ? (
+                    <div
+                      className="prose prose-sm max-w-none text-gray-700 leading-relaxed space-y-3 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mb-1.5 [&_strong]:font-bold [&_strong]:text-gray-900 [&_p]:mb-3 text-sm"
+                      dangerouslySetInnerHTML={{ __html: product.description }}
+                    />
+                  ) : (
+                    <div className="text-gray-600 leading-relaxed space-y-4 text-sm">
+                      <p>{product.description || product.shortDescription || "Engineered for high performance, reliability, and maximum durability. Perfect choice for enthusiasts and professional workloads alike."}</p>
+                      <p>Every component is sourced from authorized regional distributors and undergoes inspection before shipment to ensure 100% authentic condition.</p>
+                    </div>
+                  )}
 
                   <div className="p-6 rounded-2xl bg-gradient-to-r from-gray-900 to-black text-white flex flex-col justify-center shadow-sm mt-6">
                     <span className="text-xs font-black text-[#ea364c] uppercase tracking-widest mb-1">Official Guarantee</span>

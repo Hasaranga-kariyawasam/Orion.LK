@@ -398,13 +398,6 @@ export default function Header() {
                 >
                   OTHER ACCESSORIES <ChevronRight size={14} className={`transition-transform duration-300 ${activeDropdown === 'accessories' ? '-rotate-90' : 'rotate-90'}`} />
                 </button>
-                <button
-                  onMouseEnter={() => setActiveDropdown('used')}
-                  onClick={() => setActiveDropdown(activeDropdown === 'used' ? null : 'used')}
-                  className={`flex items-center gap-1 transition-colors h-full outline-none cursor-pointer ${activeDropdown === 'used' ? 'text-[#15803d]' : 'hover:text-[#15803d]'}`}
-                >
-                  USED PRODUCTS <ChevronRight size={14} className={`transition-transform duration-300 ${activeDropdown === 'used' ? '-rotate-90' : 'rotate-90'}`} />
-                </button>
                 <a
                   href="/shop"
                   onMouseEnter={() => setActiveDropdown(null)}
@@ -418,13 +411,6 @@ export default function Header() {
                   className="text-[#f0364c] hover:text-red-700 transition-colors flex items-center gap-1"
                 >
                   <Heart size={14} className="fill-current" /> SPECIAL OFFERS
-                </Link>
-                <Link
-                  to="/orders"
-                  onMouseEnter={() => setActiveDropdown(null)}
-                  className="hover:text-slate-950 transition-colors"
-                >
-                  TRACK YOUR DELIVERY
                 </Link>
                 <Link
                   to="/build"
@@ -449,20 +435,11 @@ export default function Header() {
                 >
                   Accessories
                 </button>
-                <button
-                  onClick={() => setActiveDropdown(activeDropdown === 'used' ? null : 'used')}
-                  className={`shrink-0 rounded-full px-3 py-1.5 transition-colors ${activeDropdown === 'used' ? 'bg-slate-900 text-white' : 'bg-white/70 text-slate-700 hover:bg-white'}`}
-                >
-                  Used
-                </button>
                 <a href="/shop" className="shrink-0 rounded-full bg-white/70 px-3 py-1.5 text-slate-700 hover:bg-white transition-colors">
                   All Products
                 </a>
                 <Link to="/offers" className="shrink-0 rounded-full bg-red-50 px-3 py-1.5 text-[#d92840] hover:bg-red-100 transition-colors">
                   Offers
-                </Link>
-                <Link to="/orders" className="shrink-0 rounded-full bg-white/70 px-3 py-1.5 text-slate-700 hover:bg-white transition-colors">
-                  Track
                 </Link>
                 <Link to="/build" className="shrink-0 rounded-full bg-white/70 px-3 py-1.5 text-slate-900 hover:bg-white transition-colors">
                   Build PC
@@ -509,7 +486,6 @@ export default function Header() {
                       <div className="container mx-auto max-w-7xl">
                         <div className="hidden lg:flex items-center justify-between pb-4 mb-6 border-b border-gray-100">
                           <div>
-                            <span className="text-xs font-black uppercase tracking-widest text-[#15803d]">Category Directory</span>
                             <h3 className="text-xl font-black text-gray-900">{currentDropdownTitle}</h3>
                           </div>
                           <Link

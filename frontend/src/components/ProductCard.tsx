@@ -135,34 +135,26 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
           ))}
         </div>
 
-        <div className="flex items-center justify-between mb-2 mt-1">
-          <div className="flex  gap-1.5">
-            {product.originalPrice && (
-              <span className="text-[20px] font-black text-[#161B22] tracking-tight leading-none">
-                {formatLKR(product.price)}
-              </span>
-            )}
-
-            <span className="text-xs text-gray-500 line-through font-bold">
+        <div className="flex flex-col mb-2 mt-1">
+          {product.originalPrice && product.originalPrice > product.price ? (
+            <span className="text-xs text-gray-400 line-through font-medium">
               {formatLKR(product.originalPrice)}
             </span>
-          </div>
-
+          ) : null}
+          <span className="text-[15px] sm:text-base font-black text-[#ea364c] tracking-tight leading-none mt-0.5">
+            {formatLKR(product.price)}
+          </span>
         </div>
 
         {/* Installments */}
-        <div className="bg-[#f8f9fa] rounded-lg p-2 mt-auto border border-gray-100 space-y-2 mb-3">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] text-gray-500">or 3 × {formatLKR(kokoInstallment)}</span>
-            <div className="h-4 flex items-center">
-              <img src="https://qa-merchant.paykoko.com/assets/images/logo.png" alt="Koko" className="h-full object-contain" />
-            </div>
+        <div className="bg-[#f8f9fa] rounded-lg p-2 mt-auto border border-gray-100/80 space-y-1.5 mb-3">
+          <div className="flex items-center justify-between text-[10px] text-gray-500 font-medium">
+            <span>or 3 × {formatLKR(Math.round(kokoInstallment))} with</span>
+            <img src="https://mymemorylk.com/wp-content/uploads/2025/11/koko-logo.png" alt="Koko" className="h-3.5 object-contain" />
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] text-gray-500">or 4 × {formatLKR(payzyInstallment)}</span>
-            <div className="h-4 flex items-center">
-              <img src="https://payzy.lk/images/logoWordDark.png" alt="Payzy" className="h-full object-contain" />
-            </div>
+          <div className="flex items-center justify-between text-[10px] text-gray-500 font-medium">
+            <span>or 4 × {formatLKR(Math.round(payzyInstallment))} with</span>
+            <img src="https://mymemorylk.com/wp-content/uploads/2025/11/payzy.png" alt="Payzy" className="h-3.5 object-contain" />
           </div>
         </div>
 

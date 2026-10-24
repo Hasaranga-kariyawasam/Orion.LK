@@ -266,8 +266,7 @@ export default function Home() {
           87.5% { border-radius: 12% 88% 69% 31% / 10% 66% 34% 90%; }
         }
       `}</style>
-      <div className="h-10 w-full bg-white"></div>
-      <div className="min-h-screen bg-gray-50 pb-12">
+      <div className="min-h-screen bg-gray-50 pt-4 pb-12">
 
         {/* 1. Hero Section */}
         <AnimatedSection className="max-w-7xl mx-auto px-4 mt-0 ">
@@ -649,7 +648,7 @@ export default function Home() {
                   <img
                     src="/assets/clearance-controller.jpg"
                     alt="Gaming Console Controller"
-                    className="w-full h-full object-contain filter drop-shadow-[0_20px_40px_rgba(0,0,0,0.85)] -rotate-3 hover:rotate-0 transition-transform duration-500 rounded-2xl"
+                    className="w-full h-full object-contain mix-blend-lighten filter drop-shadow-[0_12px_30px_rgba(234,54,76,0.35)] -rotate-3 hover:rotate-0 transition-transform duration-500 rounded-2xl [mask-image:radial-gradient(ellipse_at_center,black_60%,transparent_96%)]"
                   />
                 </div>
               </div>
