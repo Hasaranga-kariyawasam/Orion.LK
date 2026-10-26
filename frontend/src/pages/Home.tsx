@@ -86,7 +86,7 @@ const BRANDS = [
 ];
 
 export default function Home() {
-  const { videoUrl, heroImages, accessories, featuredImages, pcBuildCards, homePromoCards, brands, categories, products, productsReady, bestSellerIds, specialOffers, specialOffersDeadline, loadingGifUrl, whatsappNumber, storeAddress, refreshHomeSettings, homeSettingsReady } = useAdmin();
+  const { videoUrl, heroImages, accessories, featuredImages, pcBuildCards, homePromoCards, brands, categories, products, bestSellerIds, whatsappNumber, storeAddress, refreshHomeSettings, homeSettingsReady } = useAdmin();
   const [isMuted, setIsMuted] = useState(true);
   const [videoFailed, setVideoFailed] = useState(false);
   const [showVideoText, setShowVideoText] = useState(false);
@@ -113,14 +113,13 @@ export default function Home() {
   const clearanceSliderRef = useRef<HTMLDivElement>(null);
   const youtubeEmbedUrl = getYouTubeEmbedUrl(videoUrl);
 
-  // Keep the branded loader visible until live catalog and settings requests settle.
+  // Fast 500ms initial morph loader
   useEffect(() => {
-    if (!productsReady || !homeSettingsReady) return;
     const timer = setTimeout(() => {
       setPageLoading(false);
-    }, 350);
+    }, 500);
     return () => clearTimeout(timer);
-  }, [productsReady, homeSettingsReady]);
+  }, []);
 
   // Dynamic Clearance countdown timer
   useEffect(() => {
@@ -210,19 +209,8 @@ export default function Home() {
     databaseImageFallbacks[index] ||
     resolveMediaUrl(displayCategories[index]?.img) ||
     FALLBACK_HOME_IMAGE;
-  const offersExpired = Boolean(specialOffersDeadline && Date.now() >= new Date(specialOffersDeadline).getTime());
-  const displayOffers = offersExpired ? [] : specialOffers.filter(offer => offer.enabled).flatMap(offer => {
-    const product = products.find(item => String(item.id) === String(offer.productId) || String(item._id) === String(offer.productId));
-    if (!product) return [];
-    return [{ ...product, ...(offer.offerPrice && offer.offerPrice < product.price ? {
-      originalPrice: product.price,
-      price: offer.offerPrice,
-      discount: Math.round((1 - offer.offerPrice / product.price) * 100),
-    } : {}) }];
-  });
-  const haylouBrand = brands.find(brand => brand.name.toLowerCase().includes('haylou'));
-  const haylouProduct = products.find(product => product.brand?.toLowerCase().includes('haylou') && (product.category.toLowerCase().includes('watch') || product.name.toLowerCase().includes('watch')));
-  const haylouBannerImage = resolveMediaUrl(haylouBrand?.banner) || resolveMediaUrl(haylouProduct?.image);
+  const clearanceProducts = products.filter(p => (p.discount && p.discount > 0) || p.price < 150000).slice(0, 8);
+  const displayClearance = clearanceProducts.length > 0 ? clearanceProducts : products.slice(0, 8);
 
   const bestSellerProducts = products.filter(p => {
     if (bestSellerCategory === 'Coolers') {
@@ -253,7 +241,7 @@ export default function Home() {
       {pageLoading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-white transition-opacity duration-300">
           <div className="flex flex-col items-center gap-3">
-            {loadingGifUrl ? <img src={loadingGifUrl} alt="Loading Orion.LK" className="max-h-24 max-w-32 object-contain" /> : <div className="home-loader" />}
+            <div className="home-loader" />
             <p className="text-sm font-black tracking-tight text-gray-900" style={{ fontFamily: "'Orbitron', sans-serif" }}>
               ORION<span className="text-[#16a34a]">.LK</span>
             </p>
@@ -553,19 +541,42 @@ export default function Home() {
           </div>
         </AnimatedSection>
 
-        {haylouBannerImage && (
-          <AnimatedSection className="max-w-7xl mx-auto px-4 mt-12 md:mt-16 mb-8">
-            <Link to="/shop?search=Haylou" className="relative block h-[250px] overflow-hidden rounded-2xl bg-[#101820] shadow-md md:h-[350px] lg:h-[400px]">
-              <img src={haylouBannerImage} alt={haylouProduct?.name || 'Haylou product'} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/25 to-transparent" />
-              <div className="absolute inset-y-0 left-0 flex max-w-xl flex-col justify-center p-6 text-white sm:p-10">
-                <span className="text-xs font-bold uppercase text-sky-300">Haylou</span>
-                <h3 className="mt-2 text-2xl font-black sm:text-4xl">{haylouProduct?.name || 'Explore Haylou watches'}</h3>
-                <span className="mt-5 inline-flex w-fit items-center gap-2 rounded-md bg-blue-600 px-5 py-3 text-xs font-black uppercase">Shop Haylou <ChevronRight size={15} /></span>
+        {/* 9. Haylou Banner */}
+        <AnimatedSection className="max-w-7xl mx-auto px-4 mt-12 md:mt-16 mb-8">
+          <div className="w-full bg-[#030816] rounded-2xl overflow-hidden relative shadow-md h-[250px] md:h-[350px] lg:h-[400px] flex items-center justify-center">
+            {/* Logo */}
+            <div className="absolute top-6 left-6 z-20 flex items-center gap-2 text-white/90">
+              <div className="w-6 h-6 border-2 border-white/80 rounded-full flex items-center justify-center text-[10px] font-black italic">H</div>
+              <span className="font-medium tracking-[0.2em] text-sm">HAYLOU</span>
+            </div>
+
+            {/* Background Elements */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#030816] via-[#091530] to-[#030816] z-0" />
+            <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#4a72d3] via-transparent to-transparent z-0 blur-2xl" />
+
+            <div className="relative z-10 flex flex-col items-center justify-center w-full h-full pt-10">
+              {/* Typography Background */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center w-full z-0 opacity-90">
+                <h3 className="text-[120px] md:text-[200px] font-black text-[#5a8bf6]/30 leading-none tracking-tighter" style={{ textShadow: '0 0 40px rgba(90, 139, 246, 0.4)' }}>1.58"</h3>
+                <div className="flex flex-col items-start ml-2 md:ml-6 mt-8 md:mt-16">
+                  <span className="text-white font-bold text-lg md:text-3xl tracking-widest uppercase" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.8)' }}>Escort Extreme</span>
+                  <span className="text-[#5a8bf6] font-black text-xl md:text-4xl tracking-[0.15em] uppercase" style={{ textShadow: '0 0 20px rgba(90, 139, 246, 0.5)' }}>Adventure</span>
+                </div>
               </div>
-            </Link>
-          </AnimatedSection>
-        )}
+
+              {/* Watch Image Mock */}
+              <div className="relative z-10 w-[280px] md:w-[450px] h-[280px] md:h-[450px] mt-10 md:mt-20">
+                <div className="absolute -inset-4 rounded-full border-4 border-gray-800/50 shadow-2xl z-[-1]"></div>
+                <div className="absolute top-1/2 -left-8 w-12 h-24 bg-[#1a1a24] -translate-y-1/2 rounded-l-xl z-[-2]"></div>
+                <div className="absolute top-1/2 -right-8 w-12 h-24 bg-[#1a1a24] -translate-y-1/2 rounded-r-xl z-[-2]"></div>
+              </div>
+
+              <button className="bg-[#15803d] hover:bg-[#166534] text-white font-bold py-2.5 px-8 rounded absolute bottom-6 md:bottom-10 z-20 shadow-[0_4px_20px_rgba(0,0,0,0.5)] transition-transform hover:scale-105 text-sm border border-green-600/50 cursor-pointer">
+                Buy Now
+              </button>
+            </div>
+          </div>
+        </AnimatedSection>
         {/* 7. Browse Laptops */}
         <AnimatedSection className="max-w-7xl mx-auto px-4 mt-12 md:mt-16 mb-8 md:mb-12">
           <div className="flex justify-between items-center mb-6">
@@ -645,7 +656,7 @@ export default function Home() {
 
             {/* Centered 4 Product Cards Grid */}
             <div className="relative z-10 mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
-              {displayOffers.slice(0, 4).map((product, idx) => (
+              {displayClearance.slice(0, 4).map((product, idx) => (
                 <ProductCard key={product.id || idx} product={product} index={idx} />
               ))}
             </div>

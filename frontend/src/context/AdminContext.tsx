@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { BRAND_NEW_CATEGORIES, USED_CATEGORIES, BRAND_LOGO_URL } from '../data';
+import { MOCK_PRODUCTS, BRAND_NEW_CATEGORIES, USED_CATEGORIES } from '../data';
 import { Product } from '../types';
 import {
   getAllUsersFromDb,
@@ -180,12 +180,6 @@ interface AdminContextType {
   setSpecialOffers: (offers: SpecialOffer[]) => void;
   specialOffersDeadline: string;
   setSpecialOffersDeadline: (deadline: string) => void;
-  brandLogoUrl: string;
-  setBrandLogoUrl: (url: string) => void;
-  specialOffersBannerUrl: string;
-  setSpecialOffersBannerUrl: (url: string) => void;
-  loadingGifUrl: string;
-  setLoadingGifUrl: (url: string) => void;
   whatsappNumber: string;
   setWhatsappNumber: (num: string) => void;
   storeAddress: string;
@@ -196,7 +190,6 @@ interface AdminContextType {
   homeSettingsReady: boolean;
   // Async actions connected to MongoDB
   refreshProducts: () => Promise<void>;
-  productsReady: boolean;
   refreshCategories: () => Promise<void>;
   refreshBrands: () => Promise<void>;
   refreshUsers: () => Promise<void>;
@@ -304,17 +297,13 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [pcBuildCards, setPcBuildCards] = useState<PcBuildCard[]>(DEFAULT_PC_BUILD_CARDS);
   const [homePromoCards, setHomePromoCards] = useState<HomePromoCard[]>(DEFAULT_HOME_PROMO_CARDS);
   const [brands, setBrands] = useState<Brand[]>(() => loadState('admin_brands', []));
-  const [products, setProducts] = useState<AdminProductItem[]>([]);
-  const [productsReady, setProductsReady] = useState(false);
+  const [products, setProducts] = useState<AdminProductItem[]>(() => loadState('admin_products', MOCK_PRODUCTS));
   const [orders, setOrders] = useState<AdminOrder[]>(() => loadState('admin_orders', DEFAULT_ORDERS));
   const [users, setUsers] = useState<AdminUser[]>(() => loadState('admin_users', DEFAULT_USERS));
   const [categories, setCategories] = useState<AdminCategory[]>(() => loadState('admin_categories', [...BRAND_NEW_CATEGORIES, ...USED_CATEGORIES]));
   const [paymentOptions, setPaymentOptions] = useState<PaymentOption[]>(() => loadState('admin_payments', DEFAULT_PAYMENTS));
   const [specialOffers, setSpecialOffers] = useState<SpecialOffer[]>(() => loadState('admin_offers', DEFAULT_SPECIAL_OFFERS));
   const [specialOffersDeadline, setSpecialOffersDeadline] = useState<string>(() => loadState('admin_offers_deadline', ''));
-  const [brandLogoUrl, setBrandLogoUrl] = useState(BRAND_LOGO_URL);
-  const [specialOffersBannerUrl, setSpecialOffersBannerUrl] = useState('');
-    const [loadingGifUrl, setLoadingGifUrl] = useState('');
   const [homeSettingsReady, setHomeSettingsReady] = useState(false);
   const [whatsappNumber, setWhatsappNumber] = useState<string>(() => loadState('admin_whatsapp', '+94 77 123 4567'));
   const [storeAddress, setStoreAddress] = useState<string>(() => loadState('admin_address', 'No. 123, Main Street, Colombo 03, Sri Lanka'));
@@ -345,18 +334,17 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const refreshProducts = async () => {
     try {
       const res = await fetchProducts({ limit: 'all' });
-      const mapped = res.products.map(p => ({
-        ...p,
-        id: p._id || p.id,
-        isNew: p.isNewProduct !== undefined ? p.isNewProduct : p.isNew,
-      }));
-      setProducts(mapped);
-      localStorage.setItem('admin_products', JSON.stringify(mapped));
+      if (res.products && res.products.length > 0) {
+        const mapped = res.products.map(p => ({
+          ...p,
+          id: p._id || p.id,
+          isNew: p.isNewProduct !== undefined ? p.isNewProduct : p.isNew,
+        }));
+        setProducts(mapped);
+        localStorage.setItem('admin_products', JSON.stringify(mapped));
+      }
     } catch (e) {
-      setProducts([]);
       console.warn('Error refreshing products:', e);
-    } finally {
-      setProductsReady(true);
     }
   };
 
@@ -652,9 +640,6 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       if (typeof settings.storeAddress === 'string') setStoreAddress(settings.storeAddress);
       if (Array.isArray(settings.specialOffers)) setSpecialOffers(settings.specialOffers as SpecialOffer[]);
       if (typeof settings.specialOffersDeadline === 'string') setSpecialOffersDeadline(settings.specialOffersDeadline);
-      if (typeof settings.brandLogoUrl === 'string') setBrandLogoUrl(resolveMediaUrl(settings.brandLogoUrl));
-      if (typeof settings.specialOffersBannerUrl === 'string') setSpecialOffersBannerUrl(resolveMediaUrl(settings.specialOffersBannerUrl));
-    if (typeof settings.loadingGifUrl === 'string') setLoadingGifUrl(resolveMediaUrl(settings.loadingGifUrl));
   }, []);
 
   const refreshHomeSettings = useCallback(async () => {
@@ -686,16 +671,13 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     localStorage.setItem('admin_payments', JSON.stringify(paymentOptions));
     localStorage.setItem('admin_offers', JSON.stringify(specialOffers));
     localStorage.setItem('admin_offers_deadline', JSON.stringify(specialOffersDeadline));
-    localStorage.setItem('admin_brandLogoUrl', JSON.stringify(brandLogoUrl));
-    localStorage.setItem('admin_specialOffersBannerUrl', JSON.stringify(specialOffersBannerUrl));
-    localStorage.setItem('admin_loadingGifUrl', JSON.stringify(loadingGifUrl));
     localStorage.setItem('admin_whatsapp', JSON.stringify(whatsappNumber));
     localStorage.setItem('admin_address', JSON.stringify(storeAddress));
     localStorage.setItem('admin_bestsellers', JSON.stringify(bestSellerIds));
     const saved = await saveHomeSettingsApi({
       heroImages, featuredImages, pcBuildCards, homePromoCards,
       accessories, bestSellerIds, whatsappNumber, storeAddress,
-      specialOffers, specialOffersDeadline, brandLogoUrl, specialOffersBannerUrl, loadingGifUrl,
+      specialOffers, specialOffersDeadline,
     });
     applyHomeSettings(saved);
   };
@@ -716,14 +698,11 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       categories, setCategories,
       paymentOptions, setPaymentOptions,
       specialOffers, setSpecialOffers, specialOffersDeadline, setSpecialOffersDeadline,
-      brandLogoUrl, setBrandLogoUrl, specialOffersBannerUrl, setSpecialOffersBannerUrl,
-      loadingGifUrl, setLoadingGifUrl,
       whatsappNumber, setWhatsappNumber,
       storeAddress, setStoreAddress,
       bestSellerIds, setBestSellerIds,
       refreshHomeSettings, homeSettingsReady,
       refreshProducts,
-      productsReady,
       refreshCategories,
       refreshBrands,
       refreshUsers,

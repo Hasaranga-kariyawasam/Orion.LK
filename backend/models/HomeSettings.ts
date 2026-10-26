@@ -12,9 +12,6 @@ export interface IHomeSettings extends Document {
   storeAddress: string;
   specialOffers: unknown[];
   specialOffersDeadline: string;
-  brandLogoUrl: string;
-  specialOffersBannerUrl: string;
-  loadingGifUrl: string;
   updatedAt: Date;
 }
 
@@ -31,9 +28,6 @@ const HomeSettingsSchema = new Schema<IHomeSettings>(
     storeAddress: { type: String, default: '' },
     specialOffers: { type: [Schema.Types.Mixed], default: [] },
     specialOffersDeadline: { type: String, default: '' },
-    brandLogoUrl: { type: String, default: '' },
-    specialOffersBannerUrl: { type: String, default: '' },
-    loadingGifUrl: { type: String, default: '' },
   },
   { timestamps: true }
 );

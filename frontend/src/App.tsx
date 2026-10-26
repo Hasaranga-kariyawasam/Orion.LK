@@ -1,7 +1,6 @@
 import { StrictMode, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Header from './components/Header';
-import ConnectionStatus from './components/ConnectionStatus';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import ProductDetail from './pages/ProductDetail';
@@ -52,7 +51,6 @@ export default function App() {
                 <Route path="*" element={
                   <>
                     <Header />
-                    <ConnectionStatus />
                     <main className="flex-grow pt-[128px] md:pt-[128px] pb-16 md:pb-0 bg-gray-50">
                       <Routes>
                         <Route path="/" element={<Home />} />

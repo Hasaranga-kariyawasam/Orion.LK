@@ -43,9 +43,6 @@ export async function PUT(req: NextRequest) {
           storeAddress: String(body.storeAddress || ''),
           specialOffers: Array.isArray(body.specialOffers) ? body.specialOffers : [],
           specialOffersDeadline: String(body.specialOffersDeadline || ''),
-          brandLogoUrl: String(body.brandLogoUrl || ''),
-          specialOffersBannerUrl: String(body.specialOffersBannerUrl || ''),
-          loadingGifUrl: String(body.loadingGifUrl || ''),
         },
       },
       { new: true, upsert: true, runValidators: true }

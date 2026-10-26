@@ -32,9 +32,6 @@ export interface HomeSettingsPayload {
   storeAddress: string;
   specialOffers?: unknown[];
   specialOffersDeadline?: string;
-  brandLogoUrl?: string;
-  specialOffersBannerUrl?: string;
-  loadingGifUrl?: string;
   updatedAt?: string;
 }
 
@@ -142,62 +139,6 @@ export interface ApiNotification {
   message: string;
   time: string;
   isRead: boolean;
-}
-
-export interface ApiReview {
-  _id: string;
-  productId: string;
-  productName: string;
-  orderNumber: string;
-  customerName: string;
-  customerEmail: string;
-  rating: number;
-  comment: string;
-  status: 'Pending' | 'Approved' | 'Rejected';
-  createdAt: string;
-}
-
-export async function getReviews(params: { productId?: string; mine?: boolean; admin?: boolean } = {}): Promise<ApiReview[]> {
-  const query = new URLSearchParams();
-  if (params.productId) query.set('productId', params.productId);
-  if (params.mine) query.set('mine', 'true');
-  if (params.admin) query.set('admin', 'true');
-  const authHeaders = params.mine || params.admin ? await getAuthHeader() : {};
-  const res = await fetch(`${API_BASE_URL}/api/reviews?${query}`, { headers: authHeaders, cache: 'no-store' });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || 'Failed to load reviews');
-  return data.reviews || [];
-}
-
-export async function submitReview(review: { productId: string; orderNumber: string; rating: number; comment: string; customerName?: string }): Promise<ApiReview> {
-  const authHeaders = await getAuthHeader();
-  const res = await fetch(`${API_BASE_URL}/api/reviews`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...authHeaders },
-    body: JSON.stringify(review),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || 'Failed to submit review');
-  return data.review;
-}
-
-export async function updateReviewStatus(id: string, status: ApiReview['status']): Promise<ApiReview> {
-  const authHeaders = await getAuthHeader();
-  const res = await fetch(`${API_BASE_URL}/api/reviews/${encodeURIComponent(id)}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', ...authHeaders },
-    body: JSON.stringify({ status }),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || 'Failed to update review');
-  return data.review;
-}
-
-export async function deleteReview(id: string): Promise<void> {
-  const authHeaders = await getAuthHeader();
-  const res = await fetch(`${API_BASE_URL}/api/reviews/${encodeURIComponent(id)}`, { method: 'DELETE', headers: authHeaders });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || 'Failed to delete review');
 }
 
 export async function getMyNotifications(): Promise<ApiNotification[]> {

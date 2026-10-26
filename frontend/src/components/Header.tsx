@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Heart, Search, Menu, X, User, Phone, Globe, ChevronRight, Shuffle, Watch, Headphones, Square, Keyboard, HardDrive, Headset, BatteryCharging, Smartphone, Speaker, Cable, Car, Camera, Monitor, MoreHorizontal, Home, LayoutGrid, RefreshCw, Wind, Store, MapPin, Package, Bell, LogOut, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { BRAND_NEW_CATEGORIES, USED_CATEGORIES } from '../data';
+import { BRAND_NEW_CATEGORIES, USED_CATEGORIES, MOCK_PRODUCTS, BRAND_LOGO_URL } from '../data';
 import { useShop } from '../context/ShopContext';
 import { useAdmin } from '../context/AdminContext';
 import { formatLKR } from '../data';
@@ -10,7 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { formatAvatarUrl } from '../lib/api';
 
 export default function Header() {
-  const { categories, products, whatsappNumber, brandLogoUrl } = useAdmin();
+  const { categories, products, whatsappNumber } = useAdmin();
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [activeDropdown, setActiveDropdown] = useState<'components' | 'accessories' | 'used' | null>(null);
@@ -127,15 +127,12 @@ export default function Header() {
           <div className="relative z-10 container mx-auto max-w-7xl px-4 h-20 flex items-center justify-between gap-6">
 
             {/* Logo */}
-            <a href="/" className="flex items-center shrink-0" aria-label="Orion.LK home">
-              {brandLogoUrl ? (
-                <img src={brandLogoUrl} alt="Orion.LK" className="max-h-12 max-w-44 object-contain" />
-              ) : (
-                <span className="text-3xl font-black tracking-tight flex items-baseline" style={{ fontFamily: "'Orbitron', sans-serif" }}>
-                  <span className="text-white">O</span><span className="text-white">RION</span>
-                  <span className="text-[#16a34a] ml-1 text-2xl">.lk</span>
-                </span>
-              )}
+            <a href="/" className="flex items-center shrink-0">
+              <span className="text-3xl font-black tracking-tight flex items-baseline" style={{ fontFamily: "'Orbitron', sans-serif" }}>
+                <span className="text-white">O</span>
+                <span className="text-white">RION</span>
+                <span className="text-[#16a34a] ml-1 text-2xl" style={{ textShadow: '0 0 10px rgba(22, 163, 74, 0.4)' }}>.lk</span>
+              </span>
             </a>
 
             {/* Search */}
@@ -350,31 +347,29 @@ export default function Header() {
                 className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors relative cursor-pointer"
               >
                 <Shuffle size={18} className={compareList.length > 0 ? "text-[#15803d]" : ""} />
-                {compareList.length > 0 && <span className="absolute -top-2 -right-2 bg-[#15803d] border-none text-white text-[10px] font-bold min-w-5 h-5 px-1 rounded-full flex items-center justify-center">{compareList.length}</span>}
+                <span className="absolute -top-2 -right-2 bg-[#15803d] border-none text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">{compareList.length}</span>
               </button>
 
               <button onClick={() => setIsWishlistOpen(true)} className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors relative cursor-pointer">
                 <Heart size={20} className={wishlist.length > 0 ? "fill-[#15803d] text-[#15803d]" : ""} />
-                {wishlist.length > 0 && <span className="absolute -top-2 -right-2 bg-[#15803d] border-none text-white text-[10px] font-bold min-w-5 h-5 px-1 rounded-full flex items-center justify-center">{wishlist.length}</span>}
+                <span className="absolute -top-2 -right-2 bg-[#15803d] border-none text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">{wishlist.length}</span>
               </button>
 
               {/* Cart Pill Button matching custom design */}
               <button
                 onClick={() => setIsCartOpen(true)}
-                className="h-10 pl-1.5 pr-4 rounded-full bg-blue-600 hover:bg-blue-700 transition-all duration-200 flex items-center gap-2.5 relative ml-2 shadow-sm hover:shadow-md cursor-pointer group"
+                className="h-10 pl-1.5 pr-4 rounded-full bg-[#15803d] hover:bg-[#166534] transition-all duration-200 flex items-center gap-2.5 relative ml-2 shadow-sm hover:shadow-md cursor-pointer group"
                 aria-label="Shopping Cart"
               >
                 <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center shadow-sm shrink-0 group-hover:scale-105 transition-transform">
-                  <ShoppingCart size={15} strokeWidth={2.2} className="text-blue-700 ml-[-1px]" />
+                  <ShoppingCart size={15} strokeWidth={2.2} className="text-gray-900 ml-[-1px]" />
                 </div>
                 <span className="font-black text-[13px] md:text-sm text-white tracking-tight whitespace-nowrap">
                   LKR {cartTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
-                {cart.reduce((sum, item) => sum + item.quantity, 0) > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-white text-blue-700 text-[10px] font-black min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center shadow-[0_2px_6px_rgba(0,0,0,0.15)] border border-blue-100">
-                    {cart.reduce((sum, item) => sum + item.quantity, 0)}
-                  </span>
-                )}
+                <span className="absolute -top-1.5 -right-1.5 bg-white text-black text-[10px] font-black min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center shadow-[0_2px_6px_rgba(0,0,0,0.15)] border border-gray-100/80">
+                  {cart.reduce((a, b) => a + b.quantity, 0)}
+                </span>
               </button>
             </div>
           </div>
@@ -570,14 +565,18 @@ export default function Header() {
           <button onClick={() => setIsWishlistOpen(true)} className="flex flex-col items-center gap-1 text-gray-500 hover:text-[#15803d] transition-colors relative">
             <div className="relative">
               <Heart size={22} strokeWidth={2} className={wishlist.length > 0 ? "fill-[#15803d] text-[#15803d]" : ""} />
-              {wishlist.length > 0 && <span className="absolute -top-1 -right-2 bg-[#15803d] text-white text-[9px] font-black min-w-4 h-4 px-1 rounded-full flex items-center justify-center">{wishlist.length}</span>}
+              <span className="absolute -top-1 -right-2 bg-[#15803d] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">
+                {wishlist.length}
+              </span>
             </div>
             <span className="text-[10px] font-bold">Wishlist</span>
           </button>
           <button onClick={() => setIsCartOpen(true)} className="flex flex-col items-center gap-1 text-gray-500 hover:text-[#f0364c] transition-colors relative">
             <div className="relative">
               <ShoppingCart size={22} strokeWidth={2} />
-              {cart.reduce((sum, item) => sum + item.quantity, 0) > 0 && <span className="absolute -top-1 -right-2 bg-blue-600 text-white text-[9px] font-black min-w-4 h-4 px-1 rounded-full flex items-center justify-center shadow-sm">{cart.reduce((sum, item) => sum + item.quantity, 0)}</span>}
+              <span className="absolute -top-1 -right-2 bg-[#f0364c] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+                {cart.reduce((a, b) => a + b.quantity, 0)}
+              </span>
             </div>
             <span className="text-[10px] font-bold">Cart</span>
           </button>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Tag, Percent, Calendar, ToggleLeft, ToggleRight, Search, Star, Save, Upload } from 'lucide-react';
+import { Tag, Percent, Calendar, ToggleLeft, ToggleRight, Search, Star, Save } from 'lucide-react';
 import { useAdmin, SpecialOffer } from '../../context/AdminContext';
-import { broadcastAdminNotification, uploadImageToServer } from '../../lib/api';
+import { broadcastAdminNotification } from '../../lib/api';
 
 const toDateTimeLocal = (value?: string) => {
   if (!value) return '';
@@ -20,8 +20,6 @@ export default function AdminSpecialOffers() {
     setSpecialOffers,
     specialOffersDeadline,
     setSpecialOffersDeadline,
-    specialOffersBannerUrl,
-    setSpecialOffersBannerUrl,
     saveSettings,
   } = useAdmin();
   const [search, setSearch] = useState('');
@@ -90,27 +88,6 @@ export default function AdminSpecialOffers() {
           >
             <Save size={15} /> {saved ? 'Saved' : 'Save Offers'}
           </button>
-        </div>
-      </div>
-
-      <div className="max-w-2xl rounded-xl border border-[#30363D] bg-[#161B22] p-5 space-y-3">
-        <div>
-          <h3 className="text-sm font-bold text-white">Offers Banner</h3>
-          <p className="mt-1 text-xs text-gray-500">Choose the image displayed behind the special-offers page headline.</p>
-        </div>
-        {specialOffersBannerUrl && <img src={specialOffersBannerUrl} alt="Special offers banner preview" className="h-32 w-full rounded-lg object-cover" />}
-        <div className="flex gap-2">
-          <input value={specialOffersBannerUrl} onChange={e => setSpecialOffersBannerUrl(e.target.value)} placeholder="Banner image URL" className="min-w-0 flex-1 rounded-xl border border-[#30363D] bg-[#0d1117] px-4 py-2.5 text-sm text-white focus:border-[#2ee661]/50 focus:outline-none" />
-          <label className="inline-flex cursor-pointer items-center rounded-xl border border-[#30363D] bg-[#0d1117] px-3 text-gray-300 hover:text-[#2ee661]">
-            <Upload size={16} />
-            <input type="file" accept="image/*" className="hidden" onChange={async e => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              try { setSpecialOffersBannerUrl(await uploadImageToServer(file)); }
-              catch (err: any) { alert('Image upload failed: ' + (err.message || 'Unknown error')); }
-              e.currentTarget.value = '';
-            }} />
-          </label>
         </div>
       </div>
 

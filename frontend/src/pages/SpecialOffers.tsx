@@ -4,14 +4,12 @@ import { ChevronRight, Sparkles, Flame, Clock } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
 import ProductCard from '../components/ProductCard';
 import ProductCardSkeleton from '../components/ProductCardSkeleton';
-import { resolveMediaUrl } from '../lib/api';
 
 export default function SpecialOffers() {
   const {
     products,
     specialOffers,
     specialOffersDeadline,
-    specialOffersBannerUrl,
     refreshHomeSettings,
     refreshProducts,
     homeSettingsReady,
@@ -53,7 +51,6 @@ export default function SpecialOffers() {
       return product ? { product, offer } : null;
     })
     .filter((item): item is { product: typeof products[number]; offer: typeof activeOffers[number] } => item !== null);
-  const bannerImage = resolveMediaUrl(specialOffersBannerUrl) || resolveMediaUrl(discountedProducts[0]?.product.image);
   const nextExpiry = hasValidDeadline ? deadline : null;
   const remainingSeconds = nextExpiry ? Math.max(0, Math.floor((nextExpiry - now) / 1000)) : null;
   const days = remainingSeconds === null ? 0 : Math.floor(remainingSeconds / 86400);
@@ -70,9 +67,9 @@ export default function SpecialOffers() {
   return (
     <div className="bg-gray-50 min-h-screen pb-16">
       {/* Hero Banner */}
-      <div className="relative overflow-hidden bg-[#101820] py-16">
-        {bannerImage && <img src={bannerImage} alt="Orion.LK special offers" className="absolute inset-0 h-full w-full object-cover opacity-40" />}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/65 to-black/35" />
+      <div className="bg-gradient-to-r from-[#161B22] to-black py-16 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[#f0364c] rounded-full blur-[120px] opacity-20 pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#15803d] rounded-full blur-[120px] opacity-10 pointer-events-none"></div>
         
         <div className="max-w-7xl mx-auto px-4 relative z-10 flex flex-col items-center text-center">
           <div className="inline-flex items-center gap-2 bg-[#f0364c]/20 text-[#f0364c] border border-[#f0364c]/30 px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider mb-6">

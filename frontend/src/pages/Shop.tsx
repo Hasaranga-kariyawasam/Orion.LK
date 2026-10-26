@@ -23,8 +23,8 @@ export default function Shop() {
   const [sortBy, setSortBy] = useState('default');
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedCategoryType, setSelectedCategoryType] = useState<'all' | 'brand-new' | 'used' | 'other'>(
-    typeParam === 'used' ? 'used' : typeParam === 'brand-new' ? 'brand-new' : typeParam === 'other' ? 'other' : 'all'
+  const [selectedCategoryType, setSelectedCategoryType] = useState<'all' | 'brand-new' | 'used'>(
+    typeParam === 'used' ? 'used' : typeParam === 'brand-new' ? 'brand-new' : 'all'
   );
 
   useEffect(() => {
@@ -48,7 +48,6 @@ export default function Shop() {
 
   const displayedCategories = useMemo(() => {
     if (selectedCategoryType === 'all') return allCategories;
-    if (selectedCategoryType === 'other') return allCategories.filter(category => category.group === 'accessories');
     return allCategories.filter(c => c.type === selectedCategoryType);
   }, [allCategories, selectedCategoryType]);
 
@@ -59,9 +58,6 @@ export default function Shop() {
       }
       if (selectedCategoryType === 'used') {
         if (!p.category?.toLowerCase().includes('used') && p.isNewProduct !== false) return false;
-      } else if (selectedCategoryType === 'other') {
-        const productCategory = allCategories.find(category => category.name.toLowerCase() === p.category?.toLowerCase());
-        if (productCategory?.group !== 'accessories') return false;
       } else if (selectedCategoryType === 'brand-new') {
         if (p.category?.toLowerCase().includes('used')) return false;
       }
@@ -75,7 +71,7 @@ export default function Shop() {
       }
       return true;
     });
-  }, [products, categories, categoryParam, selectedCategoryType, searchParam]);
+  }, [products, categoryParam, selectedCategoryType, searchParam]);
 
   const availableBrands = useMemo(() => {
     const s = new Set<string>();
@@ -153,7 +149,7 @@ export default function Shop() {
       <div>
         <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-wider mb-3">Condition</h3>
         <div className="flex bg-gray-100 border border-gray-200/80 rounded-xl p-1 text-xs font-bold gap-1">
-          {(['all', 'brand-new', 'used', 'other'] as const).map(type => (
+          {(['all', 'brand-new', 'used'] as const).map(type => (
             <button
               key={type}
               onClick={() => setSelectedCategoryType(type)}
@@ -162,7 +158,7 @@ export default function Shop() {
                 : 'text-gray-600 hover:text-[#15803d]'
                 }`}
             >
-              {type === 'brand-new' ? 'New' : type === 'all' ? 'All' : type === 'used' ? 'Used' : 'Other'}
+              {type === 'brand-new' ? 'New' : type === 'all' ? 'All' : 'Used'}
             </button>
           ))}
         </div>
