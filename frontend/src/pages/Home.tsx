@@ -61,7 +61,7 @@ const TiltCard = ({ children, className }: { children: React.ReactNode, classNam
   );
 };
 
-const getYouTubeEmbedUrl = (value: string) => {
+const getYouTubeEmbedUrl = (value: string, autoplay: boolean) => {
   try {
     const url = new URL(value);
     const videoId = url.hostname === 'youtu.be'
@@ -69,7 +69,7 @@ const getYouTubeEmbedUrl = (value: string) => {
       : url.searchParams.get('v') || url.pathname.match(/\/embed\/([^/?]+)/)?.[1];
 
     return url.hostname.includes('youtube.com') || url.hostname === 'youtu.be'
-      ? videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&disablekb=1&modestbranding=1&rel=0&iv_load_policy=3&showinfo=0` : null
+      ? videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=${autoplay ? 1 : 0}&mute=1&loop=1&playlist=${videoId}&controls=${autoplay ? 0 : 1}&playsinline=1&modestbranding=1&rel=0&iv_load_policy=3` : null
       : null;
   } catch {
     return null;
@@ -84,6 +84,15 @@ export default function Home() {
   const [showVideoText, setShowVideoText] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
   const [failedBannerImages, setFailedBannerImages] = useState<string[]>([]);
+  const [isMobileViewport, setIsMobileViewport] = useState(() => window.matchMedia('(max-width: 767px)').matches);
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 767px)');
+    const updateViewport = () => setIsMobileViewport(mediaQuery.matches);
+    updateViewport();
+    mediaQuery.addEventListener('change', updateViewport);
+    return () => mediaQuery.removeEventListener('change', updateViewport);
+  }, []);
+
   useEffect(() => {
     const refresh = () => {
       if (document.visibilityState === 'visible') void refreshHomeSettings();
@@ -103,7 +112,7 @@ export default function Home() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const categorySliderRef = useRef<HTMLDivElement>(null);
   const clearanceSliderRef = useRef<HTMLDivElement>(null);
-  const youtubeEmbedUrl = getYouTubeEmbedUrl(videoUrl);
+  const youtubeEmbedUrl = getYouTubeEmbedUrl(videoUrl, !isMobileViewport);
 
   // Fast 500ms initial morph loader
   useEffect(() => {
@@ -475,7 +484,7 @@ export default function Home() {
               <iframe
                 src={youtubeEmbedUrl}
                 title="Hardware Spotlight video"
-                className="w-full h-full border-0 pointer-events-none scale-105"
+                className="w-full h-full border-0 md:pointer-events-none md:scale-105"
                 allow="autoplay; encrypted-media; picture-in-picture"
                 allowFullScreen
               />

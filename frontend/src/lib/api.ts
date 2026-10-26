@@ -14,7 +14,8 @@ export const API_BASE_URL = (
 export function resolveMediaUrl(url: string | undefined | null): string {
   if (!url) return '';
   if (/^(https?:|data:|blob:)/i.test(url)) return url;
-  return `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+  const path = url.startsWith('/') ? url : `/${url}`;
+  return /^\/(?:api\/)?uploads\//i.test(path) ? `${API_BASE_URL}${path}` : path;
 }
 
 function normalizeProductMedia(product: any): any {
