@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
         $set: { cart },
         $setOnInsert: {
           uid: decoded.uid,
-          email: decoded.email || '',
+          email: decoded.email || `${decoded.uid}@orion.local`,
           name: decoded.name || decoded.email?.split('@')[0] || 'Customer',
           avatar: decoded.picture || '',
           addresses: [],

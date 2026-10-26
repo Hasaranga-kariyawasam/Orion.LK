@@ -34,7 +34,7 @@ export default function Shop() {
   // Reset page to 1 whenever filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [categoryParam, selectedCategoryType, selectedBrands, selectedTags, priceRange, searchParam, sortBy]);
+  }, [categoryParam, productTypeParam, selectedCategoryType, selectedBrands, selectedTags, priceRange, searchParam, sortBy]);
 
   const allCategories = categories;
 
@@ -159,7 +159,7 @@ export default function Shop() {
   };
 
   const FilterPanel = () => (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Condition */}
       <div>
         <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-wider mb-3">Condition</h3>
@@ -203,7 +203,7 @@ export default function Shop() {
         <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-wider mb-3">
           Categories <span className="text-gray-400 font-normal">({displayedCategories.length})</span>
         </h3>
-        <div className="space-y-1 max-h-64 overflow-y-auto pr-1 scrollbar-hide">
+        <div className="space-y-1 max-h-48 md:max-h-64 overflow-y-auto pr-1 scrollbar-hide">
           <button
             onClick={() => { const p = new URLSearchParams(searchParams); p.delete('category'); setSearchParams(p); }}
             className={`flex items-center justify-between w-full text-xs py-2 px-3 rounded-lg transition-all text-left ${!categoryParam
@@ -258,7 +258,7 @@ export default function Shop() {
       {availableBrands.length > 0 && (
         <div className="border-t border-gray-200 pt-5">
           <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-wider mb-3">Brands</h3>
-          <div className="space-y-2 max-h-48 overflow-y-auto pr-1 scrollbar-hide">
+          <div className="space-y-2 max-h-36 md:max-h-48 overflow-y-auto pr-1 scrollbar-hide">
             {availableBrands.map(brand => (
               <label key={brand} className="flex items-center gap-2.5 text-xs text-gray-700 cursor-pointer hover:text-black group">
                 <span className={`w-4 h-4 rounded border flex items-center justify-center transition-all shrink-0 ${selectedBrands.includes(brand)
@@ -313,7 +313,7 @@ export default function Shop() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-0">
+    <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
 
       {/* ── Breadcrumb bar ── */}
       <div className="">
@@ -361,11 +361,14 @@ export default function Shop() {
         {isFilterOpen && (
           <div className="fixed inset-0 z-50 flex md:hidden">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-xs" onClick={() => setIsFilterOpen(false)} />
-            <div className="relative ml-auto w-[85%] max-w-sm bg-white h-full overflow-y-auto p-6 ">
-              <div className="flex items-center justify-between mb-6">
+            <div className="relative ml-auto w-[88%] max-w-sm bg-white h-full overflow-y-auto p-4 sm:p-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
+              <div className="sticky top-0 z-10 -mx-4 -mt-4 mb-4 flex items-center justify-between border-b border-gray-100 bg-white px-4 pb-3 pt-[max(1rem,env(safe-area-inset-top))] sm:-mx-6 sm:-mt-6 sm:px-6">
                 <div className="flex items-center gap-2">
                   <SlidersHorizontal size={16} className="text-[#15803d]" />
-                  <h2 className="text-lg font-black text-gray-900 uppercase tracking-wider">Filters</h2>
+                  <div>
+                    <h2 className="text-lg font-black text-gray-900 uppercase tracking-wider">Filters</h2>
+                    <p className="text-[11px] text-gray-500">{filteredProducts.length} matching products</p>
+                  </div>
                 </div>
                 <button
                   onClick={() => setIsFilterOpen(false)}
@@ -383,12 +386,13 @@ export default function Shop() {
         <div className="flex-1 min-w-0">
 
           {/* Toolbar */}
-          <div className="flex items-center justify-between mb-5 gap-3">
-            <div className="flex items-center gap-3">
+          <div className="mb-4 md:mb-5">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
               {/* Mobile filter button */}
               <button
                 onClick={() => setIsFilterOpen(true)}
-                className="md:hidden min-h-11 flex items-center gap-2 bg-white border border-gray-200 text-gray-800 py-2 px-3 rounded-xl text-xs font-bold hover:bg-gray-50 shadow-sm transition-all"
+                className="order-2 md:hidden min-h-11 shrink-0 flex items-center gap-1.5 sm:gap-2 bg-white border border-gray-200 text-gray-800 py-2 px-2.5 sm:px-3 rounded-xl text-[11px] sm:text-xs font-bold hover:bg-gray-50 shadow-sm transition-all"
               >
                 <Filter size={14} />
                 Filters
@@ -399,21 +403,22 @@ export default function Shop() {
                 )}
               </button>
 
-              <h1 className="min-w-0 text-base sm:text-lg md:text-xl font-black text-gray-900 uppercase tracking-tight truncate">
+              <h1 className="order-1 min-w-0 flex-1 text-[13px] sm:text-lg md:text-xl font-black text-gray-900 uppercase tracking-tight truncate">
                 {searchParam
                   ? <><Search size={16} className="inline mr-1 text-gray-400" />"{searchParam}"</>
                   : categoryParam || 'All Products'
                 }
               </h1>
             </div>
-
             {/* Sort dropdown */}
             <div className="relative shrink-0">
               <button
                 onClick={() => setShowSortMenu(v => !v)}
-                className="min-h-11 flex items-center gap-2 bg-white border border-gray-200 text-gray-800 py-2 px-3.5 rounded-xl text-xs font-bold hover:border-gray-300 shadow-sm transition-all whitespace-nowrap"
+                aria-label={`Sort products: ${sortLabels[sortBy]}`}
+                className="min-h-11 flex items-center gap-1.5 sm:gap-2 bg-white border border-gray-200 text-gray-800 py-2 px-2.5 sm:px-3.5 rounded-xl text-xs font-bold hover:border-gray-300 shadow-sm transition-all whitespace-nowrap"
               >
-                {sortLabels[sortBy]}
+                <span className="hidden sm:inline">{sortLabels[sortBy]}</span>
+                <span className="sm:hidden"><SlidersHorizontal size={15} /></span>
                 <ChevronDown size={12} className={`transition-transform text-gray-400 ${showSortMenu ? 'rotate-180' : ''}`} />
               </button>
               {showSortMenu && (
@@ -433,6 +438,10 @@ export default function Shop() {
                 </div>
               )}
             </div>
+          </div>
+          <p className="md:hidden mt-2 text-[11px] font-medium text-gray-500">
+            {productsLoading ? 'Loading products…' : `${filteredProducts.length} product${filteredProducts.length === 1 ? '' : 's'} found`}
+          </p>
           </div>
 
           {/* Grid */}

@@ -1,8 +1,14 @@
 import { auth } from './firebase';
 
-const API_BASE_URL = (
-  import.meta.env.VITE_API_URL ||
-  (import.meta.env.DEV ? 'http://localhost:5000' : 'https://orion-lkbackend-psi.vercel.app')
+const configuredApiUrl = import.meta.env.VITE_API_URL;
+const localNetworkApiUrl = import.meta.env.DEV && typeof window !== 'undefined'
+  ? `${window.location.protocol}//${window.location.hostname}:5000`
+  : undefined;
+
+export const API_BASE_URL = (
+  localNetworkApiUrl && (!configuredApiUrl || /^(https?:\/\/)?(localhost|127\.0\.0\.1)(:\d+)?$/i.test(configuredApiUrl))
+    ? localNetworkApiUrl
+    : configuredApiUrl || (import.meta.env.DEV ? 'http://localhost:5000' : 'https://orion-lkbackend-psi.vercel.app')
 ).replace(/\/$/, '');
 
 export function resolveMediaUrl(url: string | undefined | null): string {

@@ -328,10 +328,10 @@ export default function Profile() {
     switch (activeTab) {
       case 'dashboard':
         return (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="space-y-4 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* User Profile Card */}
-            <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-6">
-              <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
+            <div className="bg-white p-4 md:p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 md:gap-6">
+              <div className="flex flex-col sm:flex-row items-center gap-4 md:gap-6 text-center sm:text-left">
                 {/* Avatar with Camera upload button */}
                 <div className="relative group">
                   <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center border-4 border-white shadow-lg overflow-hidden shrink-0">
@@ -390,9 +390,9 @@ export default function Profile() {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
               <div
-                className="bg-gradient-to-br from-amber-500/10 via-yellow-500/5 to-white p-6 rounded-2xl shadow-sm border border-amber-500/30 flex flex-col items-center justify-center text-center hover:border-amber-500 transition-colors cursor-pointer"
+                className="bg-gradient-to-br from-amber-500/10 via-yellow-500/5 to-white p-4 md:p-6 rounded-2xl shadow-sm border border-amber-500/30 flex flex-col items-center justify-center text-center hover:border-amber-500 transition-colors cursor-pointer"
                 onClick={() => setActiveTab('rewards')}
               >
                 <div className="w-12 h-12 bg-amber-500/20 text-amber-600 rounded-full flex items-center justify-center mb-3">
@@ -405,7 +405,7 @@ export default function Profile() {
               </div>
 
               <div
-                className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center hover:border-black transition-colors cursor-pointer"
+                className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center hover:border-black transition-colors cursor-pointer"
                 onClick={() => setActiveTab('orders')}
               >
                 <div className="w-12 h-12 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-3">
@@ -418,7 +418,7 @@ export default function Profile() {
               </div>
 
               <div
-                className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center hover:border-black transition-colors cursor-pointer"
+                className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center hover:border-black transition-colors cursor-pointer"
                 onClick={() => setActiveTab('addresses')}
               >
                 <div className="w-12 h-12 bg-green-50 text-[#1cd75b] rounded-full flex items-center justify-center mb-3">
@@ -431,7 +431,7 @@ export default function Profile() {
               </div>
 
               <div
-                className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center hover:border-black transition-colors cursor-pointer"
+                className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center hover:border-black transition-colors cursor-pointer"
                 onClick={() => navigate('/shop')}
               >
                 <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-3">
@@ -495,7 +495,7 @@ export default function Profile() {
 
       case 'orders':
         return (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="space-y-4 md:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div>
               <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight">My Orders</h2>
               <p className="text-sm text-gray-500 mt-1">View your products, payment details, and delivery progress.</p>
@@ -1209,35 +1209,35 @@ export default function Profile() {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen pb-16">
-      <div className="bg-white border-b border-gray-200 py-6">
+    <div className="bg-gray-50 min-h-screen pb-24 md:pb-16">
+      <div className="bg-white border-b border-gray-200 py-4 md:py-6">
         <div className="max-w-7xl mx-auto px-4">
-          <h1 className="text-2xl md:text-3xl font-black text-gray-900 uppercase tracking-tight">My Account</h1>
+        <h1 className="text-xl md:text-3xl font-black text-gray-900 uppercase tracking-tight">My Account</h1>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 mt-8">
-        <div className="flex flex-col md:flex-row gap-8">
+      <div className="max-w-7xl mx-auto px-4 mt-4 md:mt-8">
+        <div className="flex flex-col md:flex-row gap-4 md:gap-8">
 
           {/* Sidebar */}
           <div className="w-full md:w-64 shrink-0">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden  top-32">
-              <nav className="flex flex-col">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden top-32">
+              <nav className="flex flex-row overflow-x-auto scrollbar-hide md:flex-col">
                 <button
                   onClick={() => setActiveTab('dashboard')}
-                  className={`flex items-center gap-3 p-4 text-left transition-colors border-l-4 ${activeTab === 'dashboard' ? 'border-gray-900 bg-gray-50 text-gray-900 font-bold' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium'}`}
+                  className={`flex shrink-0 items-center gap-2 p-3 md:gap-3 md:p-4 whitespace-nowrap text-left transition-colors border-b-2 md:border-b-0 md:border-l-4 ${activeTab === 'dashboard' ? 'border-b-gray-900 md:border-l-gray-900 bg-gray-50 text-gray-900 font-bold' : 'border-b-transparent md:border-l-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium'}`}
                 >
                   <User size={18} /> Dashboard
                 </button>
                 <button
                   onClick={() => setActiveTab('orders')}
-                  className={`flex items-center gap-3 p-4 text-left transition-colors border-l-4 border-t border-t-gray-100 ${activeTab === 'orders' ? 'border-l-gray-900 bg-gray-50 text-gray-900 font-bold' : 'border-l-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium'}`}
+                  className={`flex shrink-0 items-center gap-2 p-3 md:gap-3 md:p-4 whitespace-nowrap text-left transition-colors border-b-2 md:border-b-0 md:border-l-4 md:border-t md:border-t-gray-100 ${activeTab === 'orders' ? 'border-b-gray-900 md:border-l-gray-900 bg-gray-50 text-gray-900 font-bold' : 'border-b-transparent md:border-l-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium'}`}
                 >
                   <ShoppingBag size={18} /> My Orders
                 </button>
                 <button
                   onClick={() => setActiveTab('rewards')}
-                  className={`flex items-center justify-between p-4 text-left transition-colors border-l-4 border-t border-t-gray-100 ${activeTab === 'rewards' ? 'border-l-amber-500 bg-amber-50/50 text-amber-900 font-bold' : 'border-l-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium'}`}
+                  className={`flex shrink-0 items-center gap-2 p-3 md:justify-between md:gap-3 md:p-4 whitespace-nowrap text-left transition-colors border-b-2 md:border-b-0 md:border-l-4 md:border-t md:border-t-gray-100 ${activeTab === 'rewards' ? 'border-b-amber-500 md:border-l-amber-500 bg-amber-50/50 text-amber-900 font-bold' : 'border-b-transparent md:border-l-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium'}`}
                 >
                   <div className="flex items-center gap-3">
                     <Coins size={18} className={activeTab === 'rewards' ? 'text-amber-600' : 'text-amber-500'} />
@@ -1249,19 +1249,19 @@ export default function Profile() {
                 </button>
                 <button
                   onClick={() => setActiveTab('addresses')}
-                  className={`flex items-center gap-3 p-4 text-left transition-colors border-l-4 border-t border-t-gray-100 ${activeTab === 'addresses' ? 'border-l-gray-900 bg-gray-50 text-gray-900 font-bold' : 'border-l-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium'}`}
+                  className={`flex shrink-0 items-center gap-2 p-3 md:gap-3 md:p-4 whitespace-nowrap text-left transition-colors border-b-2 md:border-b-0 md:border-l-4 md:border-t md:border-t-gray-100 ${activeTab === 'addresses' ? 'border-b-gray-900 md:border-l-gray-900 bg-gray-50 text-gray-900 font-bold' : 'border-b-transparent md:border-l-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium'}`}
                 >
                   <MapPin size={18} /> Saved Addresses
                 </button>
                 <button
                   onClick={() => setActiveTab('settings')}
-                  className={`flex items-center gap-3 p-4 text-left transition-colors border-l-4 border-t border-t-gray-100 ${activeTab === 'settings' ? 'border-l-gray-900 bg-gray-50 text-gray-900 font-bold' : 'border-l-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium'}`}
+                  className={`flex shrink-0 items-center gap-2 p-3 md:gap-3 md:p-4 whitespace-nowrap text-left transition-colors border-b-2 md:border-b-0 md:border-l-4 md:border-t md:border-t-gray-100 ${activeTab === 'settings' ? 'border-b-gray-900 md:border-l-gray-900 bg-gray-50 text-gray-900 font-bold' : 'border-b-transparent md:border-l-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium'}`}
                 >
                   <Settings size={18} /> Account Settings
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-3 p-4 text-left transition-colors border-l-4 border-t border-t-gray-100 border-l-transparent text-red-500 hover:bg-red-50 font-bold"
+                  className="flex shrink-0 items-center gap-2 p-3 md:gap-3 md:p-4 whitespace-nowrap text-left transition-colors border-b-2 md:border-b-0 md:border-l-4 md:border-t md:border-t-gray-100 border-b-transparent md:border-l-transparent text-red-500 hover:bg-red-50 font-bold"
                 >
                   <LogOut size={18} /> Sign Out
                 </button>

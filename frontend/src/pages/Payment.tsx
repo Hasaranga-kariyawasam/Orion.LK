@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
+import { API_BASE_URL } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { createOrderInDb, createPayHerePayment } from '../lib/api';
 import { formatLKR } from '../data';
@@ -174,9 +175,6 @@ export default function Payment() {
         const payHere = await createPayHerePayment(finalTotal);
         window.payhere.onCompleted = async () => {
           try {
-            if (paymentMethod !== 'cod') {
-              throw new Error('This payment method is not available. Choose PayHere or Cash on Delivery.');
-            }
             await submitOrder(paymentMethodLabel);
           } catch (err: any) {
             setErrorMessage(err.message || 'Payment succeeded, but the order could not be saved.');
@@ -193,7 +191,7 @@ export default function Payment() {
           merchant_id: payHere.merchantId,
           return_url: `${window.location.origin}/success`,
           cancel_url: `${window.location.origin}/payment`,
-          notify_url: `${import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : 'https://orion-lkbackend-psi.vercel.app')}/api/payhere/notify`,
+          notify_url: `${API_BASE_URL}/api/payhere/notify`,
           order_id: payHere.orderId,
           items: cart.map(item => `${item.product.name} x${item.quantity}`).join(', '),
           amount: payHere.amount,
@@ -359,21 +357,40 @@ export default function Payment() {
               </div>
               
               <div className="space-y-4">
-                {/* Card entry and saved-card autofill are handled by PayHere's hosted checkout. */}
-                <label className={`flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all ${paymentMethod === 'payhere' ? 'border-[#1cd75b] bg-[#1cd75b]/5' : 'border-gray-200 hover:border-gray-300'}`} onClick={() => setPaymentMethod('payhere')}>
-                    <div className="flex items-center gap-3">
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'payhere' ? 'border-[#1cd75b]' : 'border-gray-300'}`}>
-                        {paymentMethod === 'payhere' && <div className="w-2.5 h-2.5 bg-[#1cd75b] rounded-full" />}
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="font-bold text-gray-900">Credit / Debit Card</span>
-                        <span className="text-xs text-gray-500">Secure checkout via PayHere Sandbox</span>
-                      </div>
+                {/* Card entry is handled by PayHere's hosted checkout. */}
+                <label
+                  className={`relative flex min-h-28 cursor-pointer items-center justify-between gap-4 overflow-hidden rounded-2xl border-2 p-4 transition-all sm:p-5 ${
+                    paymentMethod === 'payhere'
+                      ? 'border-[#1cd75b] bg-gradient-to-br from-[#1cd75b]/10 via-white to-white shadow-[0_8px_24px_rgba(28,215,91,0.10)]'
+                      : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+                  }`}
+                  onClick={() => setPaymentMethod('payhere')}
+                >
+                  <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${paymentMethod === 'payhere' ? 'bg-[#1cd75b] text-white shadow-md shadow-[#1cd75b]/20' : 'bg-gray-100 text-gray-500'}`}>
+                      <CreditCard size={23} />
                     </div>
-                    <div className="flex gap-2">
-                      <div className="w-8 h-5 bg-blue-600 rounded flex items-center justify-center text-[8px] text-white font-bold italic">VISA</div>
-                      <div className="w-8 h-5 bg-red-500 rounded flex items-center justify-center text-[8px] text-white font-bold">MC</div>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-black text-gray-900">PayHere</span>
+                        <span className="rounded-full border border-[#1cd75b]/30 bg-[#1cd75b]/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-[#11833a]">
+                          Sandbox
+                        </span>
+                      </div>
+                      <span className="mt-1 block text-xs leading-relaxed text-gray-500">
+                        Secure credit or debit card checkout
+                      </span>
                     </div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-3">
+                    <div className="hidden gap-1.5 sm:flex">
+                      <span className="flex h-6 w-9 items-center justify-center rounded bg-[#1a1f71] text-[8px] font-black italic text-white">VISA</span>
+                      <span className="flex h-6 w-9 items-center justify-center rounded bg-gray-900 text-[8px] font-black text-white">MC</span>
+                    </div>
+                    <span className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${paymentMethod === 'payhere' ? 'border-[#1cd75b]' : 'border-gray-300'}`}>
+                      {paymentMethod === 'payhere' && <span className="h-2.5 w-2.5 rounded-full bg-[#1cd75b]" />}
+                    </span>
+                  </div>
                 </label>
 
                 {/* Koko */}

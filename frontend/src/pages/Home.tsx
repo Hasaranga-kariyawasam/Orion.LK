@@ -81,8 +81,8 @@ const FALLBACK_VIDEO_URL = 'https://interactive-examples.mdn.mozilla.net/media/c
 export default function Home() {
   const { videoUrl, heroImages, accessories, featuredImages, pcBuildCards, homePromoCards, brandBanner, secondBannerImage, homeProductCategories, bestSellerBannerImage, brands, categories, products, bestSellerIds, specialOffers, specialOffersDeadline, whatsappNumber, storeAddress, refreshHomeSettings, homeSettingsReady } = useAdmin();
   const [isMuted, setIsMuted] = useState(true);
-  const [videoFailed, setVideoFailed] = useState(false);
   const [showVideoText, setShowVideoText] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
   const [failedBannerImages, setFailedBannerImages] = useState<string[]>([]);
   useEffect(() => {
     const refresh = () => {
@@ -98,12 +98,21 @@ export default function Home() {
   const [bestSellerCategory, setBestSellerCategory] = useState('Processors');
   const [heroImageReady, setHeroImageReady] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
+  const [isDesktopViewport, setIsDesktopViewport] = useState(false);
   const [isCategoryHovered, setIsCategoryHovered] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const videoRef = useRef<HTMLVideoElement>(null);
   const categorySliderRef = useRef<HTMLDivElement>(null);
   const clearanceSliderRef = useRef<HTMLDivElement>(null);
   const youtubeEmbedUrl = getYouTubeEmbedUrl(videoUrl);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(min-width: 768px)');
+    const updateViewport = () => setIsDesktopViewport(mediaQuery.matches);
+    updateViewport();
+    mediaQuery.addEventListener('change', updateViewport);
+    return () => mediaQuery.removeEventListener('change', updateViewport);
+  }, []);
 
   // Fast 500ms initial morph loader
   useEffect(() => {
@@ -208,12 +217,12 @@ export default function Home() {
     if (bestSellerCategory === 'Coolers') {
       return p.category === 'Coolers' || p.category === 'Cooling Pads' || p.category === 'Fan Kits';
     }
-    return p.category === bestSellerCategory;
+    return matchesCategoryName(p.category, bestSellerCategory);
   });
-  const selectedBestSellers = products.filter(product => bestSellerIds.includes(product.id));
+  const selectedBestSellers = bestSellerProducts.filter(product => bestSellerIds.includes(product.id));
   const displayBestSellers = selectedBestSellers.length > 0
     ? selectedBestSellers.slice(0, 8)
-    : bestSellerProducts.length > 0 ? bestSellerProducts.slice(0, 8) : products.slice(0, 8);
+    : bestSellerProducts.slice(0, 8);
   const bestSellerCampaignImage = bestSellerBannerImage === DEFAULT_BEST_SELLER_BANNER_IMAGE
     ? DEFAULT_BEST_SELLER_BANNER_IMAGE
     : resolveMediaUrl(bestSellerBannerImage);
@@ -294,16 +303,16 @@ export default function Home() {
 
         {/* 1. Hero Section */}
         <AnimatedSection className="max-w-7xl mx-auto px-4 mt-0 ">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 h-auto md:h-[460px]">
+          <div className="grid grid-cols-3 md:grid-cols-4 gap-2 md:gap-4 h-auto md:h-[460px]">
             {/* Main Hero Carousel */}
-            <div className="md:col-span-2 relative h-full min-h-[300px]">
+            <div className="col-span-3 md:col-span-2 relative h-[190px] sm:h-[240px] md:h-full md:min-h-[300px]">
               <HeroCarousel />
             </div>
 
             {/* Stacked Right Columns */}
-            <div className="md:col-span-1 flex flex-col gap-4">
+            <div className="hidden md:col-span-1 md:flex md:flex-col gap-4">
               <div className="flex-1 relative rounded-2xl overflow-hidden group shadow-lg bg-[#0D1117] cursor-pointer">
-                <img src={getFeaturedImage(0)} onError={handleHomeImageError} alt={featuredImages[0]?.alt || 'Accessories'} loading="eager" fetchPriority="high" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
+                <img src={getFeaturedImage(0)} onError={handleHomeImageError} alt={featuredImages[0]?.alt || 'Accessories'} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
                 <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none"></div>
                 <div className="absolute bottom-4 left-4 z-20 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
                   <button className="bg-white text-black font-black uppercase tracking-wider py-2 px-6 rounded-full hover:bg-gray-200 transition-all shadow-lg">
@@ -312,7 +321,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="flex-1 relative rounded-2xl overflow-hidden group shadow-lg bg-[#0D1117] cursor-pointer">
-                <img src={getFeaturedImage(1)} onError={handleHomeImageError} alt={featuredImages[1]?.alt || 'Hardware'} loading="eager" fetchPriority="high" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
+                <img src={getFeaturedImage(1)} onError={handleHomeImageError} alt={featuredImages[1]?.alt || 'Hardware'} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
                 <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none"></div>
                 <div className="absolute bottom-4 left-4 z-20 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
                   <button className="bg-white text-black font-black uppercase tracking-wider py-2 px-6 rounded-full hover:bg-gray-200 transition-all shadow-lg">
@@ -323,8 +332,8 @@ export default function Home() {
             </div>
 
             {/* Tall Right Column */}
-            <div className="md:col-span-1 relative rounded-2xl overflow-hidden group shadow-lg bg-[#0D1117] cursor-pointer">
-              <img src={getFeaturedImage(2)} onError={handleHomeImageError} alt={featuredImages[2]?.alt || 'Monitors'} loading="eager" fetchPriority="high" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
+            <div className="hidden md:block md:col-span-1 relative rounded-2xl overflow-hidden group shadow-lg bg-[#0D1117] cursor-pointer">
+              <img src={getFeaturedImage(2)} onError={handleHomeImageError} alt={featuredImages[2]?.alt || 'Monitors'} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
               <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none"></div>
               <div className="absolute bottom-6 left-6 z-20 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
                 <button className="bg-white text-black font-black uppercase tracking-wider py-3 px-8 rounded-full hover:bg-gray-200 transition-all shadow-lg">
@@ -336,27 +345,27 @@ export default function Home() {
         </AnimatedSection>
 
         {/* 2. Feature Strip / Trust Badges */}
-        <AnimatedSection className="max-w-7xl mx-auto px-4 mt-6 md:mt-8">
-          <div className="bg-transparent py-4 flex flex-wrap md:flex-nowrap items-center justify-between gap-4 border-b border-gray-200 pb-8">
+        <AnimatedSection className="hidden md:block border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap md:flex-nowrap items-center justify-between gap-3">
             <div className="flex items-center gap-3 text-gray-700">
-              <Truck className="text-black" size={28} />
-              <span className="font-semibold text-xs leading-tight">Fast & Express<br />Islandwide Delivery</span>
+              <Truck className="text-black shrink-0" size={22} />
+              <span className="font-semibold text-[10px] leading-tight">Fast & Express<br />Islandwide Delivery</span>
             </div>
             <div className="flex items-center gap-3 text-gray-700">
-              <Smile className="text-black" size={28} />
-              <span className="font-semibold text-xs leading-tight">Top Customer<br />Satisfaction</span>
+              <Smile className="text-black shrink-0" size={22} />
+              <span className="font-semibold text-[10px] leading-tight">Top Customer<br />Satisfaction</span>
             </div>
             <div className="flex items-center gap-3 text-gray-700">
-              <ShieldCheck className="text-black" size={28} />
-              <span className="font-semibold text-xs leading-tight">Secures Payment<br />Methods</span>
+              <ShieldCheck className="text-black shrink-0" size={22} />
+              <span className="font-semibold text-[10px] leading-tight">Secures Payment<br />Methods</span>
             </div>
             <div className="flex items-center gap-3 text-gray-700">
-              <Award className="text-black" size={28} />
-              <span className="font-semibold text-xs leading-tight">Best Quality Since<br />Day One</span>
+              <Award className="text-black shrink-0" size={22} />
+              <span className="font-semibold text-[10px] leading-tight">Best Quality Since<br />Day One</span>
             </div>
             <div className="flex items-center gap-3 text-gray-700">
-              <CheckCircle className="text-black" size={28} />
-              <span className="font-semibold text-xs leading-tight">Warranty on All<br />Products</span>
+              <CheckCircle className="text-black shrink-0" size={22} />
+              <span className="font-semibold text-[10px] leading-tight">Warranty on All<br />Products</span>
             </div>
           </div>
         </AnimatedSection>
@@ -391,9 +400,9 @@ export default function Home() {
               <Link
                 key={cat.id || idx}
                 to={`/shop?category=${encodeURIComponent(cat.name)}`}
-                className="flex flex-col items-center gap-2 cursor-pointer group min-w-[88px] md:min-w-[110px] shrink-0"
+                className="flex flex-col items-center gap-1.5 cursor-pointer group min-w-[88px] md:min-w-[90px] shrink-0"
               >
-                <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-white overflow-hidden flex items-center justify-center p-2.5 md:p-3 transition-all duration-300">
+                <div className="w-20 h-20 md:w-[80px] md:h-[80px] rounded-xl md:rounded-lg bg-white overflow-hidden flex items-center justify-center p-2 md:p-2.5 transition-all duration-300">
                   <img src={cat.img} alt={cat.name} className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500" />
                 </div>
                 <span className="text-[11px] md:text-xs font-bold text-center text-gray-800 group-hover:text-black transition-colors leading-tight line-clamp-2 max-w-[100px]">{cat.name}</span>
@@ -410,15 +419,15 @@ export default function Home() {
           </button>
         </AnimatedSection>
         {/* Pre-Built PCs Section */}
-        <AnimatedSection className="max-w-7xl mx-auto px-4 mt-10 md:mt-12">
+        <AnimatedSection className="hidden md:block max-w-7xl mx-auto w-full px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <TiltCard className="md:col-span-1 rounded-xl overflow-hidden cursor-pointer shadow-sm relative h-[380px] group bg-black">
+            <TiltCard className="md:col-span-1 rounded-xl overflow-hidden cursor-pointer shadow-sm relative h-[190px] sm:h-[240px] md:h-[310px] group bg-black">
               <img src={getHomeImage(pcBuildCards[0]?.image)} onError={handleHomeImageError} alt={pcBuildCards[0]?.alt} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" />
               <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/20 to-black/90"></div>
               <div className="absolute inset-0 pt-8 pb-6 px-4 flex flex-col justify-between items-center text-center text-white">
                 <div>
                   <span className="text-[#ff9800] font-bold text-xs uppercase tracking-wide block mb-2">{pcBuildCards[0]?.eyebrow}</span>
-                  <h3 className="text-3xl font-black uppercase leading-[1.1] tracking-wide drop-shadow-md whitespace-pre-line">{pcBuildCards[0]?.title}</h3>
+                  <h3 className="text-xl sm:text-2xl md:text-3xl font-black uppercase leading-[1.1] tracking-wide drop-shadow-md whitespace-pre-line">{pcBuildCards[0]?.title}</h3>
                 </div>
                 <button className="bg-white text-black font-black text-[13px] py-2.5 px-6 rounded flex items-center gap-2 hover:bg-gray-100 transition-colors shadow-lg shadow-white/10 mt-auto">
                   Shop Now <ChevronRight size={14} className="text-black" strokeWidth={3} />
@@ -426,13 +435,13 @@ export default function Home() {
               </div>
             </TiltCard>
 
-            <TiltCard className="md:col-span-2 rounded-xl overflow-hidden cursor-pointer shadow-sm relative h-[380px] group bg-black">
+            <TiltCard className="md:col-span-2 rounded-xl overflow-hidden cursor-pointer shadow-sm relative h-[190px] sm:h-[240px] md:h-[310px] group bg-black">
               <img src={getHomeImage(pcBuildCards[1]?.image)} onError={handleHomeImageError} alt={pcBuildCards[1]?.alt} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover opacity-70 group-hover:scale-105 transition-transform duration-700" />
               <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/30 to-black/80"></div>
               <div className="absolute inset-0 pt-8 pb-6 px-6 flex flex-col justify-between items-center text-center text-white">
                 <div>
                   <span className="text-[#ff9800] font-bold text-[13px] uppercase tracking-wide block mb-2">{pcBuildCards[1]?.eyebrow}</span>
-                  <h3 className="text-4xl font-black uppercase leading-[1.1] tracking-wide drop-shadow-lg whitespace-pre-line">{pcBuildCards[1]?.title}</h3>
+                  <h3 className="text-2xl sm:text-3xl md:text-4xl font-black uppercase leading-[1.1] tracking-wide drop-shadow-lg whitespace-pre-line">{pcBuildCards[1]?.title}</h3>
                 </div>
                 <button className="bg-white text-black font-black text-[13px] py-2.5 px-6 rounded flex items-center gap-2 hover:bg-gray-100 transition-colors shadow-lg shadow-white/10 mt-auto">
                   Shop Now <ChevronRight size={14} className="text-black" strokeWidth={3} />
@@ -440,13 +449,13 @@ export default function Home() {
               </div>
             </TiltCard>
 
-            <TiltCard className="md:col-span-1 rounded-xl overflow-hidden cursor-pointer shadow-sm relative h-[380px] group bg-[#09101a]">
+            <TiltCard className="md:col-span-1 rounded-xl overflow-hidden cursor-pointer shadow-sm relative h-[190px] sm:h-[240px] md:h-[310px] group bg-[#09101a]">
               <img src={getHomeImage(pcBuildCards[2]?.image)} onError={handleHomeImageError} alt={pcBuildCards[2]?.alt} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" />
               <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-blue-900/30 to-black/90 mix-blend-overlay"></div>
               <div className="absolute inset-0 pt-8 pb-6 px-4 flex flex-col justify-between items-center text-center text-white">
                 <div>
                   <span className="text-[#ff9800] font-bold text-xs uppercase tracking-wide block mb-2">{pcBuildCards[2]?.eyebrow}</span>
-                  <h3 className="text-3xl font-black uppercase leading-[1.1] tracking-wide drop-shadow-md whitespace-pre-line">{pcBuildCards[2]?.title}</h3>
+                  <h3 className="text-xl sm:text-2xl md:text-3xl font-black uppercase leading-[1.1] tracking-wide drop-shadow-md whitespace-pre-line">{pcBuildCards[2]?.title}</h3>
                 </div>
                 <button className="bg-white text-black font-black text-[13px] py-2.5 px-6 rounded flex items-center gap-2 hover:bg-gray-100 transition-colors shadow-lg shadow-white/10 mt-auto">
                   Shop Now <ChevronRight size={14} className="text-black" strokeWidth={3} />
@@ -458,17 +467,19 @@ export default function Home() {
 
 
         {/* 5. Hardware Spotlight */}
-        <AnimatedSection className="max-w-7xl mx-auto px-0 mt-12 md:mt-16">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-6 gap-4">
+        {isDesktopViewport && (
+        <AnimatedSection className="hidden md:block max-w-7xl mx-auto px-3 md:px-0 mt-8 md:mt-16">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-4 md:mb-6 gap-3 md:gap-4">
             <div>
-              <h2 className="text-3xl font-black text-gray-900 uppercase tracking-tight">Hardware Spotlight</h2>
+              <h2 className="text-2xl sm:text-3xl font-black text-gray-900 uppercase tracking-tight">Hardware Spotlight</h2>
             </div>
           </div>
 
           <div
-            className="w-full aspect-[21/9] md:aspect-video rounded-2xl overflow-hidden relative shadow-2xl bg-black group"
+            className="w-full aspect-video rounded-xl md:rounded-2xl overflow-hidden relative shadow-xl md:shadow-2xl bg-black group"
             onMouseEnter={() => setShowVideoText(true)}
             onMouseLeave={() => setShowVideoText(false)}
+            onClick={() => setShowVideoText(visible => !visible)}
           >
             {youtubeEmbedUrl ? (
               <iframe
@@ -491,38 +502,37 @@ export default function Home() {
               />
             )}
 
-            {/* Overlay Gradient - only visible when hovering */}
-            <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none transition-opacity duration-300 ${showVideoText ? 'opacity-100' : 'opacity-0'}`}></div>
+            <div className="hidden md:block absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none transition-opacity duration-300" />
 
             {/* Sound Toggle */}
             {!youtubeEmbedUrl && (
               <button
                 onClick={(e) => { e.preventDefault(); setIsMuted(!isMuted); }}
-                className={`absolute top-6 right-6 bg-black/40 hover:bg-black/80 backdrop-blur-md text-white p-3 rounded-full transition-all z-20 ${showVideoText ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+                className={`absolute top-3 right-3 md:top-6 md:right-6 bg-black/60 hover:bg-black/80 backdrop-blur-md text-white min-h-11 min-w-11 flex items-center justify-center rounded-full transition-all z-20 ${showVideoText ? 'md:opacity-100 md:pointer-events-auto' : 'md:opacity-0 md:pointer-events-none'}`}
                 aria-label={isMuted ? 'Unmute video' : 'Mute video'}
               >
                 {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
               </button>
             )}
 
-            {/* Product Link Overlay - only visible on hover */}
-            <div className={`absolute bottom-6 left-6 md:bottom-10 md:left-10 z-20 max-w-sm transition-all duration-300 ${showVideoText ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
+            <div className={`hidden md:block absolute bottom-10 left-10 z-20 max-w-sm transition-all duration-300 ${showVideoText ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
               <span className="bg-[#15803d] text-white text-[10px] font-black px-2.5 py-1 rounded uppercase tracking-widest mb-3 inline-block shadow-sm">Featured</span>
-              <h3 className="text-2xl md:text-4xl font-black text-white mb-2 leading-tight">NVIDIA RTX 4090<br />Founders Edition</h3>
+              <h3 className="text-4xl font-black text-white mb-2 leading-tight">NVIDIA RTX 4090<br />Founders Edition</h3>
               <p className="text-gray-300 text-sm mb-6 line-clamp-2">Beyond fast. Experience AI-powered graphics and lifelike virtual worlds.</p>
-              <Link to="/product/1" className="inline-flex items-center gap-2 bg-white text-black px-6 py-3 rounded-xl font-bold hover:bg-gray-200 transition-colors">
+              <Link to="/product/1" className="min-h-11 inline-flex items-center gap-2 bg-white text-black px-6 py-3 rounded-xl font-bold hover:bg-gray-200 transition-colors">
                 View Product <ArrowRight size={18} />
               </Link>
             </div>
           </div>
         </AnimatedSection>
+        )}
 
         {/* 5. Shop Accessories */}
-        <AnimatedSection className="max-w-7xl mx-auto px-4 mt-10 md:mt-16">
-          <h2 className="text-2xl font-black mb-6 text-gray-900 uppercase">Shop Accessories</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {accessories.map((accessory, index) => (
-              <Link key={accessory.id} to={`/shop?category=${encodeURIComponent(accessory.name)}`} className={`${accessory.colorClass} rounded-xl p-6 relative overflow-hidden group cursor-pointer shadow-sm h-32 md:h-40 flex items-center justify-center`}>
+        <AnimatedSection className="hidden md:block max-w-7xl w-full mx-auto px-4">
+          <h2 className="text-xl sm:text-2xl font-black mb-4 md:mb-6 text-gray-900 uppercase">Shop Accessories</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4">
+            {accessories.map(accessory => (
+              <Link key={accessory.id} to={`/shop?category=${encodeURIComponent(accessory.name)}`} className={`${accessory.colorClass} rounded-xl p-3 sm:p-6 relative overflow-hidden group cursor-pointer shadow-sm h-24 sm:h-32 md:h-[130px] flex items-center justify-center`}>
                 <div className={`absolute inset-0 bg-gradient-to-r ${accessory.gradientClass} opacity-80 z-0`}></div>
                 <img
                   src={resolveMediaUrl(accessory.image)}
@@ -531,11 +541,10 @@ export default function Home() {
                   }}
                   className="absolute inset-0 w-full h-full object-cover mix-blend-overlay group-hover:scale-110 transition-transform duration-500 z-0"
                   alt={accessory.name}
-                  loading="eager"
-                  fetchPriority={index < 2 ? 'high' : 'auto'}
+                  loading="lazy"
                   decoding="async"
                 />
-                <h3 className="text-white font-black text-lg md:text-xl relative z-10 drop-shadow-md">{accessory.name}</h3>
+                <h3 className="text-center text-white font-black text-sm sm:text-lg md:text-xl relative z-10 drop-shadow-md leading-tight">{accessory.name}</h3>
               </Link>
             ))}
           </div>
@@ -559,7 +568,7 @@ export default function Home() {
             ))}
           </div>
           <div className="grid grid-cols-1 items-stretch lg:grid-cols-[minmax(360px,0.45fr)_minmax(0,1fr)] gap-4">
-            <Link to="/shop" className="block w-full min-h-[400px] aspect-[9/16] lg:aspect-auto rounded-xl overflow-hidden bg-gray-900 shadow-sm">
+            <Link to={`/shop?category=${encodeURIComponent(bestSellerCategory)}`} aria-label={`Shop ${bestSellerCategory}`} className="block w-full min-h-0 aspect-[3/2] sm:aspect-[9/16] lg:aspect-auto lg:min-h-[400px] rounded-xl overflow-hidden bg-gray-900 shadow-sm">
               <img
                 src={bestSellerCampaignImage}
                 alt="Best Sellers campaign"
@@ -647,7 +656,7 @@ export default function Home() {
                 <span className="text-[#ea364c] font-black text-lg md:text-xl uppercase tracking-wider block mb-1">
                   SPECIAL OFFERS
                 </span>
-                <h3 className="text-3xl sm:text-4xl md:text-5xl font-black text-white uppercase tracking-wider mb-2">
+                <h3 className="text-2xl sm:text-4xl md:text-5xl font-black text-white uppercase tracking-wider mb-2">
                   EXCLUSIVE DEALS
                 </h3>
                 <p className="text-xs md:text-sm font-bold text-gray-400 uppercase tracking-widest mb-3">
@@ -678,7 +687,7 @@ export default function Home() {
               </div>
 
               {/* 3D Console/Controller Artwork */}
-              <div className="relative w-full md:w-auto flex justify-center md:justify-end shrink-0">
+              <div className="relative hidden md:flex md:w-auto justify-center md:justify-end shrink-0">
                 <div className="relative w-64 h-52 sm:w-80 sm:h-60 md:w-96 md:h-64">
                   <div className="absolute inset-0 bg-purple-600/20 blur-3xl rounded-full pointer-events-none" />
                   <img
@@ -691,7 +700,7 @@ export default function Home() {
             </div>
 
             {/* Centered 4 Product Cards Grid */}
-            <div className="relative z-10 mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+            <div className="relative z-10 mt-5 md:mt-8 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 md:gap-5">
               {displayClearance.map(({ product, offer }, idx) => (
                 <div key={product.id || idx} className="relative">
                   <ProductCard product={getOfferProduct(product, offer)} index={idx} />
@@ -716,7 +725,7 @@ export default function Home() {
         </AnimatedSection>
 
         {/* Promotional Banners Grid */}
-        <AnimatedSection className="max-w-7xl mx-auto px-1 mt-12 md:mt-16 mb-12">
+        <AnimatedSection className="hidden md:block max-w-7xl mx-auto px-1 mt-12 md:mt-16 mb-12">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <TiltCard className="col-span-1 rounded-xl overflow-hidden cursor-pointer shadow-sm relative h-48 md:h-64 group bg-[#0e1628]">
               <img src={getHomeImage(deliveryPromo?.image)} onError={handleHomeImageError} alt={deliveryPromo?.alt} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover opacity-50 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" />
@@ -826,7 +835,7 @@ export default function Home() {
 
 
         {/* 10. Why Choose */}
-        <AnimatedSection className="max-w-7xl mx-auto px-4 mt-12 md:mt-16 mb-12 md:mb-16 bg-[#f8f9fa] py-10 md:py-14 rounded-2xl relative overflow-hidden">
+        <AnimatedSection className="hidden md:block">
           {/* Subtle background pattern */}
           <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
@@ -879,26 +888,26 @@ export default function Home() {
         </AnimatedSection>
 
         {/* 11. Brands */}
-        <AnimatedSection className="max-w-7xl mx-auto px-4 mt-10 md:mt-12 mb-8 md:mb-12">
-          <h2 className="text-2xl font-black text-center mb-8 text-gray-900">Our Brands</h2>
-          <div className="flex flex-wrap justify-center items-center gap-4 md:gap-6">
+        <AnimatedSection className="max-w-7xl mx-auto px-3 sm:px-4 mt-8 md:mt-12 mb-6 md:mb-12">
+          <h2 className="text-xl sm:text-2xl font-black text-center mb-4 md:mb-8 text-gray-900">Our Brands</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap justify-center items-center gap-2.5 sm:gap-3 md:gap-6">
             {brands.filter(brand => brand.visible !== false).map((brand, idx) => (
-              <div key={brand.id || idx} className="bg-white border border-gray-100 h-[80px] w-[120px] md:w-[160px] rounded-xl flex justify-center items-center cursor-pointer shadow-sm group hover:shadow-md transition-all duration-300 p-3">
+              <div key={brand.id || idx} className="bg-white border border-gray-100 h-[72px] sm:h-[80px] w-full md:w-[160px] rounded-xl flex justify-center items-center cursor-pointer shadow-sm group hover:shadow-md transition-all duration-300 p-2 sm:p-3">
                 {brand.image ? (
                   <>
                     <img
                       src={brand.image}
                       alt={brand.name}
-                      className="max-h-10 max-w-[90px] md:max-w-[120px] object-contain grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500"
+                      className="max-h-9 sm:max-h-10 max-w-full md:max-w-[120px] object-contain grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500"
                       onError={event => {
                         event.currentTarget.classList.add('hidden');
                         event.currentTarget.nextElementSibling?.classList.remove('hidden');
                       }}
                     />
-                    <span className="hidden font-black text-[14px] md:text-base text-gray-700 group-hover:text-black transition-colors duration-300">{brand.name}</span>
+                    <span className="hidden max-w-full text-center font-black text-xs sm:text-sm md:text-base leading-tight break-words text-gray-700 group-hover:text-black transition-colors duration-300">{brand.name}</span>
                   </>
                 ) : (
-                  <span className="font-black text-[14px] md:text-base text-gray-700 group-hover:text-black transition-colors duration-300">{brand.name}</span>
+                  <span className="max-w-full text-center font-black text-xs sm:text-sm md:text-base leading-tight break-words text-gray-700 group-hover:text-black transition-colors duration-300">{brand.name}</span>
                 )}
               </div>
             ))}

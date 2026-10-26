@@ -171,6 +171,28 @@ export default function BuildMyPC() {
           </div>
         </div>
 
+        <section className="lg:hidden mb-6 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm" aria-label="Current PC build">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-base font-black text-gray-900">The build, so far.</h2>
+            <button onClick={generatePDF} className="min-h-10 min-w-10 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-red-500" title="Download PDF" aria-label="Download build PDF">
+              <Download size={18} className="mx-auto" />
+            </button>
+          </div>
+          {buildItems.length > 0 ? (
+            <ul className="mt-2 max-h-24 space-y-1 overflow-y-auto text-xs text-gray-600">
+              {buildItems.slice(0, 4).map(item => (
+                <li key={item.id} className="truncate">{item.name}</li>
+              ))}
+              {buildItems.length > 4 && <li className="font-semibold text-gray-400">+ {buildItems.length - 4} more parts</li>}
+            </ul>
+          ) : (
+            <p className="mt-1 text-xs text-gray-500">Choose components to see them in your build.</p>
+          )}
+          <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-3">
+            <span className="text-xs font-bold uppercase tracking-wide text-gray-500">Total</span>
+            <span className="text-lg font-black text-gray-900">{formatLKR(buildTotal)}</span>
+          </div>
+        </section>
 
         {/* AI Assistant Banner */}
         {showAI && (
@@ -251,7 +273,7 @@ export default function BuildMyPC() {
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 relative">
 
           {/* Left Column: Category Sidebar */}
-          <div className="w-full lg:w-64 shrink-0">
+          <div className="w-full lg:w-64 shrink-0 order-1 lg:order-none">
             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 px-4">Your components</h3>
             <div className="flex flex-row lg:flex-col relative overflow-x-auto lg:overflow-visible gap-2 lg:gap-0 pb-2 lg:pb-0 scrollbar-hide before:content-[''] before:absolute before:left-6 before:top-4 before:bottom-4 before:w-px before:bg-gray-200 before:hidden lg:before:block">
               {BUILD_CATEGORIES.map(cat => {
@@ -277,7 +299,7 @@ export default function BuildMyPC() {
           </div>
 
           {/* Middle Column: Product Selection */}
-          <div className="flex-1 min-h-[600px]">
+          <div className="flex-1 min-h-[600px] order-2 lg:order-none">
             <h2 className="text-xl font-black mb-1">{activeCategory.name}</h2>
             <p className="text-xs text-gray-500 mb-6">Choose a part to build your PC.</p>
 
@@ -323,9 +345,9 @@ export default function BuildMyPC() {
           </div>
 
           {/* Right Column: Build Summary */}
-          <div className="w-full lg:w-80 shrink-0">
-            <div className="bg-white rounded-2xl border border-gray-100  p-6  top-36">
-              <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
+          <div className="hidden lg:block w-full lg:w-80 shrink-0 order-last">
+            <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6 lg:sticky lg:top-36">
+              <div className="flex items-center justify-between mb-4 lg:mb-8 pb-3 lg:pb-4 border-b border-gray-100">
                 <h3 className="text-lg font-black text-gray-900">The build, so far.</h3>
                 <button onClick={generatePDF} className="text-gray-400 hover:text-red-500 transition-colors" title="Download PDF">
                   <Download size={18} />
@@ -333,7 +355,7 @@ export default function BuildMyPC() {
               </div>
 
               {/* Fixed 3D PC Animation */}
-              <div className="h-40 mb-6 flex items-center justify-center relative" style={{ perspective: '1000px' }}>
+              <div className="hidden lg:flex h-40 mb-6 items-center justify-center relative" style={{ perspective: '1000px' }}>
                 <motion.div
                   animate={{ rotateY: [0, 360] }}
                   transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
@@ -348,7 +370,7 @@ export default function BuildMyPC() {
                 </motion.div>
               </div>
 
-              <div className="min-h-[200px] flex flex-col">
+              <div className="min-h-0 lg:min-h-[200px] flex flex-col">
                 {buildItems.length > 0 ? (
                   <div className="space-y-4 mb-6 flex-1 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                     {buildItems.map(item => (

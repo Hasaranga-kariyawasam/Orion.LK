@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Heart, Search, Menu, X, User, Phone, Globe, ChevronRight, Shuffle, Watch, Headphones, Square, Keyboard, HardDrive, Headset, BatteryCharging, Smartphone, Speaker, Cable, Car, Camera, Monitor, MoreHorizontal, Home, LayoutGrid, RefreshCw, Wind, Store, MapPin, Package, Bell, LogOut, Settings } from 'lucide-react';
+import { ShoppingCart, Heart, Search, Menu, X, User, Phone, Globe, ChevronRight, Shuffle, Watch, Headphones, Square, Keyboard, HardDrive, Headset, BatteryCharging, Smartphone, Speaker, Cable, Car, Camera, Monitor, MoreHorizontal, Home, LayoutGrid, RefreshCw, Wind, Store, MapPin, Package, Bell, LogOut, Settings, Sun, Moon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { BRAND_LOGO_URL } from '../data';
@@ -20,13 +20,33 @@ export default function Header() {
   const [showBanner, setShowBanner] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [mobileMenuTab, setMobileMenuTab] = useState<'categories' | 'menu'>('categories');
+  const [mobileCategoryType, setMobileCategoryType] = useState<ProductType>('pc');
+  const [desktopHeaderTheme, setDesktopHeaderTheme] = useState<'dark' | 'light'>(() =>
+    localStorage.getItem('orion_desktop_header_theme') === 'light' ? 'light' : 'dark'
+  );
   const navigate = useNavigate();
   const location = useLocation();
+
+  const isDesktopHeaderLight = desktopHeaderTheme === 'light';
+
+  const toggleDesktopHeaderTheme = () => {
+    setDesktopHeaderTheme(current => {
+      const next = current === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('orion_desktop_header_theme', next);
+      return next;
+    });
+  };
 
   // Close menus on page navigation
   useEffect(() => {
     setActiveDropdown(null);
     setShowSearchResults(false);
+    setShowMobileSearch(false);
+    setShowMobileSearch(false);
+    setIsMobileMenuOpen(false);
     setShowProfileDropdown(false);
     setShowNotifications(false);
   }, [location.pathname, location.search]);
@@ -37,6 +57,7 @@ export default function Header() {
       if (e.key === 'Escape') {
         setActiveDropdown(null);
         setShowSearchResults(false);
+        setIsMobileMenuOpen(false);
         setShowProfileDropdown(false);
         setShowNotifications(false);
       }
@@ -44,6 +65,15 @@ export default function Header() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isMobileMenuOpen]);
 
   const currentDropdownCategories = activeDropdown
     ? categories.filter(c => getProductType(c.productType, '', c.name, c.productTypeManual) === activeDropdown)
@@ -63,6 +93,7 @@ export default function Header() {
 
   const handleSearchNavigate = (id: string) => {
     setShowSearchResults(false);
+    setShowMobileSearch(false);
     setSearchQuery('');
     navigate(`/product/${id}`);
   };
@@ -71,6 +102,7 @@ export default function Header() {
     if (e) e.preventDefault();
     if (searchQuery.trim()) {
       setShowSearchResults(false);
+      setShowMobileSearch(false);
       navigate(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
@@ -114,19 +146,31 @@ export default function Header() {
 
   return (
     <>
-      <header className={`w-full bg-[#e8eef7] fixed top-0 left-0 right-0 z-40 transition-transform duration-300 ease-in-out will-change-transform ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+      <header className={`w-full fixed top-0 left-0 right-0 z-40 transition-transform duration-300 ease-in-out will-change-transform ${isDesktopHeaderLight ? 'bg-white' : 'bg-[#e8eef7]'} ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
         {/* Top Header */}
         <div
           onMouseEnter={() => setActiveDropdown(null)}
-          className="bg-[#161B22]/90 backdrop-blur-md relative z-30"
+          className={`relative z-30 backdrop-blur-md transition-colors duration-200 ${isDesktopHeaderLight ? 'bg-white' : 'bg-white md:bg-[#161B22]/90'}`}
         >
           <div className="relative z-10 container mx-auto max-w-7xl px-3 md:px-4 h-14 md:h-20 flex items-center justify-between gap-2 md:gap-6">
 
+            <button
+              type="button"
+              onClick={() => {
+                setMobileMenuTab('categories');
+                setIsMobileMenuOpen(true);
+              }}
+              aria-label="Open categories and menu"
+              className="lg:hidden min-h-11 min-w-11 flex items-center justify-center text-[#161B22] md:text-white"
+            >
+              <Menu size={23} />
+            </button>
+
             {/* Logo */}
-            <a href="/" className="flex items-center shrink-0">
+            <a href="/" className="absolute left-1/2 -translate-x-1/2 flex items-center shrink-0 md:static md:translate-x-0">
               <span className="text-2xl sm:text-3xl font-black tracking-tight flex items-baseline" style={{ fontFamily: "'Orbitron', sans-serif" }}>
-                <span className="text-white">O</span>
-                <span className="text-white">RION</span>
+                <span className={isDesktopHeaderLight ? 'text-[#161B22]' : 'text-[#161B22] md:text-white'}>O</span>
+                <span className={isDesktopHeaderLight ? 'text-[#161B22]' : 'text-[#161B22] md:text-white'}>RION</span>
                 <span className="text-[#16a34a] ml-1 text-2xl" style={{ textShadow: '0 0 10px rgba(22, 163, 74, 0.4)' }}>.lk</span>
               </span>
             </a>
@@ -134,7 +178,7 @@ export default function Header() {
             {/* Search */}
             <form
               onSubmit={handleSearchSubmit}
-              className="hidden md:flex flex-1 max-w-2xl relative group"
+              className="hidden lg:flex flex-1 max-w-2xl relative group"
             >
               <input
                 type="text"
@@ -151,7 +195,7 @@ export default function Header() {
                     handleSearchSubmit(e);
                   }
                 }}
-                className="w-full bg-[#0D1117] text-white placeholder-[#8B949E] border border-[#30363D] rounded-full py-2.5 pl-6 pr-14 focus:outline-none focus:border-[#16a34a] focus:bg-[#0D1117]/80 transition-all shadow-inner"
+                className={`w-full rounded-full border py-2.5 pl-6 pr-14 transition-all focus:outline-none focus:border-[#16a34a] shadow-inner ${isDesktopHeaderLight ? 'bg-gray-50 text-gray-900 placeholder-gray-500 border-gray-200 focus:bg-white' : 'bg-[#0D1117] text-white placeholder-[#8B949E] border-[#30363D] focus:bg-[#0D1117]/80'}`}
               />
               <button
                 type="submit"
@@ -218,14 +262,14 @@ export default function Header() {
 
             {/* Action Icons */}
             <div className="flex items-center gap-1.5 lg:gap-4 shrink-0">
-              <Link to="/profile?tab=orders" title="My Orders" className="hidden lg:flex w-10 h-10 rounded-full border border-[#30363D] items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors">
+              <Link to="/profile?tab=orders" title="My Orders" className={`hidden lg:flex w-10 h-10 rounded-full border items-center justify-center transition-colors ${isDesktopHeaderLight ? 'border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-100' : 'border-[#30363D] text-[#8B949E] hover:text-white hover:bg-white/10'}`}>
                 <Package size={20} />
               </Link>
 
               <div className="relative group hidden lg:block" onMouseEnter={() => setShowNotifications(true)} onMouseLeave={() => setShowNotifications(false)}>
                 <button
                   onClick={() => setShowNotifications(prev => !prev)}
-                  className="hidden lg:flex w-10 h-10 rounded-full border border-[#30363D] items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors relative cursor-pointer"
+                  className={`hidden lg:flex w-10 h-10 rounded-full border items-center justify-center transition-colors relative cursor-pointer ${isDesktopHeaderLight ? 'border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-100' : 'border-[#30363D] text-[#8B949E] hover:text-white hover:bg-white/10'}`}
                 >
                   <Bell size={20} />
                   {unreadCount > 0 && (
@@ -265,73 +309,106 @@ export default function Header() {
               </div>
 
               <div
-                className="relative group"
+                className="relative order-4 group lg:order-none"
                 onMouseEnter={() => setShowProfileDropdown(true)}
                 onMouseLeave={() => setShowProfileDropdown(false)}
               >
                 {user ? (
                   <button
+                    type="button"
                     onClick={() => setShowProfileDropdown(prev => !prev)}
-                    className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center overflow-hidden hover:bg-white/10 transition-colors cursor-pointer"
+                    className={`w-10 h-10 rounded-full border-0 md:border flex items-center justify-center overflow-hidden transition-colors cursor-pointer ${isDesktopHeaderLight ? 'md:border-gray-200 hover:bg-gray-100' : 'md:border-[#30363D] hover:bg-gray-100 md:hover:bg-white/10'}`}
                   >
                     {formatAvatarUrl(mongoUser?.avatar || user.photoURL) ? (
                       <img src={formatAvatarUrl(mongoUser?.avatar || user.photoURL)!} alt={user.displayName || 'User'} className="w-full h-full object-cover" />
                     ) : (
-                      <User size={20} className="text-[#8B949E]" />
+                      <User size={20} className={isDesktopHeaderLight ? 'text-[#161B22]' : 'text-[#161B22] md:text-[#8B949E]'} />
                     )}
                   </button>
                 ) : (
-                  <Link to="/login" title="Sign In" className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors">
-                    <User size={20} />
-                  </Link>
+                  <>
+                    <Link to="/login" title="Sign In" className={`lg:hidden w-10 h-10 rounded-full border-0 md:border flex items-center justify-center transition-colors ${isDesktopHeaderLight ? 'md:border-gray-200 text-[#161B22] hover:text-black hover:bg-gray-100' : 'md:border-[#30363D] text-[#161B22] md:text-[#8B949E] hover:text-black md:hover:text-white hover:bg-gray-100 md:hover:bg-white/10'}`}>
+                      <User size={20} />
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setShowProfileDropdown(prev => !prev)}
+                      title="Profile and display settings"
+                      aria-label="Open profile and display settings"
+                      className={`hidden lg:flex w-10 h-10 rounded-full border items-center justify-center transition-colors ${isDesktopHeaderLight ? 'border-gray-200 text-gray-700 hover:bg-gray-100' : 'border-[#30363D] text-[#8B949E] hover:text-white hover:bg-white/10'}`}
+                    >
+                      <User size={20} />
+                    </button>
+                  </>
                 )}
 
                 <AnimatePresence>
-                  {showProfileDropdown && user && (
+                  {showProfileDropdown && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
-                      className="absolute top-full right-0 mt-2 w-60 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[100] before:content-[''] before:absolute before:-top-3 before:left-0 before:right-0 before:h-3"
+                      className="absolute top-full right-0 mt-2 hidden w-64 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-2xl z-[100] before:content-[''] before:absolute before:-top-3 before:left-0 before:right-0 before:h-3 lg:block"
                     >
-                      <div className="p-3 bg-gradient-to-r from-gray-50 to-amber-50/60 border-b border-gray-100 flex items-center justify-between">
-                        <div className="min-w-0 pr-2">
-                          <p className="text-sm font-bold text-gray-900 truncate">{user.displayName || 'User'}</p>
-                          <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                        </div>
-                        <span className="text-[11px] font-black text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full shrink-0">
-                          {mongoUser?.points !== undefined ? mongoUser.points : 100} Pts
-                        </span>
-                      </div>
-                      <div className="py-2">
-                        <Link
-                          to="/profile"
-                          onClick={() => setShowProfileDropdown(false)}
-                          className="flex items-center gap-3 px-4 py-2 text-sm text-gray-600 hover:text-black hover:bg-gray-50 transition-colors"
-                        >
-                          <User size={16} /> My Profile
-                        </Link>
-                        <Link
-                          to="/profile?tab=orders"
-                          onClick={() => setShowProfileDropdown(false)}
-                          className="flex items-center gap-3 px-4 py-2 text-sm text-gray-600 hover:text-black hover:bg-gray-50 transition-colors"
-                        >
-                          <Package size={16} /> My Orders
-                        </Link>
-                        {(user.email === 'orian@admin.lk' || user.email === 'orion@admin.lk' || mongoUser?.isAdmin) && (
-                          <Link
-                            to="/admin"
-                            onClick={() => setShowProfileDropdown(false)}
-                            className="flex items-center gap-3 px-4 py-2 text-sm text-[#15803d] font-bold hover:bg-[#15803d]/10 transition-colors"
-                          >
-                            <Settings size={16} /> Admin Dashboard
+                      {user ? (
+                        <>
+                          <div className="p-3 bg-gradient-to-r from-gray-50 to-amber-50/60 border-b border-gray-100 flex items-center justify-between">
+                            <div className="min-w-0 pr-2">
+                              <p className="text-sm font-bold text-gray-900 truncate">{user.displayName || 'User'}</p>
+                              <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                            </div>
+                            <span className="text-[11px] font-black text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full shrink-0">
+                              {mongoUser?.points !== undefined ? mongoUser.points : 100} Pts
+                            </span>
+                          </div>
+                          <div className="py-2">
+                            <Link
+                              to="/profile"
+                              onClick={() => setShowProfileDropdown(false)}
+                              className="flex items-center gap-3 px-4 py-2 text-sm text-gray-600 hover:text-black hover:bg-gray-50 transition-colors"
+                            >
+                              <User size={16} /> My Profile
+                            </Link>
+                            <Link
+                              to="/profile?tab=orders"
+                              onClick={() => setShowProfileDropdown(false)}
+                              className="flex items-center gap-3 px-4 py-2 text-sm text-gray-600 hover:text-black hover:bg-gray-50 transition-colors"
+                            >
+                              <Package size={16} /> My Orders
+                            </Link>
+                            {(user.email === 'orian@admin.lk' || user.email === 'orion@admin.lk' || mongoUser?.isAdmin) && (
+                              <Link
+                                to="/admin"
+                                onClick={() => setShowProfileDropdown(false)}
+                                className="flex items-center gap-3 px-4 py-2 text-sm text-[#15803d] font-bold hover:bg-[#15803d]/10 transition-colors"
+                              >
+                                <Settings size={16} /> Admin Dashboard
+                              </Link>
+                            )}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="border-b border-gray-100 p-4">
+                          <p className="text-sm font-bold text-gray-900">Welcome to Orion.LK</p>
+                          <Link to="/login" onClick={() => setShowProfileDropdown(false)} className="mt-1 inline-block text-xs font-semibold text-gray-500 hover:text-gray-900">
+                            Sign in to your account
                           </Link>
-                        )}
-                      </div>
-                      <div className="py-2 border-t border-gray-100">
-                        <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors text-left font-bold cursor-pointer">
-                          <LogOut size={16} /> Sign Out
+                        </div>
+                      )}
+                      <div className="border-t border-gray-100 py-2">
+                        <button
+                          type="button"
+                          onClick={toggleDesktopHeaderTheme}
+                          className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-950"
+                        >
+                          {isDesktopHeaderLight ? <Moon size={16} /> : <Sun size={16} />}
+                          Switch to {isDesktopHeaderLight ? 'dark' : 'light'} mode
                         </button>
+                        {user && (
+                          <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors text-left font-bold cursor-pointer">
+                            <LogOut size={16} /> Sign Out
+                          </button>
+                        )}
                       </div>
                     </motion.div>
                   )}
@@ -340,13 +417,13 @@ export default function Header() {
 
               <button
                 onClick={() => setIsCompareModalOpen(true)}
-                className="hidden lg:flex w-10 h-10 rounded-full border border-[#30363D] items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors relative cursor-pointer"
+                className={`hidden lg:flex w-10 h-10 rounded-full border items-center justify-center transition-colors relative cursor-pointer ${isDesktopHeaderLight ? 'border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-100' : 'border-[#30363D] text-[#8B949E] hover:text-white hover:bg-white/10'}`}
               >
                 <Shuffle size={18} className={compareList.length > 0 ? "text-[#15803d]" : ""} />
                 <span className="absolute -top-2 -right-2 bg-[#15803d] border-none text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">{compareList.length}</span>
               </button>
 
-              <button onClick={() => setIsWishlistOpen(true)} className="hidden md:flex w-10 h-10 rounded-full border border-[#30363D] items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors relative cursor-pointer">
+              <button onClick={() => setIsWishlistOpen(true)} className={`hidden md:flex w-10 h-10 rounded-full border items-center justify-center transition-colors relative cursor-pointer ${isDesktopHeaderLight ? 'border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-100' : 'border-[#30363D] text-[#8B949E] hover:text-white hover:bg-white/10'}`}>
                 <Heart size={20} className={wishlist.length > 0 ? "fill-[#15803d] text-[#15803d]" : ""} />
                 <span className="absolute -top-2 -right-2 bg-[#15803d] border-none text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">{wishlist.length}</span>
               </button>
@@ -369,30 +446,31 @@ export default function Header() {
               </button>
             </div>
           </div>
-            <form onSubmit={handleSearchSubmit} className="md:hidden h-12 px-3 pb-2 flex items-center">
-              <div className="relative w-full">
-                <input
-                  type="search"
-                  placeholder="Search products"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  aria-label="Search products"
-                  className="w-full h-10 rounded-lg bg-[#0D1117] text-white placeholder-[#8B949E] border border-[#30363D] pl-3 pr-11 text-sm focus:outline-none focus:border-[#16a34a]"
-                />
-                <button
-                  type="submit"
-                  aria-label="Submit search"
-                  className="absolute right-0 top-0 h-10 w-11 rounded-r-lg bg-[#16a34a] text-white flex items-center justify-center"
-                >
-                  <Search size={17} />
-                </button>
-              </div>
-            </form>
         </div>
+
+        <form onSubmit={handleSearchSubmit} className="lg:hidden bg-green-50 px-4 py-2.5">
+          <div className="mx-auto flex h-10 max-w-7xl overflow-hidden rounded-full border border-gray-200 bg-white shadow-sm">
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={event => setSearchQuery(event.target.value)}
+              placeholder="Search for products"
+              aria-label="Search for products"
+              className="min-w-0 flex-1 bg-transparent px-4 text-sm text-gray-800 outline-none placeholder:text-gray-500"
+            />
+            <button
+              type="submit"
+              aria-label="Search"
+              className="mobile-search-glow my-0.5 mr-0.5 flex w-9 shrink-0 items-center justify-center rounded-full bg-[#15803d] text-white hover:bg-[#166534]"
+            >
+              <Search size={18} />
+            </button>
+          </div>
+        </form>
 
         {/* Sub Header */}
         <div
-          className={`bg-[#e8eef7] relative border-0 ${activeDropdown ? 'z-50' : 'z-20'}`}
+          className={`desktop-subheader-glow hidden lg:block relative border-0 transition-colors duration-200 ${isDesktopHeaderLight ? 'bg-white' : 'bg-[#e8eef7]'} ${activeDropdown ? 'z-50' : 'z-20'}`}
           onMouseLeave={() => setActiveDropdown(null)}
         >
           <div className="container mx-auto max-w-7xl px-3 md:px-4 h-11 md:h-12 flex items-center justify-between">
@@ -438,19 +516,18 @@ export default function Header() {
                   <button
                     key={productType}
                     onClick={() => setActiveDropdown(activeDropdown === productType ? null : productType)}
-                    className={`min-h-10 shrink-0 inline-flex items-center rounded-full px-3 py-2 transition-colors capitalize ${activeDropdown === productType ? 'bg-slate-900 text-white' : 'bg-white/70 text-slate-700 hover:bg-white'}`}
+                    aria-expanded={activeDropdown === productType}
+                    aria-controls="mobile-category-menu"
+                    className={`relative min-h-10 shrink-0 inline-flex items-center px-3 py-2 transition-colors capitalize after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#15803d] focus-visible:ring-offset-2 ${activeDropdown === productType ? 'text-[#15803d] after:bg-[#15803d]' : 'text-slate-700 after:bg-transparent hover:text-slate-950'}`}
                   >
                     {productType === 'pc' ? 'PC' : productType}
                   </button>
                 ))}
-                <a href="/shop" className="min-h-10 shrink-0 flex items-center rounded-full bg-white/70 px-3 py-2 text-slate-700 hover:bg-white transition-colors">
+                <a href="/shop" className="min-h-10 shrink-0 flex items-center px-3 py-2 text-slate-700 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#15803d] focus-visible:ring-offset-2 transition-colors">
                   All Products
                 </a>
-                <Link to="/offers" className="min-h-10 shrink-0 flex items-center rounded-full bg-red-50 px-3 py-2 text-[#d92840] hover:bg-red-100 transition-colors">
+                <Link to="/offers" className="min-h-10 shrink-0 flex items-center px-3 py-2 text-[#d92840] hover:text-red-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#15803d] focus-visible:ring-offset-2 transition-colors">
                   Offers
-                </Link>
-                <Link to="/build" className="min-h-10 shrink-0 flex items-center rounded-full bg-white/70 px-3 py-2 text-slate-900 hover:bg-white transition-colors">
-                  Build PC
                 </Link>
               </nav>
 
@@ -469,6 +546,7 @@ export default function Header() {
                     />
 
                     <motion.div
+                      id="mobile-category-menu"
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 8 }}
@@ -576,6 +654,226 @@ export default function Header() {
         </div>
       </header>
 
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <>
+            <motion.button
+              type="button"
+              aria-label="Close categories and menu"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="fixed inset-0 z-[60] bg-black/55 lg:hidden"
+            />
+            <motion.aside
+              id="mobile-category-menu"
+              role="dialog"
+              aria-modal="true"
+              aria-label={mobileMenuTab === 'categories' ? 'Product categories' : 'Site menu'}
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'tween', duration: 0.22 }}
+              className="fixed inset-y-0 left-0 z-[70] flex w-[78vw] max-w-[340px] flex-col bg-white shadow-2xl lg:hidden"
+            >
+              <div className="grid h-14 shrink-0 grid-cols-2 border-b border-gray-200">
+                {(['categories', 'menu'] as const).map(tab => (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => setMobileMenuTab(tab)}
+                    aria-pressed={mobileMenuTab === tab}
+                    className={`relative text-xs font-bold uppercase tracking-wide transition-colors ${mobileMenuTab === tab ? 'bg-white text-slate-900 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-[#15803d]' : 'bg-gray-100 text-gray-500'}`}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+
+              {mobileMenuTab === 'categories' ? (
+                <>
+                  <div className="grid shrink-0 grid-cols-3 border-b border-gray-200 bg-white">
+                    {PRODUCT_TYPES.map(productType => {
+                      const label = productType === 'pc' ? 'PC' : productType === 'laptop' ? 'Laptop' : 'Other';
+                      const count = categories.filter(category =>
+                        getProductType(category.productType, '', category.name, category.productTypeManual) === productType
+                      ).length;
+                      return (
+                        <button
+                          key={productType}
+                          type="button"
+                          onClick={() => setMobileCategoryType(productType)}
+                          aria-pressed={mobileCategoryType === productType}
+                          className={`min-h-12 px-2 text-[11px] font-bold uppercase tracking-wide transition-colors ${mobileCategoryType === productType ? 'mobile-category-glow bg-green-50 text-[#15803d] shadow-[inset_0_-2px_0_#15803d]' : 'text-gray-500 hover:bg-gray-50'}`}
+                        >
+                          {label} <span className="ml-0.5 text-[10px] opacity-75">{count}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+                  {categories.filter(category =>
+                    getProductType(category.productType, '', category.name, category.productTypeManual) === mobileCategoryType
+                  ).length > 0 ? categories.filter(category =>
+                    getProductType(category.productType, '', category.name, category.productTypeManual) === mobileCategoryType
+                  ).map(category => {
+                    const name = category.name.toLowerCase();
+                    const categoryIcon = name.includes('watch') ? Watch
+                      : name.includes('earbud') ? Headset
+                      : name.includes('headphone') ? Headphones
+                      : name.includes('case') ? Square
+                      : name.includes('computer') || name.includes('keyboard') ? Keyboard
+                      : name.includes('storage') || name.includes('drive') ? HardDrive
+                      : name.includes('power bank') ? BatteryCharging
+                      : name.includes('mobile') || name.includes('phone') ? Smartphone
+                      : name.includes('speaker') ? Speaker
+                      : name.includes('cable') || name.includes('adapter') ? Cable
+                      : name.includes('car') ? Car
+                      : name.includes('camera') || name.includes('cctv') ? Camera
+                      : name.includes('monitor') || name.includes('display') ? Monitor
+                      : name.includes('fan') || name.includes('cooler') ? Wind
+                      : name.includes('software') ? LayoutGrid
+                      : MoreHorizontal;
+                    const Icon = categoryIcon;
+                    const productType = getProductType(category.productType, '', category.name, category.productTypeManual);
+                    const query = new URLSearchParams({
+                      category: category.name,
+                      productType,
+                    });
+                    if (category.type) query.set('type', category.type);
+
+                    return (
+                      <Link
+                        key={category.id || category.name}
+                        to={`/shop?${query.toString()}`}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="flex min-h-[50px] items-center gap-3 border-b border-gray-200 px-5 text-[13px] font-medium text-slate-900 transition-colors hover:bg-green-50 active:bg-green-100"
+                      >
+                        <Icon size={17} strokeWidth={1.8} className="shrink-0 text-gray-700" />
+                        <span className="min-w-0 flex-1 truncate">{category.name}</span>
+                        <ChevronRight size={15} className="shrink-0 text-gray-400" />
+                      </Link>
+                    );
+                  }) : (
+                    <p className="px-5 py-6 text-sm text-gray-500">No categories available.</p>
+                  )}
+                  </nav>
+                </>
+              ) : (
+                <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      setShowMobileSearch(true);
+                    }}
+                    className="flex min-h-[50px] w-full items-center gap-3 border-b border-gray-200 px-5 text-left text-sm font-medium text-slate-900"
+                  >
+                    <Search size={18} className="text-gray-700" /> Search Products
+                  </button>
+                  <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="flex min-h-[50px] items-center gap-3 border-b border-gray-200 px-5 text-sm font-medium text-slate-900">
+                    <Home size={18} className="text-gray-700" /> Home
+                  </Link>
+                  <Link to="/shop" onClick={() => setIsMobileMenuOpen(false)} className="flex min-h-[50px] items-center gap-3 border-b border-gray-200 px-5 text-sm font-medium text-slate-900">
+                    <Store size={18} className="text-gray-700" /> All Products
+                  </Link>
+                  <Link to="/offers" onClick={() => setIsMobileMenuOpen(false)} className="flex min-h-[50px] items-center gap-3 border-b border-gray-200 px-5 text-sm font-medium text-slate-900">
+                    <Heart size={18} className="text-gray-700" /> Special Offers
+                  </Link>
+                  <Link to="/build" onClick={() => setIsMobileMenuOpen(false)} className="flex min-h-[50px] items-center gap-3 border-b border-gray-200 px-5 text-sm font-medium text-slate-900">
+                    <Package size={18} className="text-gray-700" /> Build My PC
+                  </Link>
+                  <Link to={user ? '/profile' : '/login'} onClick={() => setIsMobileMenuOpen(false)} className="flex min-h-[50px] items-center gap-3 border-b border-gray-200 px-5 text-sm font-medium text-slate-900">
+                    <User size={18} className="text-gray-700" /> {user ? 'My Profile' : 'Sign In'}
+                  </Link>
+                  {user && (
+                    <Link to="/profile?tab=orders" onClick={() => setIsMobileMenuOpen(false)} className="flex min-h-[50px] items-center gap-3 border-b border-gray-200 px-5 text-sm font-medium text-slate-900">
+                      <ShoppingCart size={18} className="text-gray-700" /> My Orders
+                    </Link>
+                  )}
+                </nav>
+              )}
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showMobileSearch && (
+          <motion.div
+            className="fixed inset-0 z-[100] lg:hidden bg-black/50 backdrop-blur-sm px-4 pt-[max(1rem,env(safe-area-inset-top))]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowMobileSearch(false)}
+            role="presentation"
+          >
+            <motion.div
+              className="mx-auto mt-2 w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl"
+              initial={{ opacity: 0, y: -12, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -12, scale: 0.98 }}
+              onClick={event => event.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Search products"
+            >
+              <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 border-b border-gray-100 p-3">
+                <Search size={19} className="ml-1 shrink-0 text-gray-400" />
+                <input
+                  autoFocus
+                  type="search"
+                  placeholder="Search products"
+                  value={searchQuery}
+                  onChange={event => setSearchQuery(event.target.value)}
+                  aria-label="Search products"
+                  className="h-11 min-w-0 flex-1 bg-transparent text-base text-gray-900 outline-none placeholder:text-gray-400"
+                />
+                {searchQuery && (
+                  <button
+                    type="submit"
+                    className="min-h-10 rounded-lg bg-[#15803d] px-3 text-sm font-bold text-white"
+                  >
+                    Search
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setShowMobileSearch(false)}
+                  aria-label="Close search"
+                  className="min-h-10 min-w-10 rounded-full text-gray-500 hover:bg-gray-100"
+                >
+                  <X size={20} className="mx-auto" />
+                </button>
+              </form>
+              <div className="max-h-[65vh] overflow-y-auto">
+                <p className="px-4 pt-3 text-[11px] font-bold uppercase tracking-wide text-gray-400">
+                  {searchQuery.trim() ? 'Search results' : 'Popular products'}
+                </p>
+                {searchResults.length > 0 ? searchResults.map(product => (
+                  <button
+                    key={product.id}
+                    type="button"
+                    onClick={() => handleSearchNavigate(product.id)}
+                    className="flex min-h-[68px] w-full items-center gap-3 border-b border-gray-100 px-4 py-2.5 text-left hover:bg-gray-50"
+                  >
+                    <img src={product.image} alt="" className="h-11 w-11 shrink-0 rounded-lg bg-gray-100 object-cover" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-bold text-gray-900">{product.name}</span>
+                      <span className="block truncate text-xs text-gray-500">{product.category}</span>
+                    </span>
+                    <span className="shrink-0 text-xs font-black text-[#15803d]">{formatLKR(product.price)}</span>
+                  </button>
+                )) : (
+                  <p className="px-4 py-6 text-center text-sm text-gray-500">No products found.</p>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Mobile Bottom Navigation Bar */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 px-6 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
         <div className="flex items-center justify-between">
@@ -587,19 +885,21 @@ export default function Header() {
             <Store size={22} strokeWidth={2} />
             <span className="text-[10px] font-bold">Shop</span>
           </button>
-          <button onClick={() => setIsWishlistOpen(true)} className="min-h-11 min-w-11 flex flex-col items-center justify-center gap-1 text-gray-500 hover:text-[#15803d] transition-colors relative">
+          <Link to="/build" className="min-h-11 min-w-11 flex flex-col items-center justify-center gap-1 text-gray-500 hover:text-[#15803d] transition-colors">
+            <Package size={22} strokeWidth={2} />
+            <span className="text-[10px] font-bold">Build</span>
+          </Link>
+          <button onClick={() => setIsWishlistOpen(true)} aria-label={`Wishlist, ${wishlist.length} items`} className="min-h-11 min-w-11 flex flex-col items-center justify-center gap-1 text-gray-500 hover:text-[#15803d] transition-colors relative">
             <div className="relative">
-              <Heart size={22} strokeWidth={2} className={wishlist.length > 0 ? "fill-[#15803d] text-[#15803d]" : ""} />
-              <span className="absolute -top-1 -right-2 bg-[#15803d] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">
-                {wishlist.length}
-              </span>
+              <Heart size={22} strokeWidth={2} className={wishlist.length > 0 ? 'fill-[#15803d] text-[#15803d]' : ''} />
+              {wishlist.length > 0 && <span className="absolute -top-1 -right-2 bg-[#15803d] text-white text-[9px] font-black min-w-4 h-4 px-0.5 rounded-full flex items-center justify-center shadow-sm">{wishlist.length}</span>}
             </div>
             <span className="text-[10px] font-bold">Wishlist</span>
           </button>
-          <button onClick={() => setIsCartOpen(true)} className="min-h-11 min-w-11 flex flex-col items-center justify-center gap-1 text-gray-500 hover:text-[#f0364c] transition-colors relative">
+          <button onClick={() => setIsCartOpen(true)} className="min-h-11 min-w-11 flex flex-col items-center justify-center gap-1 text-gray-500 hover:text-[#15803d] transition-colors relative">
             <div className="relative">
               <ShoppingCart size={22} strokeWidth={2} />
-              <span className="absolute -top-1 -right-2 bg-[#f0364c] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+              <span className="absolute -top-1 -right-2 bg-[#15803d] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
                 {cart.reduce((a, b) => a + b.quantity, 0)}
               </span>
             </div>

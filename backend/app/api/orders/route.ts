@@ -88,12 +88,18 @@ export async function POST(req: NextRequest) {
     await connectDB();
 
     const orderNumber = generateOrderNumber();
+    const profileEmail = String(decoded.email || `${decoded.uid}@orion.local`).trim().toLowerCase();
+    const profileName = String(
+      decoded.name ||
+      shippingAddress.name ||
+      profileEmail.split('@')[0] ||
+      'Customer'
+    ).trim();
     let user = await User.findOne({ uid: decoded.uid });
     if (!user) {
-      const profileEmail = String(decoded.email || `${decoded.uid}@orion.local`).trim().toLowerCase();
       user = await User.create({
         uid: decoded.uid,
-        name: decoded.name || profileEmail.split('@')[0] || 'Customer',
+        name: profileName,
         email: profileEmail,
         points: 100,
         pointsHistory: [
@@ -105,6 +111,9 @@ export async function POST(req: NextRequest) {
           },
         ],
       });
+    } else {
+      if (!user.name?.trim()) user.name = profileName;
+      if (!user.email?.trim()) user.email = profileEmail;
     }
 
     if (user) {

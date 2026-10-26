@@ -35,8 +35,26 @@ export default function AdminHomePage({ onSaved }: { onSaved?: () => void }) {
   } = useAdmin();
 
   const [activeTab, setActiveTab] = useState<'hero' | 'brand-banner' | 'second-banner' | 'featured' | 'pc-builds' | 'pc-build-categories' | 'promos' | 'video' | 'accessories' | 'bestsellers' | 'contact'>('hero');
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState('');
+  const [saveError, setSaveError] = useState('');
   const heroFileRefs = useRef<HTMLInputElement[]>([]);
   const newHeroRef = useRef<HTMLInputElement>(null);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    setSaveMessage('');
+    setSaveError('');
+    try {
+      await saveSettings();
+      setSaveMessage('Home page settings saved.');
+      onSaved?.();
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'Could not save home page settings.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const addHeroImage = () => setHeroImages([...heroImages, '']);
   const updateHeroImage = (i: number, val: string) => { const n = [...heroImages]; n[i] = val; setHeroImages(n); };
@@ -128,10 +146,15 @@ export default function AdminHomePage({ onSaved }: { onSaved?: () => void }) {
           <h2 className="text-2xl font-black text-white">Home Page</h2>
           <p className="text-gray-500 text-sm mt-1">Customize the home page content</p>
         </div>
-        <button onClick={async () => { await saveSettings(); onSaved?.(); }} className="flex items-center gap-2 bg-[#2ee661] text-black px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-[#24c24e] transition-colors">
-          Save All Changes
+        <button onClick={() => void handleSave()} disabled={isSaving} className="flex items-center gap-2 bg-[#2ee661] text-black px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-[#24c24e] transition-colors disabled:opacity-60">
+          {isSaving ? 'Saving...' : 'Save All Changes'}
         </button>
       </div>
+      {(saveMessage || saveError) && (
+        <p role={saveError ? 'alert' : 'status'} className={`text-sm font-medium ${saveError ? 'text-red-400' : 'text-green-400'}`}>
+          {saveError || saveMessage}
+        </p>
+      )}
 
       {/* Tabs */}
       <div className="flex flex-wrap gap-1 bg-[#0d1117] border border-[#30363D] rounded-xl p-1">
@@ -255,6 +278,17 @@ export default function AdminHomePage({ onSaved }: { onSaved?: () => void }) {
             </div>
           )}
           <p className="text-xs text-gray-500">{homeProductCategories.length} categories selected</p>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => void handleSave()}
+              disabled={isSaving}
+              className="min-h-11 rounded-xl bg-[#2ee661] px-5 py-2.5 text-sm font-bold text-black transition-colors hover:bg-[#24c24e] disabled:opacity-60"
+            >
+              {isSaving ? 'Saving categories...' : 'Save Home Categories'}
+            </button>
+            <span className="text-xs text-gray-500">Save the selected product categories to the Home page.</span>
+          </div>
         </div>
       )}
 

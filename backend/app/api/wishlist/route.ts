@@ -42,8 +42,18 @@ export async function POST(req: NextRequest) {
     await connectDB();
     await User.findOneAndUpdate(
       { uid: decoded.uid },
-      { $set: { wishlist: productIds } },
-      { upsert: true }
+      {
+        $set: { wishlist: productIds },
+        $setOnInsert: {
+          uid: decoded.uid,
+          name: decoded.name || decoded.email?.split('@')[0] || 'Customer',
+          email: decoded.email || `${decoded.uid}@orion.local`,
+          avatar: decoded.picture || '',
+          addresses: [],
+          cart: [],
+        },
+      },
+      { upsert: true, setDefaultsOnInsert: true }
     );
 
     return NextResponse.json({ success: true, productIds });

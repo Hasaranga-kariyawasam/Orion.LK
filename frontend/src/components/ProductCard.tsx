@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Search, Shuffle, Heart, Star, Wrench } from 'lucide-react';
-import { motion } from 'motion/react';
-import { Link } from 'react-router-dom';
+import { ShoppingCart, Shuffle, Heart, Star, Wrench, MoreHorizontal } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Product } from '../types';
 import { formatLKR } from '../data';
 import { useShop } from '../context/ShopContext';
@@ -10,12 +9,20 @@ import { resolveMediaUrl } from '../lib/api';
 const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, index = 0 }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
-  const { addToCart, toggleWishlist, isInWishlist, toggleCompare, isInCompare, addToBuild } = useShop();
+  const [showQuickActions, setShowQuickActions] = useState(false);
+  const { addToCart, setIsCartOpen, toggleWishlist, isInWishlist, toggleCompare, isInCompare, addToBuild } = useShop();
+  const navigate = useNavigate();
   const inWishlist = isInWishlist(product.id);
   const inCompare = isInCompare(product.id);
 
   const kokoInstallment = product.price / 3;
   const payzyInstallment = product.price / 4;
+  const handleBuyNow = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    addToCart(product);
+    setIsCartOpen(false);
+    navigate('/checkout');
+  };
 
   const images = (product.images && product.images.length > 0 ? product.images : [product.image])
     .map(resolveMediaUrl)
@@ -37,7 +44,7 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
         setIsHovered(false);
         setCurrentImageIndex(0);
       }}
-      className="group bg-white rounded-xl overflow-hidden hover:shadow-sm transition-all duration-300 flex flex-col h-fit relative p-2.5 sm:p-3 md:p-4"
+      className="group bg-white rounded-xl overflow-hidden hover:shadow-sm transition-all duration-300 flex flex-col h-fit relative p-2 sm:p-3 md:p-4"
     >
 
       {/* Top badges & Icons */}
@@ -61,31 +68,43 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
         </div>
 
 
-        {/* Always visible Wishlist Button */}
-
-
-        {/* Always visible Cart Button */}
-        <div className="product-card-quick-actions flex flex-col gap-1.5 text-gray-500 transition-opacity bg-white/95 p-1.5 rounded-lg shadow-sm border border-gray-100 absolute right-2 top-2 z-20">
-          {/* add wishlist button in side this dev */}
+        <button
+          type="button"
+          onClick={(event) => { event.preventDefault(); toggleWishlist(product); }}
+          aria-label={inWishlist ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
+          aria-pressed={inWishlist}
+          title={inWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}
+          className="absolute right-2 top-2 z-30 min-h-10 min-w-10 rounded-full bg-white/95 text-gray-700 shadow-sm border border-gray-100 flex md:hidden items-center justify-center hover:text-[#fc2d3f] transition-colors"
+        >
+          <Heart size={18} strokeWidth={1.8} fill={inWishlist ? '#fc2d3f' : 'none'} className={inWishlist ? 'text-[#fc2d3f]' : ''} />
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowQuickActions(open => !open)}
+          aria-label="More product actions"
+          aria-expanded={showQuickActions}
+          className="hidden md:flex absolute right-2 top-2 z-30 min-h-10 min-w-10 rounded-full bg-white/95 text-gray-700 shadow-sm border border-gray-100 items-center justify-center"
+        >
+          <MoreHorizontal size={19} />
+        </button>
+        <div className={`product-card-quick-actions ${showQuickActions ? 'product-card-quick-actions-open' : ''} flex-col gap-1.5 text-gray-500 transition-opacity bg-white/95 p-1.5 rounded-lg shadow-sm border border-gray-100 absolute right-2 top-2 z-20`}>
           <button
-            onClick={(e) => { e.preventDefault(); toggleWishlist(product); }}
+            onClick={(event) => { event.preventDefault(); toggleWishlist(product); setShowQuickActions(false); }}
             className={`min-w-10 min-h-10 flex items-center justify-center transition-colors rounded-lg ${inWishlist ? 'text-[#fc2d3f] bg-white/90 hover:bg-white shadow-sm' : 'bg-transparent hover:bg-gray-100'}`}
-            title={inWishlist ? "Remove from Wishlist" : "Add to Wishlist"}
+            title={inWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}
+            aria-label={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
           >
-            <Heart size={18} strokeWidth={1.5} fill={inWishlist ? "#fc2d3f" : "#b3b3b3ff"} />
+            <Heart size={18} strokeWidth={1.5} fill={inWishlist ? '#fc2d3f' : 'none'} />
           </button>
-
-
-          <button onClick={(e) => { e.preventDefault(); addToCart(product); }} className="min-w-10 min-h-10 flex items-center justify-center hover:text-black transition-colors rounded-lg" title="Add to Cart" aria-label="Add to cart"><ShoppingCart size={18} strokeWidth={1.5} /></button>
-
-          <button onClick={(e) => { e.preventDefault(); toggleCompare(product); }} className={`min-w-10 min-h-10 flex items-center justify-center transition-colors rounded-lg ${inCompare ? 'text-[#15803d]' : 'hover:text-black'}`} title="Compare" aria-label="Compare"><Shuffle size={18} strokeWidth={1.5} /></button>
-          <button onClick={(e) => { e.preventDefault(); addToBuild(product); }} className="min-w-10 min-h-10 flex items-center justify-center hover:text-black transition-colors rounded-lg text-[#15803d]" title="Add to My Build" aria-label="Add to PC build"><Wrench size={18} strokeWidth={1.5} /></button>
+          <button onClick={(event) => { event.preventDefault(); addToCart(product); setShowQuickActions(false); }} className="min-w-10 min-h-10 flex items-center justify-center hover:text-black transition-colors rounded-lg" title="Add to Cart" aria-label="Add to cart"><ShoppingCart size={18} strokeWidth={1.5} /></button>
+          <button onClick={(event) => { event.preventDefault(); toggleCompare(product); setShowQuickActions(false); }} className={`min-w-10 min-h-10 flex items-center justify-center transition-colors rounded-lg ${inCompare ? 'text-[#15803d]' : 'hover:text-black'}`} title="Compare" aria-label="Compare"><Shuffle size={18} strokeWidth={1.5} /></button>
+          <button onClick={(event) => { event.preventDefault(); addToBuild(product); setShowQuickActions(false); }} className="min-w-10 min-h-10 flex items-center justify-center hover:text-black transition-colors rounded-lg text-[#15803d]" title="Add to My Build" aria-label="Add to PC build"><Wrench size={18} strokeWidth={1.5} /></button>
         </div>
       </div>
 
       {/* Image Gallery (Scrub to switch) */}
       <div
-        className="relative aspect-[4/4] w-full flex items-center justify-center overflow-hidden mb-4 group/image mt-0"
+        className="relative aspect-[4/4] w-full flex items-center justify-center overflow-hidden mb-2 sm:mb-4 group/image mt-0"
         onMouseMove={(e) => {
           if (displayImages.length <= 1) return;
           const { left, width } = e.currentTarget.getBoundingClientRect();
@@ -101,6 +120,8 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
             <img
               src={displayImages[currentImageIndex]}
               alt={product.name}
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-contain transition-transform duration-300 group-hover/image:scale-105"
               onError={(event) => {
                 event.currentTarget.style.display = 'none';
@@ -148,7 +169,7 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
         </div>
 
         {/* Installments */}
-        <div className="bg-[#f8f9fa] rounded-lg p-2 mt-auto border border-gray-100/80 space-y-1.5 mb-3">
+        <div className="bg-[#f8f9fa] rounded-lg p-1.5 sm:p-2 mt-auto border border-gray-100/80 space-y-1 sm:space-y-1.5 mb-2 sm:mb-3">
           <div className="flex items-center justify-between text-[10px] text-gray-500 font-medium">
             <span>or 3 × {formatLKR(Math.round(kokoInstallment))} with</span>
             <img src="https://mymemorylk.com/wp-content/uploads/2025/11/koko-logo.png" alt="Koko" className="h-3.5 object-contain" />
@@ -162,7 +183,7 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
         {/* Action Buttons */}
         <div className="flex items-center gap-2 mt-auto">
           <button
-            onClick={(e) => { e.preventDefault(); addToCart(product); }}
+            onClick={handleBuyNow}
             className="flex-1 min-h-11 bg-[#161B22] text-white font-black uppercase tracking-wider text-xs sm:text-sm py-2.5 rounded-xl hover:bg-[#0D1117] transition-colors duration-300 shadow-sm cursor-pointer"
           >
             Buy Now
