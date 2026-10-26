@@ -3,6 +3,8 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
 import { resolveMediaUrl } from '../lib/api';
 
+const HERO_FALLBACK_IMAGE = '/assets/auth-tech.jpg';
+
 const HeroCarousel = () => {
   const { heroImages } = useAdmin();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -13,31 +15,35 @@ const HeroCarousel = () => {
       .map(resolveMediaUrl)
       .filter(Boolean);
   }, [heroImages]);
+  const imageSources = useMemo(
+    () => validHeroImages.length > 0 ? validHeroImages : [HERO_FALLBACK_IMAGE],
+    [validHeroImages]
+  );
 
   useEffect(() => {
-    if (validHeroImages.length === 0) return;
+    if (imageSources.length < 2) return;
     const preload = document.createElement('link');
     preload.rel = 'preload';
     preload.as = 'image';
-    preload.href = validHeroImages[0];
+    preload.href = imageSources[0];
     document.head.appendChild(preload);
     const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % validHeroImages.length);
+      setCurrentIndex((prev) => (prev + 1) % imageSources.length);
     }, 4000);
     return () => {
       clearInterval(timer);
       preload.remove();
     };
-  }, [validHeroImages]);
+  }, [imageSources]);
 
   const nextSlide = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setCurrentIndex((prev) => (prev + 1) % validHeroImages.length);
+    setCurrentIndex((prev) => (prev + 1) % imageSources.length);
   };
 
   const prevSlide = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setCurrentIndex((prev) => (prev - 1 + validHeroImages.length) % validHeroImages.length);
+    setCurrentIndex((prev) => (prev - 1 + imageSources.length) % imageSources.length);
   };
 
   return (
@@ -62,13 +68,13 @@ const HeroCarousel = () => {
       `}</style>
 
       {/* Small Morphing Loader inside Hero Banner while loading */}
-      {!isFirstImageLoaded && validHeroImages.length > 0 && (
+      {!isFirstImageLoaded && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0D1117] z-20">
           <div className="hero-banner-loader shadow-[0_0_15px_rgba(22,163,74,0.5)]" />
         </div>
       )}
 
-      {validHeroImages.map((img, idx) => (
+      {imageSources.map((img, idx) => (
         <img
           key={idx}
           src={img} 
@@ -76,7 +82,12 @@ const HeroCarousel = () => {
             if (idx === 0) setIsFirstImageLoaded(true);
           }}
           onError={(event) => {
-            event.currentTarget.style.display = 'none';
+            const image = event.currentTarget;
+            if (image.getAttribute('src') !== HERO_FALLBACK_IMAGE) {
+              image.src = HERO_FALLBACK_IMAGE;
+              return;
+            }
+            image.style.display = 'none';
             if (idx === 0) setIsFirstImageLoaded(true);
           }}
           loading={idx === 0 ? 'eager' : 'lazy'}

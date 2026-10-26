@@ -17,7 +17,7 @@ const AnimatedSection = ({ children, className }: { children: React.ReactNode, c
   </section>
 );
 
-const FALLBACK_HOME_IMAGE = 'https://images.unsplash.com/photo-1587202372634-32705e3bf49c?auto=format&fit=crop&q=80&w=1200';
+const FALLBACK_HOME_IMAGE = '/assets/auth-tech.jpg';
 
 const getHomeImage = (url: string | undefined) => resolveMediaUrl(url) || FALLBACK_HOME_IMAGE;
 
@@ -98,21 +98,12 @@ export default function Home() {
   const [bestSellerCategory, setBestSellerCategory] = useState('Processors');
   const [heroImageReady, setHeroImageReady] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
-  const [isDesktopViewport, setIsDesktopViewport] = useState(false);
   const [isCategoryHovered, setIsCategoryHovered] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const videoRef = useRef<HTMLVideoElement>(null);
   const categorySliderRef = useRef<HTMLDivElement>(null);
   const clearanceSliderRef = useRef<HTMLDivElement>(null);
   const youtubeEmbedUrl = getYouTubeEmbedUrl(videoUrl);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(min-width: 768px)');
-    const updateViewport = () => setIsDesktopViewport(mediaQuery.matches);
-    updateViewport();
-    mediaQuery.addEventListener('change', updateViewport);
-    return () => mediaQuery.removeEventListener('change', updateViewport);
-  }, []);
 
   // Fast 500ms initial morph loader
   useEffect(() => {
@@ -403,7 +394,7 @@ export default function Home() {
                 className="flex flex-col items-center gap-1.5 cursor-pointer group min-w-[88px] md:min-w-[90px] shrink-0"
               >
                 <div className="w-20 h-20 md:w-[80px] md:h-[80px] rounded-xl md:rounded-lg bg-white overflow-hidden flex items-center justify-center p-2 md:p-2.5 transition-all duration-300">
-                  <img src={cat.img} alt={cat.name} className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500" />
+                  <img src={cat.img} onError={handleHomeImageError} alt={cat.name} className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500" />
                 </div>
                 <span className="text-[11px] md:text-xs font-bold text-center text-gray-800 group-hover:text-black transition-colors leading-tight line-clamp-2 max-w-[100px]">{cat.name}</span>
               </Link>
@@ -467,8 +458,7 @@ export default function Home() {
 
 
         {/* 5. Hardware Spotlight */}
-        {isDesktopViewport && (
-        <AnimatedSection className="hidden md:block max-w-7xl mx-auto px-3 md:px-0 mt-8 md:mt-16">
+        <AnimatedSection className="max-w-7xl mx-auto px-3 md:px-0 mt-8 md:mt-16">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-4 md:mb-6 gap-3 md:gap-4">
             <div>
               <h2 className="text-2xl sm:text-3xl font-black text-gray-900 uppercase tracking-tight">Hardware Spotlight</h2>
@@ -525,7 +515,6 @@ export default function Home() {
             </div>
           </div>
         </AnimatedSection>
-        )}
 
         {/* 5. Shop Accessories */}
         <AnimatedSection className="hidden md:block max-w-7xl w-full mx-auto px-4">
