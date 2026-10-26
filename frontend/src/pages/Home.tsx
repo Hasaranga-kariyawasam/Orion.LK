@@ -6,7 +6,7 @@ import HeroCarousel from '../components/HeroCarousel';
 import { useAdmin } from '../context/AdminContext';
 import { resolveMediaUrl } from '../lib/api';
 import { getActiveSpecialOffers, getOfferProduct } from '../lib/specialOffers';
-import { matchesCategoryName } from '../lib/homeProductSections';
+import { DEFAULT_BEST_SELLER_BANNER_IMAGE, matchesCategoryName } from '../lib/homeProductSections';
 import { Truck, Smile, ShieldCheck, Award, CheckCircle, ChevronLeft, ChevronRight, Play, Youtube, Volume2, VolumeX, ArrowRight } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -79,7 +79,7 @@ const getYouTubeEmbedUrl = (value: string) => {
 const FALLBACK_VIDEO_URL = 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4';
 
 export default function Home() {
-  const { videoUrl, heroImages, accessories, featuredImages, pcBuildCards, homePromoCards, brandBanner, secondBannerImage, homeProductCategories, brands, categories, products, bestSellerIds, specialOffers, specialOffersDeadline, whatsappNumber, storeAddress, refreshHomeSettings, homeSettingsReady } = useAdmin();
+  const { videoUrl, heroImages, accessories, featuredImages, pcBuildCards, homePromoCards, brandBanner, secondBannerImage, homeProductCategories, bestSellerBannerImage, brands, categories, products, bestSellerIds, specialOffers, specialOffersDeadline, whatsappNumber, storeAddress, refreshHomeSettings, homeSettingsReady } = useAdmin();
   const [isMuted, setIsMuted] = useState(true);
   const [videoFailed, setVideoFailed] = useState(false);
   const [showVideoText, setShowVideoText] = useState(false);
@@ -212,8 +212,11 @@ export default function Home() {
   });
   const selectedBestSellers = products.filter(product => bestSellerIds.includes(product.id));
   const displayBestSellers = selectedBestSellers.length > 0
-    ? selectedBestSellers.slice(0, 4)
-    : bestSellerProducts.length > 0 ? bestSellerProducts.slice(0, 4) : products.slice(0, 4);
+    ? selectedBestSellers.slice(0, 8)
+    : bestSellerProducts.length > 0 ? bestSellerProducts.slice(0, 8) : products.slice(0, 8);
+  const bestSellerCampaignImage = bestSellerBannerImage === DEFAULT_BEST_SELLER_BANNER_IMAGE
+    ? DEFAULT_BEST_SELLER_BANNER_IMAGE
+    : resolveMediaUrl(bestSellerBannerImage);
   const deliveryPromo = homePromoCards[0];
   const installmentsPromo = homePromoCards[1];
   const gamingPromo = homePromoCards[2];
@@ -555,10 +558,21 @@ export default function Home() {
               </button>
             ))}
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {displayBestSellers.map((product, idx) => (
-              <ProductCard key={product.id || idx} product={product} index={idx} />
-            ))}
+          <div className="grid grid-cols-1 items-stretch lg:grid-cols-[minmax(360px,0.45fr)_minmax(0,1fr)] gap-4">
+            <Link to="/shop" className="block w-full min-h-[400px] aspect-[9/16] lg:aspect-auto rounded-xl overflow-hidden bg-gray-900 shadow-sm">
+              <img
+                src={bestSellerCampaignImage}
+                alt="Best Sellers campaign"
+                loading="lazy"
+                decoding="async"
+                className="h-full w-full object-cover object-center"
+              />
+            </Link>
+            <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 content-start">
+              {displayBestSellers.map((product, idx) => (
+                <ProductCard key={product.id || idx} product={product} index={idx} />
+              ))}
+            </div>
           </div>
         </AnimatedSection>
 

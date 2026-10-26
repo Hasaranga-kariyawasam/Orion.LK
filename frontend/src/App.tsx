@@ -51,7 +51,7 @@ export default function App() {
                 <Route path="*" element={
                   <>
                     <Header />
-                    <main className="flex-grow pt-[128px] md:pt-[128px] pb-16 md:pb-0 bg-gray-50">
+                    <main className="flex-grow pt-[148px] md:pt-[128px] pb-16 md:pb-0 bg-gray-50">
                       <Routes>
                         <Route path="/" element={<Home />} />
                         <Route path="/shop" element={<Shop />} />

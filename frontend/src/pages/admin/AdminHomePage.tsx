@@ -3,7 +3,7 @@ import { Upload, Trash2, Plus, Video, Image as ImageIcon, Phone, MapPin, Star, X
 import { useAdmin } from '../../context/AdminContext';
 import { resolveMediaUrl, uploadImageToServer } from '../../lib/api';
 import { BUILD_CATEGORIES } from '../../lib/buildCategories';
-import { matchesCategoryName } from '../../lib/homeProductSections';
+import { DEFAULT_BEST_SELLER_BANNER_IMAGE, matchesCategoryName } from '../../lib/homeProductSections';
 
 const GRADIENT_PRESETS = [
   'from-purple-800 to-indigo-600',
@@ -25,6 +25,7 @@ export default function AdminHomePage({ onSaved }: { onSaved?: () => void }) {
     brandBanner, setBrandBanner,
     secondBannerImage, setSecondBannerImage,
     homeProductCategories, setHomeProductCategories,
+    bestSellerBannerImage, setBestSellerBannerImage,
     pcBuildCategoryMap, setPcBuildCategoryMap, categories,
     brands,
     products, bestSellerIds, setBestSellerIds,
@@ -50,6 +51,13 @@ export default function AdminHomePage({ onSaved }: { onSaved?: () => void }) {
   const handleSecondBannerFile = async (file: File) => {
     try {
       setSecondBannerImage(await uploadImageToServer(file));
+    } catch (err: any) {
+      alert('Image upload failed: ' + (err.message || 'Unknown error'));
+    }
+  };
+  const handleBestSellerBannerFile = async (file: File) => {
+    try {
+      setBestSellerBannerImage(await uploadImageToServer(file));
     } catch (err: any) {
       alert('Image upload failed: ' + (err.message || 'Unknown error'));
     }
@@ -126,10 +134,10 @@ export default function AdminHomePage({ onSaved }: { onSaved?: () => void }) {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-[#0d1117] border border-[#30363D] rounded-xl p-1 overflow-x-auto">
+      <div className="flex flex-wrap gap-1 bg-[#0d1117] border border-[#30363D] rounded-xl p-1">
         {tabs.map(t => (
           <button key={t.id} onClick={() => setActiveTab(t.id as any)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors whitespace-nowrap ${activeTab === t.id ? 'bg-[#2ee661] text-black' : 'text-gray-400 hover:text-white'}`}>
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs sm:text-sm font-bold transition-colors whitespace-nowrap ${activeTab === t.id ? 'bg-[#2ee661] text-black' : 'text-gray-400 hover:text-white'}`}>
             <t.icon size={15} />{t.label}
           </button>
         ))}
@@ -472,7 +480,41 @@ export default function AdminHomePage({ onSaved }: { onSaved?: () => void }) {
       {/* Best Sellers */}
       {activeTab === 'bestsellers' && (
         <div className="space-y-4">
-          <p className="text-gray-500 text-sm">Select which products appear in the "Best Sellers" section on the home page.</p>
+          <p className="text-gray-500 text-sm">Choose the campaign image and products shown in the home page Best Sellers section.</p>
+          <div className="bg-[#161B22] border border-[#30363D] rounded-2xl p-4 space-y-3">
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Campaign image</label>
+            <div className="flex gap-4 items-start">
+              <img
+                src={bestSellerBannerImage === DEFAULT_BEST_SELLER_BANNER_IMAGE ? DEFAULT_BEST_SELLER_BANNER_IMAGE : resolveMediaUrl(bestSellerBannerImage)}
+                alt="Best Sellers campaign preview"
+                className="w-36 h-[19rem] rounded-xl object-cover object-center bg-gray-900"
+              />
+              <div className="flex-1 space-y-2">
+                <p className="text-sm font-bold text-white">Best Sellers campaign banner</p>
+                <div className="flex gap-2">
+                  <input aria-label="Best Sellers campaign image URL" value={bestSellerBannerImage} onChange={event => setBestSellerBannerImage(event.target.value)} placeholder="Campaign image URL..." className={`flex-1 ${inputCls}`} />
+                  <label aria-label="Upload Best Sellers campaign image" className="px-3 py-2 bg-[#0d1117] border border-[#30363D] rounded-xl text-gray-400 hover:text-[#2ee661] hover:border-[#2ee661]/40 transition-colors cursor-pointer flex items-center">
+                    <Upload size={16} />
+                    <input type="file" accept="image/*" className="hidden" onChange={event => {
+                      const file = event.target.files?.[0];
+                      if (file) void handleBestSellerBannerFile(file);
+                      event.target.value = '';
+                    }} />
+                  </label>
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <p className="text-xs text-gray-500">The preview shows the same campaign crop used beside the two-row product grid on the home page.</p>
+                  <button
+                    type="button"
+                    onClick={() => setBestSellerBannerImage(DEFAULT_BEST_SELLER_BANNER_IMAGE)}
+                    className="text-xs font-bold text-[#2ee661] hover:text-white"
+                  >
+                    Restore reference image
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[600px] overflow-y-auto pr-1">
             {products.map(p => {
               const isSelected = bestSellerIds.includes(p.id);

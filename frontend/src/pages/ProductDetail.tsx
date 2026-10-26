@@ -217,7 +217,7 @@ export default function ProductDetail() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 mt-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-200/80">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-12 bg-white p-4 sm:p-6 md:p-8 rounded-2xl shadow-sm border border-gray-200/80">
 
           {/* Left: Image Gallery */}
           <div className="w-full">
@@ -232,12 +232,12 @@ export default function ProductDetail() {
           <div className="flex flex-col">
 
             {/* Title & Brand */}
-            <div className="flex items-start justify-between mb-3">
-              <h1 className="text-2xl md:text-3xl font-black text-gray-900 leading-tight">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-3">
+              <h1 className="text-2xl md:text-3xl font-black text-gray-900 leading-tight break-words">
                 {product.name}
               </h1>
               {product.brand && (
-                <div className="text-xl font-black text-gray-400 ml-4 tracking-wider uppercase shrink-0">
+                <div className="text-base sm:text-xl font-black text-gray-400 sm:ml-4 tracking-wider uppercase shrink-0">
                   {product.brand}
                 </div>
               )}

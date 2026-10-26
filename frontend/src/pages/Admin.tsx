@@ -365,7 +365,7 @@ export default function Admin() {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 md:ml-64 flex flex-col min-h-screen">
+      <div className="flex-1 min-w-0 md:ml-64 flex flex-col min-h-screen">
         {/* Top Bar */}
         <header className="min-h-16 bg-[#161B22] border-b border-[#30363D] flex items-center justify-between gap-3 px-3 sm:px-4 lg:px-6 py-3 sticky top-0 z-30">
           <div className="flex items-center gap-3">

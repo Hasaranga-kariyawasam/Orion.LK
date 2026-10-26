@@ -42,6 +42,7 @@ export async function PUT(req: NextRequest) {
           homeProductCategories: Array.isArray(body.homeProductCategories)
             ? body.homeProductCategories.map(String)
             : [],
+          bestSellerBannerImage: String(body.bestSellerBannerImage || ''),
           pcBuildCategoryMap: body.pcBuildCategoryMap && typeof body.pcBuildCategoryMap === 'object'
             ? body.pcBuildCategoryMap
             : {},

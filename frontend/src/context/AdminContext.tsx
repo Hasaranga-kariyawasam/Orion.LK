@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { Product } from '../types';
 import { inferProductType } from '../lib/productClassification';
 import { BUILD_CATEGORIES, BUILD_CATEGORY_DEFAULT_KEYWORDS } from '../lib/buildCategories';
+import { DEFAULT_BEST_SELLER_BANNER_IMAGE } from '../lib/homeProductSections';
 import {
   getAllUsersFromDb,
   fetchProducts,
@@ -180,6 +181,8 @@ interface AdminContextType {
   setSecondBannerImage: (image: string) => void;
   homeProductCategories: string[];
   setHomeProductCategories: (categories: string[]) => void;
+  bestSellerBannerImage: string;
+  setBestSellerBannerImage: (image: string) => void;
   pcBuildCategoryMap: Record<string, string[]>;
   setPcBuildCategoryMap: (mapping: Record<string, string[]>) => void;
   brands: Brand[];
@@ -331,6 +334,7 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     'Speakers',
     'Smart Watches',
   ]);
+  const [bestSellerBannerImage, setBestSellerBannerImage] = useState(DEFAULT_BEST_SELLER_BANNER_IMAGE);
   const [pcBuildCategoryMap, setPcBuildCategoryMap] = useState<Record<string, string[]>>({});
   const [pcBuildCategoryMapConfigured, setPcBuildCategoryMapConfigured] = useState(false);
   const [brands, setBrands] = useState<Brand[]>(() => loadState('admin_brands', []));
@@ -737,6 +741,13 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       if (Array.isArray(settings.homeProductCategories)) {
         setHomeProductCategories(settings.homeProductCategories.map(String));
       }
+      if (typeof settings.bestSellerBannerImage === 'string') {
+        setBestSellerBannerImage(settings.bestSellerBannerImage
+          ? settings.bestSellerBannerImage.startsWith(DEFAULT_BEST_SELLER_BANNER_IMAGE)
+            ? settings.bestSellerBannerImage
+            : resolveMediaUrl(settings.bestSellerBannerImage)
+          : DEFAULT_BEST_SELLER_BANNER_IMAGE);
+      }
       if (settings.pcBuildCategoryMap && typeof settings.pcBuildCategoryMap === 'object') {
         setPcBuildCategoryMapConfigured(true);
         setPcBuildCategoryMap(Object.fromEntries(
@@ -780,6 +791,7 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     localStorage.setItem('admin_brandBanner', JSON.stringify(brandBanner));
     localStorage.setItem('admin_secondBannerImage', JSON.stringify(secondBannerImage));
     localStorage.setItem('admin_homeProductCategories', JSON.stringify(homeProductCategories));
+    localStorage.setItem('admin_bestSellerBannerImage', JSON.stringify(bestSellerBannerImage));
     localStorage.setItem('admin_pcBuildCategoryMap', JSON.stringify(pcBuildCategoryMap));
     localStorage.setItem('admin_brands', JSON.stringify(brands));
     localStorage.setItem('admin_products', JSON.stringify(products));
@@ -793,7 +805,8 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     localStorage.setItem('admin_address', JSON.stringify(storeAddress));
     localStorage.setItem('admin_bestsellers', JSON.stringify(bestSellerIds));
     const saved = await saveHomeSettingsApi({
-      heroImages, featuredImages, pcBuildCards, homePromoCards, brandBanner, secondBannerImage, homeProductCategories, pcBuildCategoryMap,
+      heroImages, featuredImages, pcBuildCards, homePromoCards, brandBanner, secondBannerImage, homeProductCategories,
+      bestSellerBannerImage, pcBuildCategoryMap,
       accessories, bestSellerIds, whatsappNumber, storeAddress,
       specialOffers, specialOffersDeadline,
     });
@@ -811,6 +824,7 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       brandBanner, setBrandBanner,
       secondBannerImage, setSecondBannerImage,
       homeProductCategories, setHomeProductCategories,
+      bestSellerBannerImage, setBestSellerBannerImage,
       pcBuildCategoryMap, setPcBuildCategoryMap,
       brands, setBrands,
       saveSettings,

@@ -37,7 +37,7 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
         setIsHovered(false);
         setCurrentImageIndex(0);
       }}
-      className="group bg-white rounded-xl overflow-hidden hover:shadow-sm transition-all duration-300 flex flex-col h-fit relative p-4"
+      className="group bg-white rounded-xl overflow-hidden hover:shadow-sm transition-all duration-300 flex flex-col h-fit relative p-2.5 sm:p-3 md:p-4"
     >
 
       {/* Top badges & Icons */}
@@ -65,21 +65,21 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
 
 
         {/* Always visible Cart Button */}
-        <div className="flex flex-col gap-2 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 p-1.5 rounded-lg shadow-sm border border-gray-100 absolute right-2 top-2 z-20">
+        <div className="product-card-quick-actions flex flex-col gap-1.5 text-gray-500 transition-opacity bg-white/95 p-1.5 rounded-lg shadow-sm border border-gray-100 absolute right-2 top-2 z-20">
           {/* add wishlist button in side this dev */}
           <button
             onClick={(e) => { e.preventDefault(); toggleWishlist(product); }}
-            className={`transition-colors p-1.5 rounded-lg  ${inWishlist ? 'text-[#fc2d3f] bg-white/90 hover:bg-white shadow-sm' : 'bg-transparent hover:bg-gray-100'}`}
+            className={`min-w-10 min-h-10 flex items-center justify-center transition-colors rounded-lg ${inWishlist ? 'text-[#fc2d3f] bg-white/90 hover:bg-white shadow-sm' : 'bg-transparent hover:bg-gray-100'}`}
             title={inWishlist ? "Remove from Wishlist" : "Add to Wishlist"}
           >
             <Heart size={18} strokeWidth={1.5} fill={inWishlist ? "#fc2d3f" : "#b3b3b3ff"} />
           </button>
 
 
-          <button onClick={(e) => { e.preventDefault(); addToCart(product); }} className="hover:text-black transition-colors p-1" title="Add to Cart"><ShoppingCart size={18} strokeWidth={1.5} /></button>
+          <button onClick={(e) => { e.preventDefault(); addToCart(product); }} className="min-w-10 min-h-10 flex items-center justify-center hover:text-black transition-colors rounded-lg" title="Add to Cart" aria-label="Add to cart"><ShoppingCart size={18} strokeWidth={1.5} /></button>
 
-          <button onClick={(e) => { e.preventDefault(); toggleCompare(product); }} className={`transition-colors p-1 ${inCompare ? 'text-[#15803d]' : 'hover:text-black'}`} title="Compare"><Shuffle size={18} strokeWidth={1.5} /></button>
-          <button onClick={(e) => { e.preventDefault(); addToBuild(product); }} className="hover:text-black transition-colors p-1 text-[#15803d]" title="Add to My Build"><Wrench size={18} strokeWidth={1.5} /></button>
+          <button onClick={(e) => { e.preventDefault(); toggleCompare(product); }} className={`min-w-10 min-h-10 flex items-center justify-center transition-colors rounded-lg ${inCompare ? 'text-[#15803d]' : 'hover:text-black'}`} title="Compare" aria-label="Compare"><Shuffle size={18} strokeWidth={1.5} /></button>
+          <button onClick={(e) => { e.preventDefault(); addToBuild(product); }} className="min-w-10 min-h-10 flex items-center justify-center hover:text-black transition-colors rounded-lg text-[#15803d]" title="Add to My Build" aria-label="Add to PC build"><Wrench size={18} strokeWidth={1.5} /></button>
         </div>
       </div>
 
@@ -163,7 +163,7 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
         <div className="flex items-center gap-2 mt-auto">
           <button
             onClick={(e) => { e.preventDefault(); addToCart(product); }}
-            className="flex-1 bg-[#161B22] text-white font-black uppercase tracking-wider text-sm py-2.5 rounded-xl hover:bg-[#0D1117] transition-colors duration-300 shadow-sm cursor-pointer"
+            className="flex-1 min-h-11 bg-[#161B22] text-white font-black uppercase tracking-wider text-xs sm:text-sm py-2.5 rounded-xl hover:bg-[#0D1117] transition-colors duration-300 shadow-sm cursor-pointer"
           >
             Buy Now
           </button>

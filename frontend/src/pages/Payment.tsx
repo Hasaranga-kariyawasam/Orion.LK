@@ -66,7 +66,7 @@ export default function Payment() {
   const { mongoUser, refreshProfile } = useAuth();
   const navigate = useNavigate();
 
-  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [paymentMethod, setPaymentMethod] = useState('payhere');
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -133,11 +133,7 @@ export default function Payment() {
         }
       }
 
-      const paymentMethodLabel =
-        paymentMethod === 'cod' ? 'Cash on Delivery' :
-        paymentMethod === 'koko' ? 'Koko Installments' :
-        paymentMethod === 'payzy' ? 'Payzy Installments' :
-        paymentMethod === 'payhere' ? 'PayHere Sandbox' : 'Credit / Debit Card';
+      const paymentMethodLabel = paymentMethod === 'cod' ? 'Cash on Delivery' : 'PayHere Sandbox';
 
       const submitOrder = async (label: string) => {
         const newOrder = await createOrderInDb({
@@ -178,6 +174,9 @@ export default function Payment() {
         const payHere = await createPayHerePayment(finalTotal);
         window.payhere.onCompleted = async () => {
           try {
+            if (paymentMethod !== 'cod') {
+              throw new Error('This payment method is not available. Choose PayHere or Cash on Delivery.');
+            }
             await submitOrder(paymentMethodLabel);
           } catch (err: any) {
             setErrorMessage(err.message || 'Payment succeeded, but the order could not be saved.');
@@ -360,79 +359,46 @@ export default function Payment() {
               </div>
               
               <div className="space-y-4">
-                {/* PayHere Sandbox */}
+                {/* Card entry and saved-card autofill are handled by PayHere's hosted checkout. */}
                 <label className={`flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all ${paymentMethod === 'payhere' ? 'border-[#1cd75b] bg-[#1cd75b]/5' : 'border-gray-200 hover:border-gray-300'}`} onClick={() => setPaymentMethod('payhere')}>
-                  <div className="flex items-center gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'payhere' ? 'border-[#1cd75b]' : 'border-gray-300'}`}>
-                      {paymentMethod === 'payhere' && <div className="w-2.5 h-2.5 bg-[#1cd75b] rounded-full" />}
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="font-bold text-gray-900">PayHere</span>
-                      <span className="text-xs text-gray-500">Secure card payment via PayHere Sandbox</span>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-[#12b94b] bg-[#1cd75b]/10 px-2 py-1 rounded-full">Sandbox</span>
-                </label>
-
-                {/* Credit Card */}
-                <label className={`flex flex-col border-2 rounded-xl cursor-pointer transition-all ${paymentMethod === 'card' ? 'border-red-500 bg-red-50/30' : 'border-gray-200 hover:border-gray-300'}`}>
-                  <div className="flex items-center justify-between p-4" onClick={() => setPaymentMethod('card')}>
                     <div className="flex items-center gap-3">
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'card' ? 'border-red-500' : 'border-gray-300'}`}>
-                        {paymentMethod === 'card' && <div className="w-2.5 h-2.5 bg-red-500 rounded-full"></div>}
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'payhere' ? 'border-[#1cd75b]' : 'border-gray-300'}`}>
+                        {paymentMethod === 'payhere' && <div className="w-2.5 h-2.5 bg-[#1cd75b] rounded-full" />}
                       </div>
-                      <span className="font-bold text-gray-900">Credit / Debit Card</span>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-gray-900">Credit / Debit Card</span>
+                        <span className="text-xs text-gray-500">Secure checkout via PayHere Sandbox</span>
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       <div className="w-8 h-5 bg-blue-600 rounded flex items-center justify-center text-[8px] text-white font-bold italic">VISA</div>
                       <div className="w-8 h-5 bg-red-500 rounded flex items-center justify-center text-[8px] text-white font-bold">MC</div>
                     </div>
-                  </div>
-                  {paymentMethod === 'card' && (
-                    <div className="p-4 border-t border-gray-200/60 space-y-4">
-                      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 flex flex-col gap-4">
-                        <div>
-                          <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Card Number</label>
-                          <input type="text" className="w-full p-3 rounded-lg border border-gray-300 focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none" placeholder="0000 0000 0000 0000" />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Expiry Date</label>
-                            <input type="text" className="w-full p-3 rounded-lg border border-gray-300 focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none" placeholder="MM/YY" />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-bold text-gray-700 uppercase mb-2">CVC</label>
-                            <input type="text" className="w-full p-3 rounded-lg border border-gray-300 focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none" placeholder="123" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </label>
 
                 {/* Koko */}
-                <label className={`flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all ${paymentMethod === 'koko' ? 'border-red-500 bg-red-50/30' : 'border-gray-200 hover:border-gray-300'}`} onClick={() => setPaymentMethod('koko')}>
+                <label aria-disabled="true" className="flex items-center justify-between p-4 border-2 rounded-xl cursor-not-allowed opacity-60 border-gray-200">
                   <div className="flex items-center gap-3">
                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'koko' ? 'border-red-500' : 'border-gray-300'}`}>
                       {paymentMethod === 'koko' && <div className="w-2.5 h-2.5 bg-red-500 rounded-full"></div>}
                     </div>
                     <div className="flex flex-col">
                       <span className="font-bold text-gray-900">Koko Installments</span>
-                      <span className="text-xs text-gray-500">Pay in 3 interest-free installments</span>
+                      <span className="text-xs text-gray-500">Installment checkout is not connected yet</span>
                     </div>
                   </div>
                   <img src="https://qa-merchant.paykoko.com/assets/images/logo.png" alt="Koko" className="h-6 object-contain" />
                 </label>
 
                 {/* Payzy */}
-                <label className={`flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all ${paymentMethod === 'payzy' ? 'border-red-500 bg-red-50/30' : 'border-gray-200 hover:border-gray-300'}`} onClick={() => setPaymentMethod('payzy')}>
+                <label aria-disabled="true" className="flex items-center justify-between p-4 border-2 rounded-xl cursor-not-allowed opacity-60 border-gray-200">
                   <div className="flex items-center gap-3">
                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'payzy' ? 'border-red-500' : 'border-gray-300'}`}>
                       {paymentMethod === 'payzy' && <div className="w-2.5 h-2.5 bg-red-500 rounded-full"></div>}
                     </div>
                     <div className="flex flex-col">
                       <span className="font-bold text-gray-900">Payzy Installments</span>
-                      <span className="text-xs text-gray-500">Pay in 4 interest-free installments</span>
+                      <span className="text-xs text-gray-500">Installment checkout is not connected yet</span>
                     </div>
                   </div>
                   <img src="https://payzy.lk/images/logoWordDark.png" alt="Payzy" className="h-5 object-contain" />

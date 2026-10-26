@@ -42,6 +42,17 @@ body {
   scrollbar-width: none;
 }
 
+@media (hover: hover) and (min-width: 768px) {
+  .product-card-quick-actions {
+    opacity: 0;
+  }
+
+  .group:hover .product-card-quick-actions,
+  .group:focus-within .product-card-quick-actions {
+    opacity: 1;
+  }
+}
+
 /* Custom 3-dot Animated Loader requested by user */
 .loader {
   width: 60px;

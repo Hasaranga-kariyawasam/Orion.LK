@@ -36,6 +36,7 @@ export interface HomeSettingsPayload {
   };
   secondBannerImage: string;
   homeProductCategories: string[];
+  bestSellerBannerImage: string;
   pcBuildCategoryMap: Record<string, string[]>;
   accessories: unknown[];
   bestSellerIds: string[];

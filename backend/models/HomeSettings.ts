@@ -9,6 +9,7 @@ export interface IHomeSettings extends Document {
   brandBanner: unknown;
   secondBannerImage: string;
   homeProductCategories: string[];
+  bestSellerBannerImage: string;
   pcBuildCategoryMap: Record<string, string[]>;
   accessories: unknown[];
   bestSellerIds: string[];
@@ -29,6 +30,7 @@ const HomeSettingsSchema = new Schema<IHomeSettings>(
     brandBanner: { type: Schema.Types.Mixed, default: {} },
     secondBannerImage: { type: String, default: '' },
     homeProductCategories: { type: [String], default: [] },
+    bestSellerBannerImage: { type: String, default: '' },
     pcBuildCategoryMap: { type: Schema.Types.Mixed, default: {} },
     accessories: { type: [Schema.Types.Mixed], default: [] },
     bestSellerIds: { type: [String], default: [] },

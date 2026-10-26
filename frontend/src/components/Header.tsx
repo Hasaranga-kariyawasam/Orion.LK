@@ -120,11 +120,11 @@ export default function Header() {
           onMouseEnter={() => setActiveDropdown(null)}
           className="bg-[#161B22]/90 backdrop-blur-md relative z-30"
         >
-          <div className="relative z-10 container mx-auto max-w-7xl px-4 h-20 flex items-center justify-between gap-6">
+          <div className="relative z-10 container mx-auto max-w-7xl px-3 md:px-4 h-14 md:h-20 flex items-center justify-between gap-2 md:gap-6">
 
             {/* Logo */}
             <a href="/" className="flex items-center shrink-0">
-              <span className="text-3xl font-black tracking-tight flex items-baseline" style={{ fontFamily: "'Orbitron', sans-serif" }}>
+              <span className="text-2xl sm:text-3xl font-black tracking-tight flex items-baseline" style={{ fontFamily: "'Orbitron', sans-serif" }}>
                 <span className="text-white">O</span>
                 <span className="text-white">RION</span>
                 <span className="text-[#16a34a] ml-1 text-2xl" style={{ textShadow: '0 0 10px rgba(22, 163, 74, 0.4)' }}>.lk</span>
@@ -217,15 +217,15 @@ export default function Header() {
             </form>
 
             {/* Action Icons */}
-            <div className="flex items-center gap-4 shrink-0">
-              <Link to="/profile?tab=orders" title="My Orders" className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors">
+            <div className="flex items-center gap-1.5 lg:gap-4 shrink-0">
+              <Link to="/profile?tab=orders" title="My Orders" className="hidden lg:flex w-10 h-10 rounded-full border border-[#30363D] items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors">
                 <Package size={20} />
               </Link>
 
-              <div className="relative group" onMouseEnter={() => setShowNotifications(true)} onMouseLeave={() => setShowNotifications(false)}>
+              <div className="relative group hidden lg:block" onMouseEnter={() => setShowNotifications(true)} onMouseLeave={() => setShowNotifications(false)}>
                 <button
                   onClick={() => setShowNotifications(prev => !prev)}
-                  className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors relative cursor-pointer"
+                  className="hidden lg:flex w-10 h-10 rounded-full border border-[#30363D] items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors relative cursor-pointer"
                 >
                   <Bell size={20} />
                   {unreadCount > 0 && (
@@ -340,13 +340,13 @@ export default function Header() {
 
               <button
                 onClick={() => setIsCompareModalOpen(true)}
-                className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors relative cursor-pointer"
+                className="hidden lg:flex w-10 h-10 rounded-full border border-[#30363D] items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors relative cursor-pointer"
               >
                 <Shuffle size={18} className={compareList.length > 0 ? "text-[#15803d]" : ""} />
                 <span className="absolute -top-2 -right-2 bg-[#15803d] border-none text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">{compareList.length}</span>
               </button>
 
-              <button onClick={() => setIsWishlistOpen(true)} className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors relative cursor-pointer">
+              <button onClick={() => setIsWishlistOpen(true)} className="hidden md:flex w-10 h-10 rounded-full border border-[#30363D] items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors relative cursor-pointer">
                 <Heart size={20} className={wishlist.length > 0 ? "fill-[#15803d] text-[#15803d]" : ""} />
                 <span className="absolute -top-2 -right-2 bg-[#15803d] border-none text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">{wishlist.length}</span>
               </button>
@@ -354,7 +354,7 @@ export default function Header() {
               {/* Cart Pill Button matching custom design */}
               <button
                 onClick={() => setIsCartOpen(true)}
-                className="h-10 pl-1.5 pr-4 rounded-full bg-[#15803d] hover:bg-[#166534] transition-all duration-200 flex items-center gap-2.5 relative ml-2 shadow-sm hover:shadow-md cursor-pointer group"
+                className="hidden md:flex h-10 pl-1.5 pr-4 rounded-full bg-[#15803d] hover:bg-[#166534] transition-all duration-200 items-center gap-2.5 relative ml-2 shadow-sm hover:shadow-md cursor-pointer group"
                 aria-label="Shopping Cart"
               >
                 <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center shadow-sm shrink-0 group-hover:scale-105 transition-transform">
@@ -369,6 +369,25 @@ export default function Header() {
               </button>
             </div>
           </div>
+            <form onSubmit={handleSearchSubmit} className="md:hidden h-12 px-3 pb-2 flex items-center">
+              <div className="relative w-full">
+                <input
+                  type="search"
+                  placeholder="Search products"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  aria-label="Search products"
+                  className="w-full h-10 rounded-lg bg-[#0D1117] text-white placeholder-[#8B949E] border border-[#30363D] pl-3 pr-11 text-sm focus:outline-none focus:border-[#16a34a]"
+                />
+                <button
+                  type="submit"
+                  aria-label="Submit search"
+                  className="absolute right-0 top-0 h-10 w-11 rounded-r-lg bg-[#16a34a] text-white flex items-center justify-center"
+                >
+                  <Search size={17} />
+                </button>
+              </div>
+            </form>
         </div>
 
         {/* Sub Header */}
@@ -376,7 +395,7 @@ export default function Header() {
           className={`bg-[#e8eef7] relative border-0 ${activeDropdown ? 'z-50' : 'z-20'}`}
           onMouseLeave={() => setActiveDropdown(null)}
         >
-          <div className="container mx-auto max-w-7xl px-4 h-12 flex items-center justify-between">
+          <div className="container mx-auto max-w-7xl px-3 md:px-4 h-11 md:h-12 flex items-center justify-between">
             <div className="flex items-center gap-6 h-full">
               {/* Links */}
               <nav className="hidden lg:flex items-center gap-4 xl:gap-6 font-bold text-slate-700 text-[12px] xl:text-[13px] uppercase tracking-wide h-full whitespace-nowrap">
@@ -419,18 +438,18 @@ export default function Header() {
                   <button
                     key={productType}
                     onClick={() => setActiveDropdown(activeDropdown === productType ? null : productType)}
-                    className={`shrink-0 rounded-full px-3 py-1.5 transition-colors capitalize ${activeDropdown === productType ? 'bg-slate-900 text-white' : 'bg-white/70 text-slate-700 hover:bg-white'}`}
+                    className={`min-h-10 shrink-0 inline-flex items-center rounded-full px-3 py-2 transition-colors capitalize ${activeDropdown === productType ? 'bg-slate-900 text-white' : 'bg-white/70 text-slate-700 hover:bg-white'}`}
                   >
                     {productType === 'pc' ? 'PC' : productType}
                   </button>
                 ))}
-                <a href="/shop" className="shrink-0 rounded-full bg-white/70 px-3 py-1.5 text-slate-700 hover:bg-white transition-colors">
+                <a href="/shop" className="min-h-10 shrink-0 flex items-center rounded-full bg-white/70 px-3 py-2 text-slate-700 hover:bg-white transition-colors">
                   All Products
                 </a>
-                <Link to="/offers" className="shrink-0 rounded-full bg-red-50 px-3 py-1.5 text-[#d92840] hover:bg-red-100 transition-colors">
+                <Link to="/offers" className="min-h-10 shrink-0 flex items-center rounded-full bg-red-50 px-3 py-2 text-[#d92840] hover:bg-red-100 transition-colors">
                   Offers
                 </Link>
-                <Link to="/build" className="shrink-0 rounded-full bg-white/70 px-3 py-1.5 text-slate-900 hover:bg-white transition-colors">
+                <Link to="/build" className="min-h-10 shrink-0 flex items-center rounded-full bg-white/70 px-3 py-2 text-slate-900 hover:bg-white transition-colors">
                   Build PC
                 </Link>
               </nav>
@@ -558,17 +577,17 @@ export default function Header() {
       </header>
 
       {/* Mobile Bottom Navigation Bar */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 px-6 py-2 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 px-6 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
         <div className="flex items-center justify-between">
-          <a href="/" className="flex flex-col items-center gap-1 text-[#15803d]">
+          <a href="/" className="min-h-11 min-w-11 flex flex-col items-center justify-center gap-1 text-[#15803d]">
             <Home size={22} strokeWidth={2} />
             <span className="text-[10px] font-bold">Home</span>
           </a>
-          <button onClick={() => setActiveDropdown(activeDropdown ? null : 'pc')} className="flex flex-col items-center gap-1 text-gray-500 hover:text-[#15803d] transition-colors">
+          <button onClick={() => setActiveDropdown(activeDropdown ? null : 'pc')} className="min-h-11 min-w-11 flex flex-col items-center justify-center gap-1 text-gray-500 hover:text-[#15803d] transition-colors">
             <Store size={22} strokeWidth={2} />
             <span className="text-[10px] font-bold">Shop</span>
           </button>
-          <button onClick={() => setIsWishlistOpen(true)} className="flex flex-col items-center gap-1 text-gray-500 hover:text-[#15803d] transition-colors relative">
+          <button onClick={() => setIsWishlistOpen(true)} className="min-h-11 min-w-11 flex flex-col items-center justify-center gap-1 text-gray-500 hover:text-[#15803d] transition-colors relative">
             <div className="relative">
               <Heart size={22} strokeWidth={2} className={wishlist.length > 0 ? "fill-[#15803d] text-[#15803d]" : ""} />
               <span className="absolute -top-1 -right-2 bg-[#15803d] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">
@@ -577,7 +596,7 @@ export default function Header() {
             </div>
             <span className="text-[10px] font-bold">Wishlist</span>
           </button>
-          <button onClick={() => setIsCartOpen(true)} className="flex flex-col items-center gap-1 text-gray-500 hover:text-[#f0364c] transition-colors relative">
+          <button onClick={() => setIsCartOpen(true)} className="min-h-11 min-w-11 flex flex-col items-center justify-center gap-1 text-gray-500 hover:text-[#f0364c] transition-colors relative">
             <div className="relative">
               <ShoppingCart size={22} strokeWidth={2} />
               <span className="absolute -top-1 -right-2 bg-[#f0364c] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm">

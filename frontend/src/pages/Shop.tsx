@@ -388,7 +388,7 @@ export default function Shop() {
               {/* Mobile filter button */}
               <button
                 onClick={() => setIsFilterOpen(true)}
-                className="md:hidden flex items-center gap-2 bg-white border border-gray-200 text-gray-800 py-2 px-3 rounded-xl text-xs font-bold hover:bg-gray-50 shadow-sm transition-all"
+                className="md:hidden min-h-11 flex items-center gap-2 bg-white border border-gray-200 text-gray-800 py-2 px-3 rounded-xl text-xs font-bold hover:bg-gray-50 shadow-sm transition-all"
               >
                 <Filter size={14} />
                 Filters
@@ -399,7 +399,7 @@ export default function Shop() {
                 )}
               </button>
 
-              <h1 className="text-lg md:text-xl font-black text-gray-900 uppercase tracking-tight truncate">
+              <h1 className="min-w-0 text-base sm:text-lg md:text-xl font-black text-gray-900 uppercase tracking-tight truncate">
                 {searchParam
                   ? <><Search size={16} className="inline mr-1 text-gray-400" />"{searchParam}"</>
                   : categoryParam || 'All Products'
@@ -411,7 +411,7 @@ export default function Shop() {
             <div className="relative shrink-0">
               <button
                 onClick={() => setShowSortMenu(v => !v)}
-                className="flex items-center gap-2 bg-white border border-gray-200 text-gray-800 py-2 px-3.5 rounded-xl text-xs font-bold hover:border-gray-300 shadow-sm transition-all whitespace-nowrap"
+                className="min-h-11 flex items-center gap-2 bg-white border border-gray-200 text-gray-800 py-2 px-3.5 rounded-xl text-xs font-bold hover:border-gray-300 shadow-sm transition-all whitespace-nowrap"
               >
                 {sortLabels[sortBy]}
                 <ChevronDown size={12} className={`transition-transform text-gray-400 ${showSortMenu ? 'rotate-180' : ''}`} />
@@ -454,7 +454,7 @@ export default function Shop() {
             </div>
           ) : paginatedProducts.length > 0 ? (
             <>
-              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4">
                 {paginatedProducts.map((p, idx) => (
                   <ProductCard key={p.id || idx} product={p} index={idx} />
                 ))}

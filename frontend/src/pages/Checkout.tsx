@@ -191,7 +191,7 @@ export default function Checkout() {
           
           {/* Left: Shipping Form */}
           <div className="lg:col-span-8 space-y-6">
-            <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
+            <div className="bg-white p-4 sm:p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center">
                   <Truck size={20} />

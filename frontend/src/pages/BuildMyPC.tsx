@@ -253,7 +253,7 @@ export default function BuildMyPC() {
           {/* Left Column: Category Sidebar */}
           <div className="w-full lg:w-64 shrink-0">
             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 px-4">Your components</h3>
-            <div className="flex flex-col relative before:content-[''] before:absolute before:left-6 before:top-4 before:bottom-4 before:w-px before:bg-gray-200">
+            <div className="flex flex-row lg:flex-col relative overflow-x-auto lg:overflow-visible gap-2 lg:gap-0 pb-2 lg:pb-0 scrollbar-hide before:content-[''] before:absolute before:left-6 before:top-4 before:bottom-4 before:w-px before:bg-gray-200 before:hidden lg:before:block">
               {BUILD_CATEGORIES.map(cat => {
                 const isActive = activeCategory.id === cat.id;
                 const categoryNames = (pcBuildCategoryMap[cat.id] || []).map(category => category.trim().toLowerCase());
@@ -262,7 +262,7 @@ export default function BuildMyPC() {
                   <button
                     key={cat.id}
                     onClick={() => setActiveCategory(cat)}
-                    className={`flex items-center gap-4 py-3 px-4 rounded-xl text-left transition-all relative z-10 ${isActive ? 'bg-gray-200/80' : 'hover:bg-gray-50'}`}
+                    className={`flex shrink-0 items-center gap-3 lg:gap-4 py-3 px-4 rounded-xl text-left transition-all relative z-10 ${isActive ? 'bg-gray-200/80' : 'hover:bg-gray-50'}`}
                   >
                     <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 bg-white ${isActive ? 'border-green-500' : isSelected ? 'border-green-500' : 'border-gray-300'}`}>
                       {isActive && <div className="w-1.5 h-1.5 rounded-full bg-green-500" />}
@@ -296,8 +296,8 @@ export default function BuildMyPC() {
               {availableProducts.length > 0 ? availableProducts.map(product => {
                 const isSelected = buildItems.some(item => item.id === product.id);
                 return (
-                  <div key={product.id} className={`flex items-center gap-6 p-4 rounded-xl border transition-all ${isSelected ? 'border-red-200 bg-red-50/30' : 'border-gray-100 hover:border-gray-200 bg-white'}`}>
-                    <div className="w-24 h-24 shrink-0 bg-white rounded-lg p-2 border border-gray-100 flex items-center justify-center">
+                  <div key={product.id} className={`flex items-center gap-3 sm:gap-6 p-3 sm:p-4 rounded-xl border transition-all ${isSelected ? 'border-red-200 bg-red-50/30' : 'border-gray-100 hover:border-gray-200 bg-white'}`}>
+                    <div className="w-16 h-16 sm:w-24 sm:h-24 shrink-0 bg-white rounded-lg p-2 border border-gray-100 flex items-center justify-center">
                       <img src={product.image} alt={product.name} className="max-w-full max-h-full object-contain" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -307,9 +307,9 @@ export default function BuildMyPC() {
                     </div>
                     <div className="shrink-0">
                       {isSelected ? (
-                        <button onClick={() => removeFromBuild(product.id)} className="text-green-500 border border-green-200 bg-green-50 text-xs font-bold px-4 py-2 rounded-lg hover:bg-green-100 transition-colors uppercase tracking-wider">Remove</button>
+                        <button onClick={() => removeFromBuild(product.id)} className="min-h-11 text-green-500 border border-green-200 bg-green-50 text-[10px] sm:text-xs font-bold px-3 sm:px-4 py-2 rounded-lg hover:bg-green-100 transition-colors uppercase tracking-wider">Remove</button>
                       ) : (
-                        <button onClick={() => addToBuild(product)} className="text-green-500 border border-green-200 text-xs font-bold px-4 py-2 rounded-lg hover:bg-green-50 transition-colors uppercase tracking-wider flex items-center gap-1"><PlusCircle size={14} /> Choose</button>
+                        <button onClick={() => addToBuild(product)} className="min-h-11 text-green-500 border border-green-200 text-[10px] sm:text-xs font-bold px-3 sm:px-4 py-2 rounded-lg hover:bg-green-50 transition-colors uppercase tracking-wider flex items-center gap-1"><PlusCircle size={14} /> Choose</button>
                       )}
                     </div>
                   </div>
