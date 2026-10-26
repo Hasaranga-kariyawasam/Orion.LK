@@ -1,21 +1,30 @@
 import React, { useState } from 'react';
 import { Search, Filter, Trash2, Edit3, Plus, Package, CheckCircle, XCircle, Star } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
+import { getProductType, isUsedProduct, PRODUCT_TYPES } from '../../lib/productClassification';
 
 export default function AdminProducts({ onAddItem, onEditItem }: { onAddItem: () => void; onEditItem: (id: string) => void }) {
-  const { products, deleteProductFromContext } = useAdmin();
+  const { products, categories, deleteProductFromContext } = useAdmin();
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
   const [filterStatus, setFilterStatus] = useState('All');
+  const [filterProductType, setFilterProductType] = useState('All');
+  const [filterCondition, setFilterCondition] = useState('All');
 
-  const categories = ['All', ...Array.from(new Set(products.map(p => p.category)))];
+  const categoryOptions = ['All', ...Array.from(new Set(products.map(p => p.category)))];
   const statuses = ['All', 'In Stock', 'Out of Stock', 'Sold Out'];
 
   const filtered = products.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.brand?.toLowerCase().includes(search.toLowerCase());
     const matchCat = filterCategory === 'All' || p.category === filterCategory;
     const matchStatus = filterStatus === 'All' || p.status === filterStatus;
-    return matchSearch && matchCat && matchStatus;
+    const matchingCategory = categories.find(c => c.name.toLowerCase() === p.category.toLowerCase());
+    const matchProductType = filterProductType === 'All' ||
+      getProductType(matchingCategory?.productType || p.productType, p.name, p.category, matchingCategory?.productTypeManual) === filterProductType;
+    const isUsed = isUsedProduct(p, matchingCategory?.type);
+    const matchCondition = filterCondition === 'All' ||
+      (filterCondition === 'Used' ? isUsed : !isUsed);
+    return matchSearch && matchCat && matchStatus && matchProductType && matchCondition;
   });
 
   const deleteProduct = async (id: string) => {
@@ -55,11 +64,20 @@ export default function AdminProducts({ onAddItem, onEditItem }: { onAddItem: ()
         </div>
         <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)}
           className="bg-[#0d1117] border border-[#30363D] rounded-xl px-4 py-2.5 text-gray-300 text-sm focus:outline-none focus:border-[#2ee661]/50 min-w-[160px]">
-          {categories.map(c => <option key={c} value={c}>{c}</option>)}
+          {categoryOptions.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
         <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
           className="bg-[#0d1117] border border-[#30363D] rounded-xl px-4 py-2.5 text-gray-300 text-sm focus:outline-none focus:border-[#2ee661]/50 min-w-[140px]">
           {statuses.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <select value={filterProductType} onChange={e => setFilterProductType(e.target.value)}
+          className="bg-[#0d1117] border border-[#30363D] rounded-xl px-4 py-2.5 text-gray-300 text-sm focus:outline-none focus:border-[#2ee661]/50 min-w-[140px]">
+          <option value="All">All types</option>
+          {PRODUCT_TYPES.map(type => <option key={type} value={type}>{type === 'pc' ? 'PC' : type}</option>)}
+        </select>
+        <select value={filterCondition} onChange={e => setFilterCondition(e.target.value)}
+          className="bg-[#0d1117] border border-[#30363D] rounded-xl px-4 py-2.5 text-gray-300 text-sm focus:outline-none focus:border-[#2ee661]/50 min-w-[140px]">
+          {['All', 'Brand New', 'Used'].map(condition => <option key={condition}>{condition}</option>)}
         </select>
       </div>
 
@@ -69,14 +87,14 @@ export default function AdminProducts({ onAddItem, onEditItem }: { onAddItem: ()
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[#30363D]">
-                {['Product', 'Category', 'Price', 'Stock', 'Rating', 'Status', 'Actions'].map(h => (
+                {['Product', 'Category', 'Type / Condition', 'Price', 'Stock', 'Rating', 'Status', 'Actions'].map(h => (
                   <th key={h} className="text-left px-5 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-12 text-gray-500">No products found</td></tr>
+                <tr><td colSpan={8} className="text-center py-12 text-gray-500">No products found</td></tr>
               ) : filtered.map(p => (
                 <tr key={p.id} className="border-b border-[#30363D]/50 hover:bg-white/[0.02] transition-colors group">
                   <td className="px-5 py-4">
@@ -89,6 +107,9 @@ export default function AdminProducts({ onAddItem, onEditItem }: { onAddItem: ()
                     </div>
                   </td>
                   <td className="px-5 py-4 text-gray-400 text-xs">{p.category}</td>
+                  <td className="px-5 py-4 text-gray-400 text-xs capitalize">
+                    {getProductType(categories.find(c => c.name.toLowerCase() === p.category.toLowerCase())?.productType || p.productType, p.name, p.category, categories.find(c => c.name.toLowerCase() === p.category.toLowerCase())?.productTypeManual)} / {isUsedProduct(p, categories.find(c => c.name.toLowerCase() === p.category.toLowerCase())?.type) ? 'Used' : 'Brand New'}
+                  </td>
                   <td className="px-5 py-4">
                     <p className="text-white font-bold">LKR {p.price.toLocaleString()}</p>
                     {p.originalPrice && <p className="text-gray-500 text-xs line-through">LKR {p.originalPrice.toLocaleString()}</p>}

@@ -5,6 +5,7 @@ import ProductCard from '../components/ProductCard';
 import HeroCarousel from '../components/HeroCarousel';
 import { useAdmin } from '../context/AdminContext';
 import { resolveMediaUrl } from '../lib/api';
+import { getActiveSpecialOffers, getOfferProduct } from '../lib/specialOffers';
 import { Truck, Smile, ShieldCheck, Award, CheckCircle, ChevronLeft, ChevronRight, Play, Youtube, Volume2, VolumeX, ArrowRight } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -76,22 +77,11 @@ const getYouTubeEmbedUrl = (value: string) => {
 
 const FALLBACK_VIDEO_URL = 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4';
 
-const BRANDS = [
-  { name: 'Apple', domain: 'apple.com' },
-  { name: 'Samsung', domain: 'samsung.com' },
-  { name: 'Haylou', domain: 'haylou.com' },
-  { name: 'DJI', domain: 'dji.com' },
-  { name: 'Baseus', domain: 'baseus.com' },
-  { name: 'Anker', domain: 'anker.com' },
-];
-
 export default function Home() {
-  const { videoUrl, heroImages, accessories, featuredImages, pcBuildCards, homePromoCards, brands, categories, products, bestSellerIds, whatsappNumber, storeAddress, refreshHomeSettings, homeSettingsReady } = useAdmin();
+  const { videoUrl, heroImages, accessories, featuredImages, pcBuildCards, homePromoCards, brandBanner, brands, categories, products, bestSellerIds, specialOffers, specialOffersDeadline, whatsappNumber, storeAddress, refreshHomeSettings, homeSettingsReady } = useAdmin();
   const [isMuted, setIsMuted] = useState(true);
   const [videoFailed, setVideoFailed] = useState(false);
   const [showVideoText, setShowVideoText] = useState(false);
-  const imageSettingsKey = JSON.stringify([heroImages, featuredImages, pcBuildCards, homePromoCards, accessories]);
-
   useEffect(() => {
     const refresh = () => {
       if (document.visibilityState === 'visible') void refreshHomeSettings();
@@ -107,7 +97,7 @@ export default function Home() {
   const [heroImageReady, setHeroImageReady] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
   const [isCategoryHovered, setIsCategoryHovered] = useState(false);
-  const [timeLeft, setTimeLeft] = useState({ hours: 22, mins: 47, secs: 2 });
+  const [now, setNow] = useState(() => Date.now());
   const videoRef = useRef<HTMLVideoElement>(null);
   const categorySliderRef = useRef<HTMLDivElement>(null);
   const clearanceSliderRef = useRef<HTMLDivElement>(null);
@@ -121,16 +111,9 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Dynamic Clearance countdown timer
+  // Keep the campaign countdown in sync with its configured deadline.
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev.secs > 0) return { ...prev, secs: prev.secs - 1 };
-        if (prev.mins > 0) return { ...prev, mins: prev.mins - 1, secs: 59 };
-        if (prev.hours > 0) return { hours: prev.hours - 1, mins: 59, secs: 59 };
-        return { hours: 23, mins: 59, secs: 59 };
-      });
-    }, 1000);
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -209,8 +192,14 @@ export default function Home() {
     databaseImageFallbacks[index] ||
     resolveMediaUrl(displayCategories[index]?.img) ||
     FALLBACK_HOME_IMAGE;
-  const clearanceProducts = products.filter(p => (p.discount && p.discount > 0) || p.price < 150000).slice(0, 8);
-  const displayClearance = clearanceProducts.length > 0 ? clearanceProducts : products.slice(0, 8);
+  const displayClearance = getActiveSpecialOffers(products, specialOffers, specialOffersDeadline, now).slice(0, 4);
+  const campaignDeadline = specialOffersDeadline ? Date.parse(specialOffersDeadline) : NaN;
+  const remainingSeconds = Number.isFinite(campaignDeadline) ? Math.max(0, Math.floor((campaignDeadline - now) / 1000)) : 0;
+  const timeLeft = {
+    hours: Math.floor((remainingSeconds % 86400) / 3600),
+    mins: Math.floor((remainingSeconds % 3600) / 60),
+    secs: remainingSeconds % 60,
+  };
 
   const bestSellerProducts = products.filter(p => {
     if (bestSellerCategory === 'Coolers') {
@@ -543,37 +532,22 @@ export default function Home() {
 
         {/* 9. Haylou Banner */}
         <AnimatedSection className="max-w-7xl mx-auto px-4 mt-12 md:mt-16 mb-8">
-          <div className="w-full bg-[#030816] rounded-2xl overflow-hidden relative shadow-md h-[250px] md:h-[350px] lg:h-[400px] flex items-center justify-center">
-            {/* Logo */}
-            <div className="absolute top-6 left-6 z-20 flex items-center gap-2 text-white/90">
-              <div className="w-6 h-6 border-2 border-white/80 rounded-full flex items-center justify-center text-[10px] font-black italic">H</div>
-              <span className="font-medium tracking-[0.2em] text-sm">HAYLOU</span>
-            </div>
-
-            {/* Background Elements */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#030816] via-[#091530] to-[#030816] z-0" />
-            <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#4a72d3] via-transparent to-transparent z-0 blur-2xl" />
-
-            <div className="relative z-10 flex flex-col items-center justify-center w-full h-full pt-10">
-              {/* Typography Background */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center w-full z-0 opacity-90">
-                <h3 className="text-[120px] md:text-[200px] font-black text-[#5a8bf6]/30 leading-none tracking-tighter" style={{ textShadow: '0 0 40px rgba(90, 139, 246, 0.4)' }}>1.58"</h3>
-                <div className="flex flex-col items-start ml-2 md:ml-6 mt-8 md:mt-16">
-                  <span className="text-white font-bold text-lg md:text-3xl tracking-widest uppercase" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.8)' }}>Escort Extreme</span>
-                  <span className="text-[#5a8bf6] font-black text-xl md:text-4xl tracking-[0.15em] uppercase" style={{ textShadow: '0 0 20px rgba(90, 139, 246, 0.5)' }}>Adventure</span>
-                </div>
-              </div>
-
-              {/* Watch Image Mock */}
-              <div className="relative z-10 w-[280px] md:w-[450px] h-[280px] md:h-[450px] mt-10 md:mt-20">
-                <div className="absolute -inset-4 rounded-full border-4 border-gray-800/50 shadow-2xl z-[-1]"></div>
-                <div className="absolute top-1/2 -left-8 w-12 h-24 bg-[#1a1a24] -translate-y-1/2 rounded-l-xl z-[-2]"></div>
-                <div className="absolute top-1/2 -right-8 w-12 h-24 bg-[#1a1a24] -translate-y-1/2 rounded-r-xl z-[-2]"></div>
-              </div>
-
-              <button className="bg-[#15803d] hover:bg-[#166534] text-white font-bold py-2.5 px-8 rounded absolute bottom-6 md:bottom-10 z-20 shadow-[0_4px_20px_rgba(0,0,0,0.5)] transition-transform hover:scale-105 text-sm border border-green-600/50 cursor-pointer">
-                Buy Now
-              </button>
+          <div
+            className="w-full bg-[#030816] rounded-2xl overflow-hidden relative shadow-md min-h-[250px] md:min-h-[350px] lg:min-h-[400px] flex items-center"
+            style={brandBanner.image ? {
+              backgroundImage: `linear-gradient(90deg, rgba(3,8,22,.92), rgba(3,8,22,.28)), url("${resolveMediaUrl(brandBanner.image)}")`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            } : undefined}
+          >
+            {!brandBanner.image && <div className="absolute inset-0 bg-gradient-to-r from-[#030816] via-[#091530] to-[#030816]" />}
+            <div className="relative z-10 p-8 md:p-16 max-w-2xl text-white">
+              <p className="font-medium tracking-[0.2em] text-sm mb-4">{brandBanner.brandName}</p>
+              <h3 className="text-4xl md:text-6xl font-black uppercase tracking-tight">{brandBanner.title}</h3>
+              <p className="text-[#8fb0ff] font-black text-xl md:text-3xl tracking-[0.15em] uppercase mt-2">{brandBanner.subtitle}</p>
+              <Link to={brandBanner.href || '/shop'} className="inline-flex bg-[#15803d] hover:bg-[#166534] text-white font-bold py-2.5 px-8 rounded mt-8 shadow-lg transition-transform hover:scale-105 text-sm">
+                {brandBanner.buttonText || 'Buy Now'}
+              </Link>
             </div>
           </div>
         </AnimatedSection>
@@ -613,10 +587,10 @@ export default function Home() {
             <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-6 border-b border-gray-800/60">
               <div className="max-w-xl">
                 <span className="text-[#ea364c] font-black text-lg md:text-xl uppercase tracking-wider block mb-1">
-                  CLEARANCE SALE
+                  SPECIAL OFFERS
                 </span>
                 <h3 className="text-3xl sm:text-4xl md:text-5xl font-black text-white uppercase tracking-wider mb-2">
-                  UP TO 50% OFF
+                  EXCLUSIVE DEALS
                 </h3>
                 <p className="text-xs md:text-sm font-bold text-gray-400 uppercase tracking-widest mb-3">
                   TRUSTED BY PROS. MADE FOR WINNERS.
@@ -656,8 +630,11 @@ export default function Home() {
 
             {/* Centered 4 Product Cards Grid */}
             <div className="relative z-10 mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
-              {displayClearance.slice(0, 4).map((product, idx) => (
-                <ProductCard key={product.id || idx} product={product} index={idx} />
+              {displayClearance.map(({ product, offer }, idx) => (
+                <div key={product.id || idx} className="relative">
+                  <ProductCard product={getOfferProduct(product, offer)} index={idx} />
+                  <span className="absolute top-3 left-3 z-10 bg-[#f0364c] text-white text-[10px] font-black uppercase px-2 py-1 rounded-md">{offer.badgeText}</span>
+                </div>
               ))}
             </div>
 
@@ -840,20 +817,21 @@ export default function Home() {
         <AnimatedSection className="max-w-7xl mx-auto px-4 mt-10 md:mt-12 mb-8 md:mb-12">
           <h2 className="text-2xl font-black text-center mb-8 text-gray-900">Our Brands</h2>
           <div className="flex flex-wrap justify-center items-center gap-4 md:gap-6">
-            {(brands && brands.length > 0 ? brands.filter(b => b.visible !== false) : BRANDS).map((brand: any, idx) => (
+            {brands.filter(brand => brand.visible !== false).map((brand, idx) => (
               <div key={brand.id || idx} className="bg-white border border-gray-100 h-[80px] w-[120px] md:w-[160px] rounded-xl flex justify-center items-center cursor-pointer shadow-sm group hover:shadow-md transition-all duration-300 p-3">
                 {brand.image ? (
-                  <img
-                    src={brand.image}
-                    alt={brand.name}
-                    className="max-h-10 max-w-[90px] md:max-w-[120px] object-contain grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                      if (e.currentTarget.parentElement) {
-                        e.currentTarget.parentElement.innerHTML = `<span class="font-black text-[14px] md:text-base text-gray-700 group-hover:text-black transition-colors duration-300">${brand.name}</span>`;
-                      }
-                    }}
-                  />
+                  <>
+                    <img
+                      src={brand.image}
+                      alt={brand.name}
+                      className="max-h-10 max-w-[90px] md:max-w-[120px] object-contain grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500"
+                      onError={event => {
+                        event.currentTarget.classList.add('hidden');
+                        event.currentTarget.nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                    <span className="hidden font-black text-[14px] md:text-base text-gray-700 group-hover:text-black transition-colors duration-300">{brand.name}</span>
+                  </>
                 ) : (
                   <span className="font-black text-[14px] md:text-base text-gray-700 group-hover:text-black transition-colors duration-300">{brand.name}</span>
                 )}

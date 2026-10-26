@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { MOCK_PRODUCTS, BRAND_NEW_CATEGORIES, USED_CATEGORIES } from '../data';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { Product } from '../types';
+import { inferProductType } from '../lib/productClassification';
 import {
   getAllUsersFromDb,
   fetchProducts,
@@ -55,6 +55,15 @@ export interface HomePromoCard {
   description: string;
   image: string;
   alt: string;
+  buttonText: string;
+  href: string;
+}
+
+export interface BrandBanner {
+  brandName: string;
+  title: string;
+  subtitle: string;
+  image: string;
   buttonText: string;
   href: string;
 }
@@ -120,6 +129,8 @@ export interface AdminCategory {
   img: string;
   type: 'brand-new' | 'used';
   group?: 'components' | 'accessories' | 'used';
+  productType?: 'pc' | 'laptop' | 'other';
+  productTypeManual?: boolean;
 }
 
 export interface PaymentOption {
@@ -162,12 +173,16 @@ interface AdminContextType {
   setPcBuildCards: (cards: PcBuildCard[]) => void;
   homePromoCards: HomePromoCard[];
   setHomePromoCards: (cards: HomePromoCard[]) => void;
+  brandBanner: BrandBanner;
+  setBrandBanner: (banner: BrandBanner) => void;
   brands: Brand[];
   setBrands: (brands: Brand[]) => void;
   saveSettings: () => Promise<void>;
   // Live items
   products: AdminProductItem[];
   setProducts: (products: AdminProductItem[]) => void;
+  productsLoading: boolean;
+  productsError: string | null;
   orders: AdminOrder[];
   setOrders: (orders: AdminOrder[]) => void;
   users: AdminUser[];
@@ -296,11 +311,22 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [featuredImages, setFeaturedImages] = useState<FeaturedImage[]>(DEFAULT_FEATURED_IMAGES);
   const [pcBuildCards, setPcBuildCards] = useState<PcBuildCard[]>(DEFAULT_PC_BUILD_CARDS);
   const [homePromoCards, setHomePromoCards] = useState<HomePromoCard[]>(DEFAULT_HOME_PROMO_CARDS);
+  const [brandBanner, setBrandBanner] = useState<BrandBanner>({
+    brandName: 'HAYLOU',
+    title: 'Escort Extreme',
+    subtitle: 'Adventure',
+    image: '',
+    buttonText: 'Buy Now',
+    href: '/shop?search=Haylou',
+  });
   const [brands, setBrands] = useState<Brand[]>(() => loadState('admin_brands', []));
-  const [products, setProducts] = useState<AdminProductItem[]>(() => loadState('admin_products', MOCK_PRODUCTS));
+  const [products, setProducts] = useState<AdminProductItem[]>([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [productsError, setProductsError] = useState<string | null>(null);
+  const productsRefreshRef = useRef<Promise<void> | null>(null);
   const [orders, setOrders] = useState<AdminOrder[]>(() => loadState('admin_orders', DEFAULT_ORDERS));
   const [users, setUsers] = useState<AdminUser[]>(() => loadState('admin_users', DEFAULT_USERS));
-  const [categories, setCategories] = useState<AdminCategory[]>(() => loadState('admin_categories', [...BRAND_NEW_CATEGORIES, ...USED_CATEGORIES]));
+  const [categories, setCategories] = useState<AdminCategory[]>([]);
   const [paymentOptions, setPaymentOptions] = useState<PaymentOption[]>(() => loadState('admin_payments', DEFAULT_PAYMENTS));
   const [specialOffers, setSpecialOffers] = useState<SpecialOffer[]>(() => loadState('admin_offers', DEFAULT_SPECIAL_OFFERS));
   const [specialOffersDeadline, setSpecialOffersDeadline] = useState<string>(() => loadState('admin_offers_deadline', ''));
@@ -331,41 +357,73 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, []);
 
   // 1. Refresh Products from MongoDB
-  const refreshProducts = async () => {
-    try {
-      const res = await fetchProducts({ limit: 'all' });
-      if (res.products && res.products.length > 0) {
-        const mapped = res.products.map(p => ({
+  const refreshProducts = () => {
+    if (productsRefreshRef.current) return productsRefreshRef.current;
+
+    const refreshPromise = (async () => {
+      setProductsLoading(true);
+      setProductsError(null);
+      try {
+        const pageSize = 100;
+        const firstPage = await fetchProducts({ page: 1, limit: pageSize });
+        const mapProducts = (items: any[]) => items.map(p => ({
           ...p,
           id: p._id || p.id,
           isNew: p.isNewProduct !== undefined ? p.isNewProduct : p.isNew,
         }));
-        setProducts(mapped);
-        localStorage.setItem('admin_products', JSON.stringify(mapped));
+        const firstProducts = mapProducts(firstPage.products);
+        setProducts(firstProducts);
+        setProductsLoading(false);
+        localStorage.setItem('admin_products', JSON.stringify(firstProducts));
+
+        const totalPages = firstPage.pagination?.pages || 1;
+        for (let page = 2; page <= totalPages; page += 4) {
+          const pages = Array.from({ length: Math.min(4, totalPages - page + 1) }, (_, index) => page + index);
+          const results = await Promise.all(pages.map(currentPage =>
+            fetchProducts({ page: currentPage, limit: pageSize })
+          ));
+          const batchProducts = results.flatMap(result => mapProducts(result.products));
+          setProducts(previous => {
+            const byId = new Map(previous.map(product => [product.id, product]));
+            batchProducts.forEach(product => byId.set(product.id, product));
+            const updated = Array.from(byId.values());
+            localStorage.setItem('admin_products', JSON.stringify(updated));
+            return updated;
+          });
+        }
+      } catch (e) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        console.error('Error refreshing products:', e);
+        setProductsError(message);
+      } finally {
+        setProductsLoading(false);
       }
-    } catch (e) {
-      console.warn('Error refreshing products:', e);
-    }
+    })();
+    productsRefreshRef.current = refreshPromise;
+    void refreshPromise.finally(() => {
+      productsRefreshRef.current = null;
+    });
+    return refreshPromise;
   };
 
   // 2. Refresh Categories from MongoDB
   const refreshCategories = async () => {
     try {
       const cats = await fetchCategories();
-      if (cats && cats.length > 0) {
-        const mapped: AdminCategory[] = cats.map(c => ({
-          id: c._id || c.id,
-          _id: c._id,
-          name: c.name,
-          slug: c.slug,
-          count: c.count || 0,
-          img: resolveMediaUrl(c.img),
-          type: c.type || 'brand-new',
-          group: c.group || (c.type === 'used' ? 'used' : 'components'),
-        }));
-        setCategories(mapped);
-        localStorage.setItem('admin_categories', JSON.stringify(mapped));
-      }
+      const mapped: AdminCategory[] = cats.map(c => ({
+        id: c._id || c.id,
+        _id: c._id,
+        name: c.name,
+        slug: c.slug,
+        count: c.count || 0,
+        img: resolveMediaUrl(c.img),
+        type: c.type || 'brand-new',
+        group: c.group || (c.type === 'used' ? 'used' : 'components'),
+        productType: c.productTypeManual ? c.productType : inferProductType('', c.name),
+        productTypeManual: Boolean(c.productTypeManual),
+      }));
+      setCategories(mapped);
+      localStorage.setItem('admin_categories', JSON.stringify(mapped));
     } catch (e) {
       console.warn('Error refreshing categories:', e);
     }
@@ -375,7 +433,7 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const refreshBrands = async () => {
     try {
       const bList = await fetchBrands();
-      if (bList && bList.length > 0) {
+      {
         const mapped: Brand[] = bList.map(b => ({
           id: b._id || b.id,
           _id: b._id,
@@ -544,6 +602,9 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       count: saved.count || 0,
       img: saved.img || '',
       type: saved.type || 'brand-new',
+      group: saved.group,
+      productType: saved.productTypeManual ? saved.productType : inferProductType('', saved.name),
+      productTypeManual: Boolean(saved.productTypeManual),
     };
     setCategories(prev => {
       const updated = editId ? prev.map(c => c.id === editId ? formatted : c) : [...prev, formatted];
@@ -632,6 +693,17 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       if (Array.isArray(settings.homePromoCards) && settings.homePromoCards.length > 0) {
         setHomePromoCards((settings.homePromoCards as HomePromoCard[]).map(card => ({ ...card, image: resolveMediaUrl(card.image) })));
       }
+      if (settings.brandBanner && typeof settings.brandBanner === 'object') {
+        const banner = settings.brandBanner as Partial<BrandBanner>;
+        setBrandBanner({
+          brandName: banner.brandName || 'HAYLOU',
+          title: banner.title || '',
+          subtitle: banner.subtitle || '',
+          image: resolveMediaUrl(banner.image || ''),
+          buttonText: banner.buttonText || 'Buy Now',
+          href: banner.href || '/shop?search=Haylou',
+        });
+      }
       if (Array.isArray(settings.accessories) && settings.accessories.length > 0) {
         setAccessories((settings.accessories as Accessory[]).map(accessory => ({ ...accessory, image: resolveMediaUrl(accessory.image) })));
       }
@@ -663,6 +735,7 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     localStorage.setItem('admin_featuredImages', JSON.stringify(featuredImages));
     localStorage.setItem('admin_pcBuildCards', JSON.stringify(pcBuildCards));
     localStorage.setItem('admin_homePromoCards', JSON.stringify(homePromoCards));
+    localStorage.setItem('admin_brandBanner', JSON.stringify(brandBanner));
     localStorage.setItem('admin_brands', JSON.stringify(brands));
     localStorage.setItem('admin_products', JSON.stringify(products));
     localStorage.setItem('admin_orders', JSON.stringify(orders));
@@ -675,7 +748,7 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     localStorage.setItem('admin_address', JSON.stringify(storeAddress));
     localStorage.setItem('admin_bestsellers', JSON.stringify(bestSellerIds));
     const saved = await saveHomeSettingsApi({
-      heroImages, featuredImages, pcBuildCards, homePromoCards,
+      heroImages, featuredImages, pcBuildCards, homePromoCards, brandBanner,
       accessories, bestSellerIds, whatsappNumber, storeAddress,
       specialOffers, specialOffersDeadline,
     });
@@ -690,9 +763,10 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       featuredImages, setFeaturedImages,
       pcBuildCards, setPcBuildCards,
       homePromoCards, setHomePromoCards,
+      brandBanner, setBrandBanner,
       brands, setBrands,
       saveSettings,
-      products, setProducts,
+      products, setProducts, productsLoading, productsError,
       orders, setOrders,
       users, setUsers,
       categories, setCategories,

@@ -3,6 +3,8 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 export interface ICategory extends Document {
   name: string;
   slug: string;
+  productType?: 'pc' | 'laptop' | 'other';
+  productTypeManual?: boolean;
   type: 'brand-new' | 'used';
   group?: 'components' | 'accessories' | 'used';
   count: number;
@@ -15,6 +17,11 @@ const CategorySchema = new Schema<ICategory>(
   {
     name: { type: String, required: true, trim: true, unique: true },
     slug: { type: String, required: true, trim: true, unique: true, lowercase: true },
+    productType: {
+      type: String,
+      enum: ['pc', 'laptop', 'other'],
+    },
+    productTypeManual: { type: Boolean, default: false },
     type: {
       type: String,
       enum: ['brand-new', 'used'],

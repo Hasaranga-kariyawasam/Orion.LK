@@ -26,6 +26,14 @@ export interface HomeSettingsPayload {
   featuredImages: unknown[];
   pcBuildCards: unknown[];
   homePromoCards: unknown[];
+  brandBanner: {
+    brandName: string;
+    title: string;
+    subtitle: string;
+    image: string;
+    buttonText: string;
+    href: string;
+  };
   accessories: unknown[];
   bestSellerIds: string[];
   whatsappNumber: string;
@@ -420,15 +428,15 @@ export async function fetchProducts(params?: {
     const queryString = searchParams.toString();
     const url = `${API_BASE_URL}/api/products${queryString ? `?${queryString}` : ''}`;
     const res = await fetch(url);
-    if (!res.ok) return { products: [] };
+    if (!res.ok) throw new Error(`Failed to load products (${res.status})`);
     const data = await res.json();
     return {
       products: (data.products || []).map(normalizeProductMedia),
       pagination: data.pagination,
     };
   } catch (err) {
-    console.warn('fetchProducts error:', err);
-    return { products: [] };
+    console.error('fetchProducts error:', err);
+    throw err;
   }
 }
 

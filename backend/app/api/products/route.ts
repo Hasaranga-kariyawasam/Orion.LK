@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Product from '@/models/Product';
+import { inferProductType } from '@/lib/product-classification';
 
 /**
  * GET /api/products
@@ -68,9 +69,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Name, category, and price are required' }, { status: 400 });
     }
 
+    body.productType = body.productType || inferProductType(body.name, body.category);
+
     // Support both isNew and isNewProduct
     if (body.isNew !== undefined && body.isNewProduct === undefined) {
       body.isNewProduct = body.isNew;
+    }
+    if (body.isNewProduct === undefined) {
+      body.isNewProduct = !/^used\s/i.test(body.category);
     }
 
     const product = await Product.create(body);

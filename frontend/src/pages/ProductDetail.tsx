@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { MOCK_PRODUCTS, formatLKR } from '../data';
+import { formatLKR } from '../data';
 import { useShop } from '../context/ShopContext';
 import { useAdmin } from '../context/AdminContext';
 import { fetchProductById } from '../lib/api';
@@ -19,9 +19,7 @@ export default function ProductDetail() {
   const { products } = useAdmin();
   const navigate = useNavigate();
 
-  const [product, setProduct] = useState<any>(() => {
-    return products.find(p => p.id === id || (p as any)._id === id) || products[0] || MOCK_PRODUCTS[0];
-  });
+  const [product, setProduct] = useState<any>(null);
 
   const [activeTab, setActiveTab] = useState<'description' | 'shipping' | 'reviews'>('description');
   const [isLoading, setIsLoading] = useState(true);
@@ -42,8 +40,8 @@ export default function ProductDetail() {
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
 
   const { addToCart, toggleWishlist, isInWishlist, toggleCompare, isInCompare, setIsCartOpen } = useShop();
-  const inWishlist = isInWishlist(product.id);
-  const inCompare = isInCompare(product.id);
+  const inWishlist = product ? isInWishlist(product.id) : false;
+  const inCompare = product ? isInCompare(product.id) : false;
 
   useEffect(() => {
     let isMounted = true;
@@ -70,7 +68,7 @@ export default function ProductDetail() {
         }
       }
       if (isMounted) {
-        setProduct(products[0] || MOCK_PRODUCTS[0]);
+        setProduct(null);
         setIsLoading(false);
       }
     };
@@ -137,12 +135,24 @@ export default function ProductDetail() {
     setTimeout(() => setReviewSubmitted(false), 4000);
   };
 
-  const relatedProducts = products
+  const relatedProducts = product ? products
     .filter(p => p.category === product.category && (p.id !== product.id && (p as any)._id !== product.id))
-    .slice(0, 4);
+    .slice(0, 4) : [];
 
-  if (isLoading || !product) {
+  if (isLoading) {
     return <ProductDetailSkeleton />;
+  }
+
+  if (!product) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 text-center px-4">
+        <h1 className="text-2xl font-black text-gray-900">Product not found</h1>
+        <p className="text-gray-500">This product is no longer available.</p>
+        <Link to="/shop" className="rounded-xl bg-[#161B22] px-5 py-3 text-sm font-bold text-white">
+          Browse products
+        </Link>
+      </div>
+    );
   }
 
   return (

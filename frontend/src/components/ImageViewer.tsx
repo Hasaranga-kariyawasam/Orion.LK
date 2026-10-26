@@ -2,8 +2,6 @@ import React, { useState, useRef } from 'react';
 import { Maximize2, ChevronUp, ChevronDown, X } from 'lucide-react';
 import { resolveMediaUrl } from '../lib/api';
 
-const FALLBACK_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&q=80&w=600';
-
 interface ImageViewerProps {
   images: string[];
   productName: string;
@@ -12,7 +10,7 @@ interface ImageViewerProps {
 
 const ImageViewer: React.FC<ImageViewerProps> = ({ images: rawImages, productName, discount }) => {
   const resolvedImages = rawImages.map(resolveMediaUrl).filter(Boolean);
-  const images = resolvedImages.length > 0 ? resolvedImages : [FALLBACK_PRODUCT_IMAGE];
+  const images = resolvedImages;
   const [activeIndex, setActiveIndex] = useState(0);
   const [isFullScreen, setIsFullScreen] = useState(false);
   
@@ -69,15 +67,19 @@ const ImageViewer: React.FC<ImageViewerProps> = ({ images: rawImages, productNam
           className="flex-1 bg-[#f4f5f7] rounded-3xl w-full aspect-square md:aspect-[4/3] flex items-center justify-center relative overflow-hidden group shadow-sm cursor-crosshair"
         >
           {/* Main Image with Zoom */}
-          <img 
-            src={activeImage} 
-            alt={productName} 
-            style={{ 
-              transformOrigin: `${mousePos.x}% ${mousePos.y}%`,
-              transform: isHovering ? 'scale(2.2)' : 'scale(1)',
-            }}
-            className="w-[85%] h-[85%] object-contain mix-blend-multiply transition-transform duration-300 ease-out" 
-          />
+          {activeImage ? (
+            <img
+              src={activeImage}
+              alt={productName}
+              style={{
+                transformOrigin: `${mousePos.x}% ${mousePos.y}%`,
+                transform: isHovering ? 'scale(2.2)' : 'scale(1)',
+              }}
+              className="w-[85%] h-[85%] object-contain mix-blend-multiply transition-transform duration-300 ease-out"
+            />
+          ) : (
+            <span className="text-sm text-gray-400">No image available</span>
+          )}
 
           {/* Badges */}
           {discount && (
@@ -87,18 +89,18 @@ const ImageViewer: React.FC<ImageViewerProps> = ({ images: rawImages, productNam
           )}
 
           {/* Expand Button */}
-          <button 
+          {activeImage && <button
             onClick={(e) => { e.stopPropagation(); setIsFullScreen(true); }}
             className="absolute bottom-6 left-6 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-lg hover:scale-110 hover:text-gray-900 transition-all z-10"
             title="Full Screen"
           >
             <Maximize2 size={20} strokeWidth={2.5} />
-          </button>
+          </button>}
         </div>
       </div>
 
       {/* Fullscreen Modal */}
-      {isFullScreen && (
+      {isFullScreen && activeImage && (
         <div className="fixed inset-0 z-[100] bg-white/95 backdrop-blur-sm flex items-center justify-center p-4">
           <button 
             onClick={() => setIsFullScreen(false)}

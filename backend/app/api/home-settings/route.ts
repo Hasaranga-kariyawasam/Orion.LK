@@ -37,6 +37,7 @@ export async function PUT(req: NextRequest) {
           featuredImages: Array.isArray(body.featuredImages) ? body.featuredImages : [],
           pcBuildCards: Array.isArray(body.pcBuildCards) ? body.pcBuildCards : [],
           homePromoCards: Array.isArray(body.homePromoCards) ? body.homePromoCards : [],
+          brandBanner: body.brandBanner && typeof body.brandBanner === 'object' ? body.brandBanner : {},
           accessories: Array.isArray(body.accessories) ? body.accessories : [],
           bestSellerIds: Array.isArray(body.bestSellerIds) ? body.bestSellerIds : [],
           whatsappNumber: String(body.whatsappNumber || ''),

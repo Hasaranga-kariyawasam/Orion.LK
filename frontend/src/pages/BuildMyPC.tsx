@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useShop } from '../context/ShopContext';
 import { motion } from 'motion/react';
 import { ChevronRight, Settings, Download, ShoppingCart, Trash2, Cpu, HardDrive, MemoryStick, Maximize, Box, Battery, Wind, Server, Monitor, Keyboard, Mouse, PlusCircle, Search } from 'lucide-react';
-import { formatLKR, MOCK_PRODUCTS } from '../data';
+import { formatLKR } from '../data';
+import { useAdmin } from '../context/AdminContext';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -31,9 +32,10 @@ export default function BuildMyPC() {
   const [showAI, setShowAI] = useState(false);
   const [showSavedBuilds, setShowSavedBuilds] = useState(false);
   const { savedBuilds, saveBuild, loadBuild, deleteSavedBuild, setBuildItems } = useShop();
+  const { products } = useAdmin();
 
   // Find products matching active category
-  const availableProducts = MOCK_PRODUCTS.filter(p =>
+  const availableProducts = products.filter(p =>
     activeCategory.keywords.some(kw => p.name.toLowerCase().includes(kw.toLowerCase()) || p.category.toLowerCase().includes(kw.toLowerCase()))
   ).filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
 

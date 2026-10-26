@@ -2,6 +2,7 @@ export interface Product {
   id: string;
   name: string;
   category: string;
+  productType?: ProductType;
   price: number;
   originalPrice?: number;
   rating: number;
@@ -9,6 +10,7 @@ export interface Product {
   image: string;
   images?: string[];
   isNew?: boolean;
+  isNewProduct?: boolean;
   discount?: number;
   status?: 'Pending' | 'Processing' | 'Delivered' | 'In Stock' | 'Out of Stock' | 'Sold Out';
   shortDescription?: string;
@@ -20,8 +22,12 @@ export interface Product {
   specifications?: Record<string, string>;
 }
 
+export type ProductType = 'pc' | 'laptop' | 'other';
+
 export interface Category {
   id: string;
   name: string;
   icon?: any;
+  productType?: ProductType;
+  type?: 'brand-new' | 'used';
 }

@@ -4,7 +4,7 @@ import ProductCard from '../components/ProductCard';
 import ProductCardSkeleton from '../components/ProductCardSkeleton';
 import { useAdmin } from '../context/AdminContext';
 import { ChevronRight, Filter, X, SlidersHorizontal, ChevronDown, Search } from 'lucide-react';
-import { BRAND_NEW_CATEGORIES, USED_CATEGORIES } from '../data';
+import { getProductType, isUsedProduct, PRODUCT_TYPES } from '../lib/productClassification';
 
 const ITEMS_PER_PAGE = 16;
 
@@ -12,11 +12,11 @@ export default function Shop() {
   const [searchParams, setSearchParams] = useSearchParams();
   const categoryParam = searchParams.get('category');
   const typeParam = searchParams.get('type');
+  const productTypeParam = searchParams.get('productType');
   const searchParam = searchParams.get('search');
 
-  const { products, categories } = useAdmin();
+  const { products, categories, productsLoading, productsError, refreshProducts } = useAdmin();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1500000]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -28,39 +28,39 @@ export default function Shop() {
   );
 
   useEffect(() => {
-    setIsLoading(true);
-    const timer = setTimeout(() => setIsLoading(false), 300);
-    return () => clearTimeout(timer);
-  }, [categoryParam, searchParams, products]);
+    setSelectedCategoryType(typeParam === 'used' ? 'used' : typeParam === 'brand-new' ? 'brand-new' : 'all');
+  }, [typeParam]);
 
   // Reset page to 1 whenever filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [categoryParam, selectedCategoryType, selectedBrands, selectedTags, priceRange, searchParam, sortBy]);
 
-  const allCategories = useMemo(() => {
-    if (categories && categories.length > 0) return categories;
-    return [
-      ...BRAND_NEW_CATEGORIES.map((c, i) => ({ id: `bn-${i}`, name: c.name, count: c.count, img: c.img, type: 'brand-new' as const })),
-      ...USED_CATEGORIES.map((c, i) => ({ id: `u-${i}`, name: c.name, count: c.count, img: c.img, type: 'used' as const })),
-    ];
-  }, [categories]);
+  const allCategories = categories;
 
   const displayedCategories = useMemo(() => {
-    if (selectedCategoryType === 'all') return allCategories;
-    return allCategories.filter(c => c.type === selectedCategoryType);
-  }, [allCategories, selectedCategoryType]);
+    return allCategories.filter(c =>
+      (!productTypeParam || getProductType(c.productType, '', c.name) === productTypeParam) &&
+      (selectedCategoryType === 'all' || c.type === selectedCategoryType)
+    );
+  }, [allCategories, selectedCategoryType, productTypeParam]);
 
   const productsInCategory = useMemo(() => {
     return products.filter(p => {
       if (categoryParam && categoryParam !== 'All' && categoryParam !== 'all') {
         if (p.category?.toLowerCase() !== categoryParam.toLowerCase()) return false;
       }
-      if (selectedCategoryType === 'used') {
-        if (!p.category?.toLowerCase().includes('used') && p.isNewProduct !== false) return false;
-      } else if (selectedCategoryType === 'brand-new') {
-        if (p.category?.toLowerCase().includes('used')) return false;
-      }
+      const matchingCategory = categories.find(c => c.name.toLowerCase() === p.category?.toLowerCase());
+      const productType = getProductType(
+        matchingCategory?.productType || p.productType,
+        p.name,
+        p.category,
+        matchingCategory?.productTypeManual,
+      );
+      if (productTypeParam && productType !== productTypeParam) return false;
+      const isUsed = isUsedProduct(p, matchingCategory?.type);
+      if (selectedCategoryType === 'used' && !isUsed) return false;
+      if (selectedCategoryType === 'brand-new' && isUsed) return false;
       if (searchParam && searchParam.trim()) {
         const q = searchParam.toLowerCase().trim();
         const match = p.name.toLowerCase().includes(q) ||
@@ -71,7 +71,7 @@ export default function Shop() {
       }
       return true;
     });
-  }, [products, categoryParam, selectedCategoryType, searchParam]);
+  }, [products, categories, categoryParam, productTypeParam, selectedCategoryType, searchParam]);
 
   const availableBrands = useMemo(() => {
     const s = new Set<string>();
@@ -131,9 +131,24 @@ export default function Shop() {
     setSelectedCategoryType('all');
   };
 
+  const setConditionFilter = (type: 'all' | 'brand-new' | 'used') => {
+    const params = new URLSearchParams(searchParams);
+    if (type === 'all') params.delete('type');
+    else params.set('type', type);
+    setSearchParams(params);
+    setSelectedCategoryType(type);
+  };
+
+  const setProductTypeFilter = (productType: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (productType === 'all') params.delete('productType');
+    else params.set('productType', productType);
+    setSearchParams(params);
+  };
+
   const activeFilterCount = selectedBrands.length + selectedTags.length +
     (priceRange[1] < 1500000 ? 1 : 0) + (categoryParam ? 1 : 0) +
-    (selectedCategoryType !== 'all' ? 1 : 0);
+    (selectedCategoryType !== 'all' ? 1 : 0) + (productTypeParam ? 1 : 0);
 
   const sortLabels: Record<string, string> = {
     default: 'Default Sorting',
@@ -152,13 +167,32 @@ export default function Shop() {
           {(['all', 'brand-new', 'used'] as const).map(type => (
             <button
               key={type}
-              onClick={() => setSelectedCategoryType(type)}
+              onClick={() => setConditionFilter(type)}
               className={`flex-1 py-2 rounded-lg transition-all duration-200 capitalize ${selectedCategoryType === type
                 ? 'bg-[#161B22] text-white font-black'
                 : 'text-gray-600 hover:text-[#15803d]'
                 }`}
             >
               {type === 'brand-new' ? 'New' : type === 'all' ? 'All' : 'Used'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Product type */}
+      <div>
+        <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-wider mb-3">Product Type</h3>
+        <div className="flex flex-wrap gap-1.5">
+          {(['all', ...PRODUCT_TYPES] as const).map(productType => (
+            <button
+              key={productType}
+              onClick={() => setProductTypeFilter(productType)}
+              className={`px-3 py-2 rounded-lg text-xs font-bold capitalize transition-all ${(!productTypeParam && productType === 'all') || productTypeParam === productType
+                ? 'bg-[#161B22] text-white'
+                : 'bg-gray-100 text-gray-600 hover:text-[#15803d]'
+              }`}
+            >
+              {productType === 'all' ? 'All' : productType === 'pc' ? 'PC' : productType}
             </button>
           ))}
         </div>
@@ -182,7 +216,7 @@ export default function Shop() {
           </button>
           {displayedCategories.map(cat => {
             const isSelected = categoryParam?.toLowerCase() === cat.name.toLowerCase();
-            const catCount = products.filter(p => p.category?.toLowerCase() === cat.name.toLowerCase()).length;
+            const catCount = productsInCategory.filter(p => p.category?.toLowerCase() === cat.name.toLowerCase()).length;
             return (
               <button
                 key={cat.id || cat.name}
@@ -288,15 +322,15 @@ export default function Shop() {
             <Link to="/" className="hover:text-black transition-colors font-bold">Home</Link>
             <ChevronRight size={13} className="text-gray-400" />
             <span className="text-gray-900 font-bold">Shop</span>
-            {categoryParam && (
+            {(categoryParam || productTypeParam) && (
               <>
                 <ChevronRight size={13} className="text-gray-400" />
-                <span className="text-[#ea364c] font-bold">{categoryParam}</span>
+                <span className="text-[#ea364c] font-bold capitalize">{categoryParam || (productTypeParam === 'pc' ? 'PC' : productTypeParam)}</span>
               </>
             )}
           </div>
           <span className="text-xs text-gray-500 font-medium hidden md:block">
-            {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''} found
+            {productsLoading ? 'Loading products...' : `${filteredProducts.length} product${filteredProducts.length !== 1 ? 's' : ''} found`}
           </span>
         </div>
       </div>
@@ -402,10 +436,21 @@ export default function Shop() {
           </div>
 
           {/* Grid */}
-          {isLoading ? (
+          {productsLoading ? (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-xs flex flex-col items-center justify-center py-28 min-h-[400px]">
               <div className="loader mb-4 text-[#161B22]" />
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Loading Products...</p>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Loading products from the database...</p>
+            </div>
+          ) : productsError ? (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-xs flex flex-col items-center justify-center py-20 px-6 min-h-[300px] text-center">
+              <p className="text-sm font-bold text-gray-800">Could not load products from the database.</p>
+              <p className="mt-2 text-xs text-gray-500">{productsError}</p>
+              <button
+                onClick={() => void refreshProducts()}
+                className="mt-5 rounded-xl bg-[#161B22] px-5 py-2.5 text-xs font-bold text-white"
+              >
+                Try again
+              </button>
             </div>
           ) : paginatedProducts.length > 0 ? (
             <>

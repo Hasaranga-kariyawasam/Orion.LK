@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Upload, X, Plus, Trash2, Hash, ChevronDown, Loader2 } from 'lucide-react';
 import { useAdmin, AdminProductItem } from '../../context/AdminContext';
-import { BRAND_NEW_CATEGORIES, USED_CATEGORIES } from '../../data';
 import { uploadImageToServer } from '../../lib/api';
+import { getProductType, isUsedProduct, PRODUCT_TYPES } from '../../lib/productClassification';
 
 const WARRANTY_OPTIONS = ['No Warranty', '3 Months', '6 Months', '12 Months', '18 Months', '24 Months', '36 Months', 'Lifetime', 'Custom'];
 const COLOR_OPTIONS = ['Black', 'White', 'Silver', 'Grey', 'Red', 'Blue', 'Green', 'Gold', 'Rose Gold', 'Space Grey', 'Navy Blue', 'Orange'];
@@ -13,11 +13,6 @@ const SPEC_TEMPLATES: Record<string, string[]> = {
   'Monitors': ['Panel Type', 'Screen Size', 'Resolution', 'Refresh Rate', 'Response Time', 'Brightness', 'Contrast Ratio', 'Ports'],
   'Keyboards': ['Switch Type', 'Layout', 'Connectivity', 'Backlight', 'Anti-Ghosting', 'Keycaps Material'],
 };
-
-const DEFAULT_ALL_CATEGORIES = [
-  ...BRAND_NEW_CATEGORIES.map(c => ({ name: c.name, type: 'Brand New' })),
-  ...USED_CATEGORIES.map(c => ({ name: c.name, type: 'Used' })),
-];
 
 interface AddItemProps {
   onBack: () => void;
@@ -31,7 +26,15 @@ export default function AdminAddItem({ onBack, editId }: AddItemProps) {
   const [name, setName] = useState(existingProduct?.name || '');
   const [brand, setBrand] = useState(existingProduct?.brand || '');
   const [categoryType, setCategoryType] = useState<'Brand New' | 'Used'>(
-    existingProduct?.category?.toLowerCase().includes('used') ? 'Used' : 'Brand New'
+    existingProduct && isUsedProduct(
+      existingProduct,
+      categories.find(c => c.name.toLowerCase() === existingProduct.category.toLowerCase())?.type,
+    )
+      ? 'Used'
+      : 'Brand New'
+  );
+  const [productType, setProductType] = useState(() =>
+    getProductType(existingProduct?.productType, existingProduct?.name || '', existingProduct?.category || '')
   );
   const [category, setCategory] = useState(existingProduct?.category || '');
   const [newCategory, setNewCategory] = useState('');
@@ -64,18 +67,22 @@ export default function AdminAddItem({ onBack, editId }: AddItemProps) {
   const [uploadingImage, setUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const allCategoryList = categories.length > 0
-    ? categories.map(c => ({ name: c.name, type: c.type === 'used' ? 'Used' : 'Brand New' }))
-    : DEFAULT_ALL_CATEGORIES;
+  const allCategoryList = categories.map(c => ({
+      name: c.name,
+      type: c.type === 'used' ? 'Used' : 'Brand New',
+      productType: getProductType(c.productType, '', c.name, c.productTypeManual),
+    }));
 
-  const filteredCategories = allCategoryList.filter(c => c.type === categoryType);
+  const filteredCategories = allCategoryList.filter(c =>
+    c.type === categoryType && c.productType === productType
+  );
 
   // Auto-select initial category if none chosen
   useEffect(() => {
     if (!category && filteredCategories.length > 0) {
       setCategory(filteredCategories[0].name);
     }
-  }, [categoryType, categories]);
+  }, [categoryType, productType, categories]);
 
   // Auto-load spec template when category changes
   useEffect(() => {
@@ -142,6 +149,10 @@ export default function AdminAddItem({ onBack, editId }: AddItemProps) {
       alert('Please enter a price');
       return;
     }
+    if (images.length === 0) {
+      alert('Please upload at least one product image');
+      return;
+    }
     setSaving(true);
     try {
       const finalCategory = showNewCategory && newCategory ? newCategory : category || (filteredCategories[0]?.name || 'General');
@@ -153,12 +164,13 @@ export default function AdminAddItem({ onBack, editId }: AddItemProps) {
         name: name.trim(),
         brand: brand.trim() || 'Orion LK',
         category: finalCategory,
+        productType,
         price: parseFloat(price) || 0,
         originalPrice: originalPrice ? parseFloat(originalPrice) : undefined,
         discount: discount ? parseInt(discount) : undefined,
         rating: existingProduct?.rating || 4.8,
         reviews: existingProduct?.reviews || 12,
-        image: images[0]?.url || 'https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&q=80&w=600',
+        image: images[0].url,
         images: images.map(i => i.url),
         isNewProduct: categoryType === 'Brand New',
         isNew: categoryType === 'Brand New',
@@ -226,6 +238,17 @@ export default function AdminAddItem({ onBack, editId }: AddItemProps) {
             {/* Category */}
             <div>
               <label className={labelCls}>Category *</label>
+              <div className="flex gap-2 mb-3">
+                {PRODUCT_TYPES.map(type => (
+                  <button
+                    key={type}
+                    onClick={() => { setProductType(type); setCategory(''); }}
+                    className={`px-4 py-2 rounded-xl text-sm font-bold capitalize transition-colors ${productType === type ? 'bg-[#2ee661] text-black' : 'bg-[#0d1117] border border-[#30363D] text-gray-400'}`}
+                  >
+                    {type === 'pc' ? 'PC' : type}
+                  </button>
+                ))}
+              </div>
               <div className="flex gap-3 mb-3">
                 {(['Brand New', 'Used'] as const).map(t => (
                   <button key={t} onClick={() => { setCategoryType(t); setCategory(''); }}

@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Upload, Trash2, Plus, Video, Image as ImageIcon, Phone, MapPin, Star, X } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
-import { uploadImageToServer } from '../../lib/api';
+import { resolveMediaUrl, uploadImageToServer } from '../../lib/api';
 
 const GRADIENT_PRESETS = [
   'from-purple-800 to-indigo-600',
@@ -20,13 +20,14 @@ export default function AdminHomePage({ onSaved }: { onSaved?: () => void }) {
     featuredImages, setFeaturedImages,
     pcBuildCards, setPcBuildCards,
     homePromoCards, setHomePromoCards,
+    brandBanner, setBrandBanner,
     products, bestSellerIds, setBestSellerIds,
     whatsappNumber, setWhatsappNumber,
     storeAddress, setStoreAddress,
     saveSettings,
   } = useAdmin();
 
-  const [activeTab, setActiveTab] = useState<'hero' | 'featured' | 'pc-builds' | 'promos' | 'video' | 'accessories' | 'bestsellers' | 'contact'>('hero');
+  const [activeTab, setActiveTab] = useState<'hero' | 'brand-banner' | 'featured' | 'pc-builds' | 'promos' | 'video' | 'accessories' | 'bestsellers' | 'contact'>('hero');
   const heroFileRefs = useRef<HTMLInputElement[]>([]);
   const newHeroRef = useRef<HTMLInputElement>(null);
 
@@ -36,6 +37,14 @@ export default function AdminHomePage({ onSaved }: { onSaved?: () => void }) {
   const handleHeroFile = async (i: number, file: File) => {
     try {
       updateHeroImage(i, await uploadImageToServer(file));
+    } catch (err: any) {
+      alert('Image upload failed: ' + (err.message || 'Unknown error'));
+    }
+  };
+  const handleBrandBannerFile = async (file: File) => {
+    try {
+      const image = await uploadImageToServer(file);
+      setBrandBanner({ ...brandBanner, image });
     } catch (err: any) {
       alert('Image upload failed: ' + (err.message || 'Unknown error'));
     }
@@ -74,6 +83,7 @@ export default function AdminHomePage({ onSaved }: { onSaved?: () => void }) {
 
   const tabs = [
     { id: 'hero', label: 'Hero Banner', icon: ImageIcon },
+    { id: 'brand-banner', label: 'Haylou Banner', icon: ImageIcon },
     { id: 'featured', label: 'Featured Images', icon: ImageIcon },
     { id: 'pc-builds', label: 'PC Builds', icon: ImageIcon },
     { id: 'promos', label: 'Promo Cards', icon: ImageIcon },
@@ -141,6 +151,45 @@ export default function AdminHomePage({ onSaved }: { onSaved?: () => void }) {
             className="w-full border-2 border-dashed border-[#30363D] hover:border-[#2ee661]/50 text-gray-600 hover:text-[#2ee661] py-5 rounded-2xl font-bold flex items-center justify-center gap-2 transition-colors text-sm">
             <Plus size={18} /> Add Hero Slide
           </button>
+        </div>
+      )}
+
+      {activeTab === 'brand-banner' && (
+        <div className="space-y-4">
+          <p className="text-gray-500 text-sm">Change the image and content shown in the Haylou banner on the home page.</p>
+          <div className="bg-[#161B22] border border-[#30363D] rounded-2xl p-6 space-y-4">
+            <div className="h-48 rounded-xl bg-[#0d1117] overflow-hidden">
+              {brandBanner.image && <img src={resolveMediaUrl(brandBanner.image)} alt="Home brand banner preview" className="w-full h-full object-cover" />}
+            </div>
+            <div className="flex gap-2">
+              <input value={brandBanner.image} onChange={event => setBrandBanner({ ...brandBanner, image: event.target.value })} placeholder="Banner image URL..." className={`flex-1 ${inputCls}`} />
+              <label className="px-4 py-3 bg-[#0d1117] border border-[#30363D] rounded-xl text-gray-400 hover:text-[#2ee661] hover:border-[#2ee661]/40 transition-colors cursor-pointer">
+                <Upload size={16} />
+                <input type="file" accept="image/*" className="hidden" onChange={event => {
+                  const file = event.target.files?.[0];
+                  if (file) void handleBrandBannerFile(file);
+                  event.target.value = '';
+                }} />
+              </label>
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <label className="text-xs font-bold text-gray-500 uppercase">Brand Name
+                <input value={brandBanner.brandName} onChange={event => setBrandBanner({ ...brandBanner, brandName: event.target.value })} className={`${inputCls} mt-2`} />
+              </label>
+              <label className="text-xs font-bold text-gray-500 uppercase">Title
+                <input value={brandBanner.title} onChange={event => setBrandBanner({ ...brandBanner, title: event.target.value })} className={`${inputCls} mt-2`} />
+              </label>
+              <label className="text-xs font-bold text-gray-500 uppercase">Subtitle
+                <input value={brandBanner.subtitle} onChange={event => setBrandBanner({ ...brandBanner, subtitle: event.target.value })} className={`${inputCls} mt-2`} />
+              </label>
+              <label className="text-xs font-bold text-gray-500 uppercase">Button Text
+                <input value={brandBanner.buttonText} onChange={event => setBrandBanner({ ...brandBanner, buttonText: event.target.value })} className={`${inputCls} mt-2`} />
+              </label>
+              <label className="text-xs font-bold text-gray-500 uppercase md:col-span-2">Button Link
+                <input value={brandBanner.href} onChange={event => setBrandBanner({ ...brandBanner, href: event.target.value })} placeholder="/shop?search=Haylou" className={`${inputCls} mt-2`} />
+              </label>
+            </div>
+          </div>
         </div>
       )}
 

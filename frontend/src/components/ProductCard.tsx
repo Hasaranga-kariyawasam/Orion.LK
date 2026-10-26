@@ -7,8 +7,6 @@ import { formatLKR } from '../data';
 import { useShop } from '../context/ShopContext';
 import { resolveMediaUrl } from '../lib/api';
 
-const FALLBACK_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&q=80&w=600';
-
 const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, index = 0 }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
@@ -22,7 +20,7 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
   const images = (product.images && product.images.length > 0 ? product.images : [product.image])
     .map(resolveMediaUrl)
     .filter(Boolean);
-  const displayImages = images.length > 0 ? images : [FALLBACK_PRODUCT_IMAGE];
+  const displayImages = images;
 
   useEffect(() => {
     if (!isHovered || displayImages.length <= 1) return;
@@ -45,7 +43,7 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
       {/* Top badges & Icons */}
       <div className=" relative z-10">
         <div className="flex flex-col gap-1 items-start absolute left-1 top-2 z-20 ">
-          {product.discount && (
+          {Number(product.discount) > 0 && (
             <span className="bg-[#fc2d3f] text-white text-[11px] font-black px-2 py-1 rounded inline-block tracking-wider uppercase shadow-sm">
               -{product.discount}%
             </span>
@@ -98,17 +96,20 @@ const ProductCard: React.FC<{ product: Product, index?: number }> = ({ product, 
         }}
         onMouseLeave={() => setCurrentImageIndex(0)}
       >
-        <Link to={`/product/${product.id}`} className="w-full h-full block">
-          <img
-            src={displayImages[currentImageIndex]}
-            alt={product.name}
-            className="w-full h-full object-contain transition-transform duration-300 group-hover/image:scale-105"
-            onError={(event) => {
-              event.currentTarget.onerror = null;
-              event.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
-            }}
-          />
-        </Link>
+        {displayImages.length > 0 ? (
+          <Link to={`/product/${product.id}`} className="w-full h-full block">
+            <img
+              src={displayImages[currentImageIndex]}
+              alt={product.name}
+              className="w-full h-full object-contain transition-transform duration-300 group-hover/image:scale-105"
+              onError={(event) => {
+                event.currentTarget.style.display = 'none';
+              }}
+            />
+          </Link>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-sm text-gray-400">No image available</div>
+        )}
 
         {/* Dots */}
         {displayImages.length > 1 && (

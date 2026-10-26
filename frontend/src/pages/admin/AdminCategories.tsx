@@ -2,16 +2,21 @@ import React, { useState, useRef } from 'react';
 import { Plus, Trash2, Edit3, Check, X, Upload, Loader2 } from 'lucide-react';
 import { useAdmin, AdminCategory } from '../../context/AdminContext';
 import { uploadImageToServer } from '../../lib/api';
+import { inferProductType, PRODUCT_TYPES } from '../../lib/productClassification';
 
 export default function AdminCategories() {
   const { categories, saveCategoryToDb, deleteCategoryFromContext } = useAdmin();
   const [activeType, setActiveType] = useState<'brand-new' | 'used'>('brand-new');
+  const [activeProductType, setActiveProductType] = useState<'all' | 'pc' | 'laptop' | 'other'>('all');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
-  const filtered = categories.filter(c => c.type === activeType);
+  const filtered = categories.filter(c =>
+    (c.type || (c.name.toLowerCase().startsWith('used ') ? 'used' : 'brand-new')) === activeType &&
+    (activeProductType === 'all' || (c.productType || inferProductType('', c.name)) === activeProductType)
+  );
 
   const addCategory = async () => {
     const promptName = prompt('Enter Category Name:');
@@ -21,8 +26,10 @@ export default function AdminCategories() {
       await saveCategoryToDb({
         name: promptName.trim(),
         count: 0,
-        img: 'https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&q=80&w=300',
+        img: '',
         type: activeType,
+        productType: activeProductType === 'all' ? inferProductType('', promptName.trim()) : activeProductType,
+        productTypeManual: activeProductType !== 'all',
       });
     } catch (err: any) {
       alert('Error creating category: ' + (err.message || 'Unknown error'));
@@ -88,7 +95,21 @@ export default function AdminCategories() {
         {([['brand-new', '🆕 Brand New'], ['used', '♻️ Used']] as const).map(([type, label]) => (
           <button key={type} onClick={() => setActiveType(type)}
             className={`px-5 py-2 rounded-lg text-sm font-bold transition-colors ${activeType === type ? 'bg-[#2ee661] text-black' : 'text-gray-400 hover:text-white'}`}>
-            {label} <span className="ml-1 opacity-70">({categories.filter(c => c.type === type).length})</span>
+            {label} <span className="ml-1 opacity-70">({categories.filter(c =>
+              (c.type || (c.name.toLowerCase().startsWith('used ') ? 'used' : 'brand-new')) === type
+            ).length})</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="flex gap-1 bg-[#0d1117] border border-[#30363D] rounded-xl p-1 w-fit">
+        {(['all', ...PRODUCT_TYPES] as const).map((productType) => (
+          <button
+            key={productType}
+            onClick={() => setActiveProductType(productType)}
+            className={`px-4 py-2 rounded-lg text-sm font-bold capitalize transition-colors ${activeProductType === productType ? 'bg-[#2ee661] text-black' : 'text-gray-400 hover:text-white'}`}
+          >
+            {productType === 'all' ? 'All types' : productType === 'pc' ? 'PC' : productType}
           </button>
         ))}
       </div>
@@ -125,6 +146,22 @@ export default function AdminCategories() {
                   </div>
                 )}
                 <p className="text-gray-500 text-xs mt-0.5">{cat.count} items</p>
+                <select
+                  value={cat.productType || inferProductType('', cat.name)}
+                  onChange={async e => {
+                    try {
+                      await saveCategoryToDb({ productType: e.target.value, productTypeManual: true }, catId);
+                    } catch (err: any) {
+                      alert('Error updating product type: ' + (err.message || 'Unknown error'));
+                    }
+                  }}
+                  aria-label={`Product type for ${cat.name}`}
+                  className="mt-2 bg-[#0d1117] border border-[#30363D] rounded-lg px-2.5 py-1 text-gray-300 text-xs focus:outline-none focus:border-[#2ee661]/50"
+                >
+                  <option value="pc">PC</option>
+                  <option value="laptop">Laptop</option>
+                  <option value="other">Other</option>
+                </select>
                 <div className="flex items-center gap-2 mt-2">
                   <input
                     value={cat.img}

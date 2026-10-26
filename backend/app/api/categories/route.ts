@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Category from '@/models/Category';
+import { inferProductType } from '@/lib/product-classification';
 
 /**
  * GET /api/categories
@@ -40,6 +41,8 @@ export async function POST(req: NextRequest) {
     if (!body.name) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 });
     }
+
+    body.productType = body.productType || inferProductType('', body.name);
 
     if (!body.slug) {
       body.slug = body.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');

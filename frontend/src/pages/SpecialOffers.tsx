@@ -3,18 +3,17 @@ import { Link } from 'react-router-dom';
 import { ChevronRight, Sparkles, Flame, Clock } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
 import ProductCard from '../components/ProductCard';
-import ProductCardSkeleton from '../components/ProductCardSkeleton';
+import { getActiveSpecialOffers, getOfferProduct } from '../lib/specialOffers';
 
 export default function SpecialOffers() {
   const {
     products,
+    productsLoading,
     specialOffers,
     specialOffersDeadline,
     refreshHomeSettings,
-    refreshProducts,
     homeSettingsReady,
   } = useAdmin();
-  const [productsReady, setProductsReady] = useState(false);
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -23,34 +22,16 @@ export default function SpecialOffers() {
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-
-    const loadOffers = async () => {
-      await Promise.all([refreshHomeSettings(), refreshProducts()]);
-      if (!cancelled) setProductsReady(true);
-    };
-
-    void loadOffers();
+    void refreshHomeSettings();
     const timer = window.setInterval(() => void refreshHomeSettings(), 15000);
     return () => {
-      cancelled = true;
       window.clearInterval(timer);
     };
   }, []);
 
   const deadline = specialOffersDeadline ? new Date(specialOffersDeadline).getTime() : null;
   const hasValidDeadline = deadline !== null && Number.isFinite(deadline);
-  const activeOffers = specialOffers.filter(offer => {
-    if (!offer.enabled) return false;
-    return !hasValidDeadline || now < deadline;
-  });
-  const discountedProducts = activeOffers
-    .map(offer => {
-      const productId = String(offer.productId);
-      const product = products.find(item => String(item.id) === productId || String(item._id) === productId);
-      return product ? { product, offer } : null;
-    })
-    .filter((item): item is { product: typeof products[number]; offer: typeof activeOffers[number] } => item !== null);
+  const discountedProducts = getActiveSpecialOffers(products, specialOffers, specialOffersDeadline, now);
   const nextExpiry = hasValidDeadline ? deadline : null;
   const remainingSeconds = nextExpiry ? Math.max(0, Math.floor((nextExpiry - now) / 1000)) : null;
   const days = remainingSeconds === null ? 0 : Math.floor(remainingSeconds / 86400);
@@ -62,7 +43,7 @@ export default function SpecialOffers() {
     window.scrollTo(0, 0);
   }, []);
 
-  const isLoading = !homeSettingsReady || !productsReady;
+  const isLoading = !homeSettingsReady || productsLoading;
 
   return (
     <div className="bg-gray-50 min-h-screen pb-16">
@@ -125,9 +106,7 @@ export default function SpecialOffers() {
             : discountedProducts.length > 0 
               ? discountedProducts.map(({ product, offer }, idx) => (
                   <div key={product.id} className="relative">
-                    <ProductCard product={offer.offerPrice && offer.offerPrice < product.price
-                      ? { ...product, price: offer.offerPrice, discount: Math.round((1 - offer.offerPrice / product.price) * 100) }
-                      : product} index={idx} />
+                    <ProductCard product={getOfferProduct(product, offer)} index={idx} />
                     <span className="absolute top-3 left-3 z-10 bg-[#f0364c] text-white text-[10px] font-black uppercase px-2 py-1 rounded-md">{offer.badgeText}</span>
                   </div>
                 ))

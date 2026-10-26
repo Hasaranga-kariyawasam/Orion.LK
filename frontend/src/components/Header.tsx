@@ -2,18 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Heart, Search, Menu, X, User, Phone, Globe, ChevronRight, Shuffle, Watch, Headphones, Square, Keyboard, HardDrive, Headset, BatteryCharging, Smartphone, Speaker, Cable, Car, Camera, Monitor, MoreHorizontal, Home, LayoutGrid, RefreshCw, Wind, Store, MapPin, Package, Bell, LogOut, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { BRAND_NEW_CATEGORIES, USED_CATEGORIES, MOCK_PRODUCTS, BRAND_LOGO_URL } from '../data';
+import { BRAND_LOGO_URL } from '../data';
 import { useShop } from '../context/ShopContext';
 import { useAdmin } from '../context/AdminContext';
 import { formatLKR } from '../data';
 import { useAuth } from '../context/AuthContext';
 import { formatAvatarUrl } from '../lib/api';
+import { getProductType, PRODUCT_TYPES } from '../lib/productClassification';
+import { ProductType } from '../types';
 
 export default function Header() {
   const { categories, products, whatsappNumber } = useAdmin();
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-  const [activeDropdown, setActiveDropdown] = useState<'components' | 'accessories' | 'used' | null>(null);
+  const [activeDropdown, setActiveDropdown] = useState<ProductType | null>(null);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showBanner, setShowBanner] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -43,19 +45,13 @@ export default function Header() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const componentCategories = categories.filter(c => c.group === 'components');
-  const accessoryCategories = categories.filter(c => c.group === 'accessories');
-  const usedCategories = categories.filter(c => c.group === 'used' || c.type === 'used');
+  const currentDropdownCategories = activeDropdown
+    ? categories.filter(c => getProductType(c.productType, '', c.name, c.productTypeManual) === activeDropdown)
+    : [];
 
-  const currentDropdownCategories =
-    activeDropdown === 'components' ? componentCategories :
-      activeDropdown === 'accessories' ? accessoryCategories :
-        activeDropdown === 'used' ? usedCategories : [];
-
-  const currentDropdownTitle =
-    activeDropdown === 'components' ? 'PC Build Components' :
-      activeDropdown === 'accessories' ? 'Other Accessories' :
-        activeDropdown === 'used' ? 'Used Products' : '';
+  const currentDropdownTitle = activeDropdown === 'pc'
+    ? 'PC'
+    : activeDropdown === 'laptop' ? 'Laptops' : activeDropdown === 'other' ? 'Other Products' : '';
 
   const searchResults = searchQuery.trim() === ''
     ? products.slice(0, 5)
@@ -384,20 +380,16 @@ export default function Header() {
             <div className="flex items-center gap-6 h-full">
               {/* Links */}
               <nav className="hidden lg:flex items-center gap-4 xl:gap-6 font-bold text-slate-700 text-[12px] xl:text-[13px] uppercase tracking-wide h-full whitespace-nowrap">
-                <button
-                  onMouseEnter={() => setActiveDropdown('components')}
-                  onClick={() => setActiveDropdown(activeDropdown === 'components' ? null : 'components')}
-                  className={`flex items-center gap-1 transition-colors h-full outline-none cursor-pointer ${activeDropdown === 'components' ? 'text-[#15803d]' : 'hover:text-[#15803d]'}`}
-                >
-                  PC BUILD COMPONENTS <ChevronRight size={14} className={`transition-transform duration-300 ${activeDropdown === 'components' ? '-rotate-90' : 'rotate-90'}`} />
-                </button>
-                <button
-                  onMouseEnter={() => setActiveDropdown('accessories')}
-                  onClick={() => setActiveDropdown(activeDropdown === 'accessories' ? null : 'accessories')}
-                  className={`flex items-center gap-1 transition-colors h-full outline-none cursor-pointer ${activeDropdown === 'accessories' ? 'text-[#15803d]' : 'hover:text-[#15803d]'}`}
-                >
-                  OTHER ACCESSORIES <ChevronRight size={14} className={`transition-transform duration-300 ${activeDropdown === 'accessories' ? '-rotate-90' : 'rotate-90'}`} />
-                </button>
+                {PRODUCT_TYPES.map(productType => (
+                  <button
+                    key={productType}
+                    onMouseEnter={() => setActiveDropdown(productType)}
+                    onClick={() => setActiveDropdown(activeDropdown === productType ? null : productType)}
+                    className={`flex items-center gap-1 transition-colors h-full outline-none cursor-pointer ${activeDropdown === productType ? 'text-[#15803d]' : 'hover:text-[#15803d]'}`}
+                  >
+                    {productType === 'pc' ? 'PC' : productType === 'laptop' ? 'LAPTOPS' : 'OTHER'} <ChevronRight size={14} className={`transition-transform duration-300 ${activeDropdown === productType ? '-rotate-90' : 'rotate-90'}`} />
+                  </button>
+                ))}
                 <a
                   href="/shop"
                   onMouseEnter={() => setActiveDropdown(null)}
@@ -423,18 +415,15 @@ export default function Header() {
 
               {/* Compact navigation for mobile and tablet screens */}
               <nav className="lg:hidden flex items-center gap-1.5 h-full w-full overflow-x-auto scrollbar-hide whitespace-nowrap pr-2 text-[10px] sm:text-[11px] font-black uppercase tracking-wide">
-                <button
-                  onClick={() => setActiveDropdown(activeDropdown === 'components' ? null : 'components')}
-                  className={`shrink-0 rounded-full px-3 py-1.5 transition-colors ${activeDropdown === 'components' ? 'bg-slate-900 text-white' : 'bg-white/70 text-slate-700 hover:bg-white'}`}
-                >
-                  Components
-                </button>
-                <button
-                  onClick={() => setActiveDropdown(activeDropdown === 'accessories' ? null : 'accessories')}
-                  className={`shrink-0 rounded-full px-3 py-1.5 transition-colors ${activeDropdown === 'accessories' ? 'bg-slate-900 text-white' : 'bg-white/70 text-slate-700 hover:bg-white'}`}
-                >
-                  Accessories
-                </button>
+                {PRODUCT_TYPES.map(productType => (
+                  <button
+                    key={productType}
+                    onClick={() => setActiveDropdown(activeDropdown === productType ? null : productType)}
+                    className={`shrink-0 rounded-full px-3 py-1.5 transition-colors capitalize ${activeDropdown === productType ? 'bg-slate-900 text-white' : 'bg-white/70 text-slate-700 hover:bg-white'}`}
+                  >
+                    {productType === 'pc' ? 'PC' : productType}
+                  </button>
+                ))}
                 <a href="/shop" className="shrink-0 rounded-full bg-white/70 px-3 py-1.5 text-slate-700 hover:bg-white transition-colors">
                   All Products
                 </a>
@@ -489,18 +478,35 @@ export default function Header() {
                             <h3 className="text-xl font-black text-gray-900">{currentDropdownTitle}</h3>
                           </div>
                           <Link
-                            to="/shop"
+                            to={`/shop?productType=${activeDropdown}`}
                             onClick={() => setActiveDropdown(null)}
                             className="text-xs font-bold text-gray-600 hover:text-black flex items-center gap-1"
                           >
                             Browse All in Shop <ChevronRight size={14} />
                           </Link>
                         </div>
+                        <div className="flex gap-2 mb-5">
+                          {[
+                            ['brand-new', 'New'],
+                            ['used', 'Used'],
+                          ].map(([type, label]) => (
+                            <Link
+                              key={type}
+                              to={`/shop?productType=${activeDropdown}&type=${type}`}
+                              onClick={() => setActiveDropdown(null)}
+                              className="rounded-full bg-gray-100 px-4 py-2 text-xs font-bold text-gray-700 hover:bg-green-50 hover:text-[#15803d]"
+                            >
+                              {label} {currentDropdownCategories.filter(category =>
+                                (category.type || (category.name.toLowerCase().startsWith('used ') ? 'used' : 'brand-new')) === type
+                              ).length}
+                            </Link>
+                          ))}
+                        </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-x-4 gap-y-6 max-h-[65vh] overflow-y-auto pr-2">
                           {currentDropdownCategories.map((cat: any, idx) => (
                             <Link
                               key={cat.id || idx}
-                              to={`/shop?category=${encodeURIComponent(cat.name)}`}
+                              to={`/shop?category=${encodeURIComponent(cat.name)}&productType=${activeDropdown}${cat.type ? `&type=${cat.type}` : ''}`}
                               onClick={() => setActiveDropdown(null)}
                               className="flex flex-col items-center text-center group cursor-pointer rounded-xl p-2.5 hover:bg-gray-50 transition-all border border-transparent hover:border-gray-100"
                             >
@@ -558,7 +564,7 @@ export default function Header() {
             <Home size={22} strokeWidth={2} />
             <span className="text-[10px] font-bold">Home</span>
           </a>
-          <button onClick={() => setActiveDropdown(activeDropdown ? null : 'brandNew')} className="flex flex-col items-center gap-1 text-gray-500 hover:text-[#15803d] transition-colors">
+          <button onClick={() => setActiveDropdown(activeDropdown ? null : 'pc')} className="flex flex-col items-center gap-1 text-gray-500 hover:text-[#15803d] transition-colors">
             <Store size={22} strokeWidth={2} />
             <span className="text-[10px] font-bold">Shop</span>
           </button>

@@ -6,6 +6,7 @@ export interface IHomeSettings extends Document {
   featuredImages: unknown[];
   pcBuildCards: unknown[];
   homePromoCards: unknown[];
+  brandBanner: unknown;
   accessories: unknown[];
   bestSellerIds: string[];
   whatsappNumber: string;
@@ -22,6 +23,7 @@ const HomeSettingsSchema = new Schema<IHomeSettings>(
     featuredImages: { type: [Schema.Types.Mixed], default: [] },
     pcBuildCards: { type: [Schema.Types.Mixed], default: [] },
     homePromoCards: { type: [Schema.Types.Mixed], default: [] },
+    brandBanner: { type: Schema.Types.Mixed, default: {} },
     accessories: { type: [Schema.Types.Mixed], default: [] },
     bestSellerIds: { type: [String], default: [] },
     whatsappNumber: { type: String, default: '' },

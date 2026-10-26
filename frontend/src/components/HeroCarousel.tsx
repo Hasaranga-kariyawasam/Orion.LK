@@ -4,31 +4,15 @@ import { useAdmin } from '../context/AdminContext';
 import { resolveMediaUrl } from '../lib/api';
 
 const HeroCarousel = () => {
-  const { heroImages, products, categories } = useAdmin();
+  const { heroImages } = useAdmin();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFirstImageLoaded, setIsFirstImageLoaded] = useState(false);
 
   const validHeroImages = useMemo(() => {
-    // Gather all real DB product images
-    const dbProductImages = products
-      .flatMap(product => product.images && product.images.length > 0 ? product.images : [product.image])
+    return heroImages
       .map(resolveMediaUrl)
       .filter(Boolean);
-
-    // Prioritize store-uploaded DB images
-    const storeUploadedImages = dbProductImages.filter(img => !img.includes('images.unsplash.com'));
-
-    // Custom admin configured images (if user configured them in admin)
-    const customConfigured = heroImages
-      .map(resolveMediaUrl)
-      .filter(url => Boolean(url) && !url.includes('images.unsplash.com'));
-
-    if (customConfigured.length > 0) return customConfigured;
-    if (storeUploadedImages.length > 0) return Array.from(new Set(storeUploadedImages)).slice(0, 8);
-    if (dbProductImages.length > 0) return Array.from(new Set(dbProductImages)).slice(0, 8);
-
-    return heroImages.map(resolveMediaUrl).filter(Boolean);
-  }, [heroImages, products, categories]);
+  }, [heroImages]);
 
   useEffect(() => {
     if (validHeroImages.length === 0) return;

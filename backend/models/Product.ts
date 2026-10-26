@@ -3,6 +3,7 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 export interface IProduct extends Document {
   name: string;
   category: string;
+  productType?: 'pc' | 'laptop' | 'other';
   price: number;
   originalPrice?: number;
   rating: number;
@@ -31,13 +32,14 @@ const ProductSchema = new Schema<IProduct>(
   {
     name: { type: String, required: true, trim: true },
     category: { type: String, required: true },
+    productType: { type: String, enum: ['pc', 'laptop', 'other'] },
     price: { type: Number, required: true, min: 0 },
     originalPrice: { type: Number },
     rating: { type: Number, default: 0, min: 0, max: 5 },
     reviews: { type: Number, default: 0 },
     image: { type: String, required: true },
     images: [{ type: String }],
-    isNewProduct: { type: Boolean, default: false },
+    isNewProduct: { type: Boolean },
     discount: { type: Number, min: 0, max: 100 },
     status: {
       type: String,
