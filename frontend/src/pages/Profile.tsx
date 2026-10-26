@@ -75,6 +75,7 @@ export default function Profile() {
   const [newAddrDistrict, setNewAddrDistrict] = useState('Colombo');
   const [newAddrPostal, setNewAddrPostal] = useState('');
   const [addrSaving, setAddrSaving] = useState(false);
+  const [addrError, setAddrError] = useState('');
 
   // Avatar Upload States
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -209,6 +210,7 @@ export default function Profile() {
   };
 
   const handleOpenAddAddress = () => {
+    setAddrError('');
     setEditingAddressIndex(null);
     setNewAddrLabel('Home');
     const fullName = mongoUser?.name || user?.displayName || '';
@@ -227,6 +229,7 @@ export default function Profile() {
   const handleEditAddress = (index: number) => {
     const addr = addresses[index];
     if (!addr) return;
+    setAddrError('');
     setEditingAddressIndex(index);
     setNewAddrLabel(addr.label || 'Home');
     setNewAddrFirstName(addr.firstName || firstName || '');
@@ -242,9 +245,13 @@ export default function Profile() {
 
   const handleSaveAddress = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newAddrStreet.trim() || !newAddrCity.trim()) return;
+    if (!newAddrStreet.trim() || !newAddrCity.trim()) {
+      setAddrError('Enter a street address and city before saving.');
+      return;
+    }
 
     setAddrSaving(true);
+    setAddrError('');
     try {
       const currentAddresses = mongoUser?.addresses || [];
       const addressData: MongoAddress = {
@@ -268,14 +275,15 @@ export default function Profile() {
         updatedAddresses = [...currentAddresses, addressData];
       }
 
-      await updateMongoProfile({
+      const updatedProfile = await updateMongoProfile({
         addresses: updatedAddresses,
       });
+      if (!updatedProfile) throw new Error('Orion.LK could not save this address. Please check your connection and try again.');
 
       setShowAddAddress(false);
       setEditingAddressIndex(null);
     } catch (err) {
-      console.error('Failed to save address:', err);
+      setAddrError(err instanceof Error ? err.message : 'Failed to save address. Please try again.');
     } finally {
       setAddrSaving(false);
     }
@@ -285,7 +293,8 @@ export default function Profile() {
     if (!confirm('Are you sure you want to remove this address?')) return;
     const currentAddresses = mongoUser?.addresses || [];
     const updated = currentAddresses.filter((_, i) => i !== index);
-    await updateMongoProfile({ addresses: updated });
+    const updatedProfile = await updateMongoProfile({ addresses: updated });
+    if (!updatedProfile) setAddrError('Orion.LK could not delete this address. Please try again.');
   };
 
   const handleCancelOrder = async (order: ApiOrder) => {
@@ -798,6 +807,7 @@ export default function Profile() {
                 </div>
 
                 <form onSubmit={handleSaveAddress} className="space-y-4">
+                  {addrError && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-semibold text-red-700">{addrError}</p>}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* First Name */}
                     <div>

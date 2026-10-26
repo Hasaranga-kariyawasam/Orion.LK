@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Heart, Search, Menu, X, User, Phone, Globe, ChevronRight, Shuffle, Watch, Headphones, Square, Keyboard, HardDrive, Headset, BatteryCharging, Smartphone, Speaker, Cable, Car, Camera, Monitor, MoreHorizontal, Home, LayoutGrid, RefreshCw, Wind, Store, MapPin, Package, Bell, LogOut, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { BRAND_NEW_CATEGORIES, USED_CATEGORIES, MOCK_PRODUCTS, BRAND_LOGO_URL } from '../data';
+import { BRAND_NEW_CATEGORIES, USED_CATEGORIES } from '../data';
 import { useShop } from '../context/ShopContext';
 import { useAdmin } from '../context/AdminContext';
 import { formatLKR } from '../data';
@@ -10,7 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { formatAvatarUrl } from '../lib/api';
 
 export default function Header() {
-  const { categories, products, whatsappNumber } = useAdmin();
+  const { categories, products, whatsappNumber, brandLogoUrl } = useAdmin();
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [activeDropdown, setActiveDropdown] = useState<'components' | 'accessories' | 'used' | null>(null);
@@ -49,13 +49,13 @@ export default function Header() {
 
   const currentDropdownCategories =
     activeDropdown === 'components' ? componentCategories :
-    activeDropdown === 'accessories' ? accessoryCategories :
-    activeDropdown === 'used' ? usedCategories : [];
+      activeDropdown === 'accessories' ? accessoryCategories :
+        activeDropdown === 'used' ? usedCategories : [];
 
   const currentDropdownTitle =
     activeDropdown === 'components' ? 'PC Build Components' :
-    activeDropdown === 'accessories' ? 'Other Accessories' :
-    activeDropdown === 'used' ? 'Used Products' : '';
+      activeDropdown === 'accessories' ? 'Other Accessories' :
+        activeDropdown === 'used' ? 'Used Products' : '';
 
   const searchResults = searchQuery.trim() === ''
     ? products.slice(0, 5)
@@ -120,259 +120,264 @@ export default function Header() {
     <>
       <header className={`w-full bg-[#e8eef7] fixed top-0 left-0 right-0 z-40 transition-transform duration-300 ease-in-out will-change-transform ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
         {/* Top Header */}
-        <div 
+        <div
           onMouseEnter={() => setActiveDropdown(null)}
           className="bg-[#161B22]/90 backdrop-blur-md relative z-30"
         >
           <div className="relative z-10 container mx-auto max-w-7xl px-4 h-20 flex items-center justify-between gap-6">
 
-          {/* Logo */}
-          <a href="/" className="flex items-center shrink-0">
-            <span className="text-3xl font-black tracking-tight flex items-baseline" style={{ fontFamily: "'Orbitron', sans-serif" }}>
-              <span className="text-white">O</span>
-              <span className="text-white">RION</span>
-              <span className="text-[#16a34a] ml-1 text-2xl" style={{ textShadow: '0 0 10px rgba(22, 163, 74, 0.4)' }}>.lk</span>
-            </span>
-          </a>
-
-          {/* Search */}
-          <form
-            onSubmit={handleSearchSubmit}
-            className="hidden md:flex flex-1 max-w-2xl relative group"
-          >
-            <input
-              type="text"
-              placeholder="Search for products"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setShowSearchResults(true);
-              }}
-              onFocus={() => setShowSearchResults(true)}
-              onBlur={() => setTimeout(() => setShowSearchResults(false), 200)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleSearchSubmit(e);
-                }
-              }}
-              className="w-full bg-[#0D1117] text-white placeholder-[#8B949E] border border-[#30363D] rounded-full py-2.5 pl-6 pr-14 focus:outline-none focus:border-[#16a34a] focus:bg-[#0D1117]/80 transition-all shadow-inner"
-            />
-            <button
-              type="submit"
-              aria-label="Search products"
-              className="absolute right-0 top-0 h-full w-12 bg-[#16a34a] text-white flex items-center justify-center rounded-r-full hover:bg-[#15803d] transition-colors cursor-pointer"
-            >
-              <Search size={18} strokeWidth={2.5} />
-            </button>
-
-            {/* Search Dropdown - positioned below Sub Header */}
-            <AnimatePresence>
-              {showSearchResults && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 8 }}
-                  onMouseDown={(e) => e.preventDefault()}
-                  className="absolute top-full left-0 right-0 mt-[68px] bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-[100]"
-                >
-                  <div className="p-3 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                      {searchQuery.trim() === '' ? 'Trending Products' : 'Search Results'}
-                    </span>
-                  </div>
-                  <div className="max-h-96 overflow-y-auto">
-                    {searchResults.length > 0 ? (
-                      searchResults.map(product => (
-                        <div
-                          key={product.id}
-                          onClick={() => handleSearchNavigate(product.id)}
-                          className="flex items-center gap-4 p-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0"
-                        >
-                          <div className="w-12 h-12 rounded-lg bg-gray-100 shrink-0 overflow-hidden">
-                            <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="text-sm font-bold text-gray-900 truncate">{product.name}</h4>
-                            <p className="text-xs text-gray-500 mt-0.5">{product.category}</p>
-                          </div>
-                          <div className="text-right shrink-0">
-                            <span className="text-sm font-black text-[#15803d]">{formatLKR(product.price)}</span>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="p-6 text-center text-gray-500 text-sm">
-                        No products found matching "{searchQuery}"
-                      </div>
-                    )}
-                  </div>
-                  {searchQuery.trim() !== '' && (
-                    <div
-                      onClick={handleSearchSubmit}
-                      className="p-3 bg-gray-50 hover:bg-[#15803d]/10 text-center text-xs font-bold text-gray-700 hover:text-black cursor-pointer transition-colors border-t border-gray-100 flex items-center justify-center gap-1.5"
-                    >
-                      <span>View all results for "{searchQuery}"</span>
-                      <ChevronRight size={14} className="text-[#15803d]" />
-                    </div>
-                  )}
-                </motion.div>
+            {/* Logo */}
+            <a href="/" className="flex items-center shrink-0" aria-label="Orion.LK home">
+              {brandLogoUrl ? (
+                <img src={brandLogoUrl} alt="Orion.LK" className="max-h-12 max-w-44 object-contain" />
+              ) : (
+                <span className="text-3xl font-black tracking-tight flex items-baseline" style={{ fontFamily: "'Orbitron', sans-serif" }}>
+                  <span className="text-white">O</span><span className="text-white">RION</span>
+                  <span className="text-[#16a34a] ml-1 text-2xl">.lk</span>
+                </span>
               )}
-            </AnimatePresence>
-          </form>
+            </a>
 
-          {/* Action Icons */}
-          <div className="flex items-center gap-4 shrink-0">
-            <Link to="/profile?tab=orders" title="My Orders" className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors">
-              <Package size={20} />
-            </Link>
-
-            <div className="relative group" onMouseEnter={() => setShowNotifications(true)} onMouseLeave={() => setShowNotifications(false)}>
+            {/* Search */}
+            <form
+              onSubmit={handleSearchSubmit}
+              className="hidden md:flex flex-1 max-w-2xl relative group"
+            >
+              <input
+                type="text"
+                placeholder="Search for products"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowSearchResults(true);
+                }}
+                onFocus={() => setShowSearchResults(true)}
+                onBlur={() => setTimeout(() => setShowSearchResults(false), 200)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearchSubmit(e);
+                  }
+                }}
+                className="w-full bg-[#0D1117] text-white placeholder-[#8B949E] border border-[#30363D] rounded-full py-2.5 pl-6 pr-14 focus:outline-none focus:border-[#16a34a] focus:bg-[#0D1117]/80 transition-all shadow-inner"
+              />
               <button
-                onClick={() => setShowNotifications(prev => !prev)}
-                className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors relative cursor-pointer"
+                type="submit"
+                aria-label="Search products"
+                className="absolute right-0 top-0 h-full w-12 bg-[#16a34a] text-white flex items-center justify-center rounded-r-full hover:bg-[#15803d] transition-colors cursor-pointer"
               >
-                <Bell size={20} />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-[#f0364c] border-none text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center animate-pulse">{unreadCount}</span>
-                )}
+                <Search size={18} strokeWidth={2.5} />
               </button>
+
+              {/* Search Dropdown - positioned below Sub Header */}
               <AnimatePresence>
-                {showNotifications && (
+                {showSearchResults && (
                   <motion.div
-                    initial={{ opacity: 0, y: 10 }}
+                    initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    className="absolute top-full right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[100] before:content-[''] before:absolute before:-top-3 before:left-0 before:right-0 before:h-3"
+                    exit={{ opacity: 0, y: 8 }}
+                    onMouseDown={(e) => e.preventDefault()}
+                    className="absolute top-full left-0 right-0 mt-[68px] bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-[100]"
                   >
                     <div className="p-3 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-                      <span className="text-sm font-bold text-gray-900">Notifications</span>
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        {searchQuery.trim() === '' ? 'Trending Products' : 'Search Results'}
+                      </span>
                     </div>
-                    <div className="max-h-80 overflow-y-auto">
-                      {notifications.length > 0 ? (
-                        notifications.map(notif => (
-                          <div key={notif.id} onClick={() => removeNotification(notif.id)} className={`p-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors cursor-pointer ${!notif.isRead ? 'bg-blue-50/50' : ''}`}>
-                            <div className="flex items-start justify-between gap-3">
-                              <h4 className="text-sm font-bold text-gray-900 mb-1">{notif.title}</h4>
-                              <span className="text-[10px] text-gray-400 shrink-0">Dismiss</span>
+                    <div className="max-h-96 overflow-y-auto">
+                      {searchResults.length > 0 ? (
+                        searchResults.map(product => (
+                          <div
+                            key={product.id}
+                            onClick={() => handleSearchNavigate(product.id)}
+                            className="flex items-center gap-4 p-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0"
+                          >
+                            <div className="w-12 h-12 rounded-lg bg-gray-100 shrink-0 overflow-hidden">
+                              <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
                             </div>
-                            <p className="text-xs text-gray-600 mb-2 leading-relaxed">{notif.message}</p>
-                            <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">{notif.time}</span>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-sm font-bold text-gray-900 truncate">{product.name}</h4>
+                              <p className="text-xs text-gray-500 mt-0.5">{product.category}</p>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <span className="text-sm font-black text-[#15803d]">{formatLKR(product.price)}</span>
+                            </div>
                           </div>
                         ))
                       ) : (
-                        <div className="p-6 text-center text-gray-500 text-sm">No notifications</div>
+                        <div className="p-6 text-center text-gray-500 text-sm">
+                          No products found matching "{searchQuery}"
+                        </div>
                       )}
                     </div>
+                    {searchQuery.trim() !== '' && (
+                      <div
+                        onClick={handleSearchSubmit}
+                        className="p-3 bg-gray-50 hover:bg-[#15803d]/10 text-center text-xs font-bold text-gray-700 hover:text-black cursor-pointer transition-colors border-t border-gray-100 flex items-center justify-center gap-1.5"
+                      >
+                        <span>View all results for "{searchQuery}"</span>
+                        <ChevronRight size={14} className="text-[#15803d]" />
+                      </div>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
-            </div>
+            </form>
 
-            <div
-              className="relative group"
-              onMouseEnter={() => setShowProfileDropdown(true)}
-              onMouseLeave={() => setShowProfileDropdown(false)}
-            >
-              {user ? (
+            {/* Action Icons */}
+            <div className="flex items-center gap-4 shrink-0">
+              <Link to="/profile?tab=orders" title="My Orders" className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors">
+                <Package size={20} />
+              </Link>
+
+              <div className="relative group" onMouseEnter={() => setShowNotifications(true)} onMouseLeave={() => setShowNotifications(false)}>
                 <button
-                  onClick={() => setShowProfileDropdown(prev => !prev)}
-                  className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center overflow-hidden hover:bg-white/10 transition-colors cursor-pointer"
+                  onClick={() => setShowNotifications(prev => !prev)}
+                  className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors relative cursor-pointer"
                 >
-                  {formatAvatarUrl(mongoUser?.avatar || user.photoURL) ? (
-                    <img src={formatAvatarUrl(mongoUser?.avatar || user.photoURL)!} alt={user.displayName || 'User'} className="w-full h-full object-cover" />
-                  ) : (
-                    <User size={20} className="text-[#8B949E]" />
+                  <Bell size={20} />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-[#f0364c] border-none text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center animate-pulse">{unreadCount}</span>
                   )}
                 </button>
-              ) : (
-                <Link to="/login" title="Sign In" className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors">
-                  <User size={20} />
-                </Link>
-              )}
-
-              <AnimatePresence>
-                {showProfileDropdown && user && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    className="absolute top-full right-0 mt-2 w-60 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[100] before:content-[''] before:absolute before:-top-3 before:left-0 before:right-0 before:h-3"
-                  >
-                    <div className="p-3 bg-gradient-to-r from-gray-50 to-amber-50/60 border-b border-gray-100 flex items-center justify-between">
-                      <div className="min-w-0 pr-2">
-                        <p className="text-sm font-bold text-gray-900 truncate">{user.displayName || 'User'}</p>
-                        <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                <AnimatePresence>
+                  {showNotifications && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="absolute top-full right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[100] before:content-[''] before:absolute before:-top-3 before:left-0 before:right-0 before:h-3"
+                    >
+                      <div className="p-3 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+                        <span className="text-sm font-bold text-gray-900">Notifications</span>
                       </div>
-                      <span className="text-[11px] font-black text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full shrink-0">
-                        {mongoUser?.points !== undefined ? mongoUser.points : 100} Pts
-                      </span>
-                    </div>
-                    <div className="py-2">
-                      <Link
-                        to="/profile"
-                        onClick={() => setShowProfileDropdown(false)}
-                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-600 hover:text-black hover:bg-gray-50 transition-colors"
-                      >
-                        <User size={16} /> My Profile
-                      </Link>
-                      <Link
-                        to="/profile?tab=orders"
-                        onClick={() => setShowProfileDropdown(false)}
-                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-600 hover:text-black hover:bg-gray-50 transition-colors"
-                      >
-                        <Package size={16} /> My Orders
-                      </Link>
-                      {(user.email === 'orian@admin.lk' || user.email === 'orion@admin.lk' || mongoUser?.isAdmin) && (
-                        <Link
-                          to="/admin"
-                          onClick={() => setShowProfileDropdown(false)}
-                          className="flex items-center gap-3 px-4 py-2 text-sm text-[#15803d] font-bold hover:bg-[#15803d]/10 transition-colors"
-                        >
-                          <Settings size={16} /> Admin Dashboard
-                        </Link>
-                      )}
-                    </div>
-                    <div className="py-2 border-t border-gray-100">
-                      <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors text-left font-bold cursor-pointer">
-                        <LogOut size={16} /> Sign Out
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            <button
-              onClick={() => setIsCompareModalOpen(true)}
-              className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors relative cursor-pointer"
-            >
-              <Shuffle size={18} className={compareList.length > 0 ? "text-[#15803d]" : ""} />
-              <span className="absolute -top-2 -right-2 bg-[#15803d] border-none text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">{compareList.length}</span>
-            </button>
-
-            <button onClick={() => setIsWishlistOpen(true)} className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors relative cursor-pointer">
-              <Heart size={20} className={wishlist.length > 0 ? "fill-[#15803d] text-[#15803d]" : ""} />
-              <span className="absolute -top-2 -right-2 bg-[#15803d] border-none text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">{wishlist.length}</span>
-            </button>
-
-            {/* Cart Pill Button matching custom design */}
-            <button
-              onClick={() => setIsCartOpen(true)}
-              className="h-10 pl-1.5 pr-4 rounded-full bg-[#15803d] hover:bg-[#166534] transition-all duration-200 flex items-center gap-2.5 relative ml-2 shadow-sm hover:shadow-md cursor-pointer group"
-              aria-label="Shopping Cart"
-            >
-              <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center shadow-sm shrink-0 group-hover:scale-105 transition-transform">
-                <ShoppingCart size={15} strokeWidth={2.2} className="text-gray-900 ml-[-1px]" />
+                      <div className="max-h-80 overflow-y-auto">
+                        {notifications.length > 0 ? (
+                          notifications.map(notif => (
+                            <div key={notif.id} onClick={() => removeNotification(notif.id)} className={`p-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors cursor-pointer ${!notif.isRead ? 'bg-blue-50/50' : ''}`}>
+                              <div className="flex items-start justify-between gap-3">
+                                <h4 className="text-sm font-bold text-gray-900 mb-1">{notif.title}</h4>
+                                <span className="text-[10px] text-gray-400 shrink-0">Dismiss</span>
+                              </div>
+                              <p className="text-xs text-gray-600 mb-2 leading-relaxed">{notif.message}</p>
+                              <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">{notif.time}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="p-6 text-center text-gray-500 text-sm">No notifications</div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
-              <span className="font-black text-[13px] md:text-sm text-white tracking-tight whitespace-nowrap">
-                LKR {cartTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </span>
-              <span className="absolute -top-1.5 -right-1.5 bg-white text-black text-[10px] font-black min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center shadow-[0_2px_6px_rgba(0,0,0,0.15)] border border-gray-100/80">
-                {cart.reduce((a, b) => a + b.quantity, 0)}
-              </span>
-            </button>
+
+              <div
+                className="relative group"
+                onMouseEnter={() => setShowProfileDropdown(true)}
+                onMouseLeave={() => setShowProfileDropdown(false)}
+              >
+                {user ? (
+                  <button
+                    onClick={() => setShowProfileDropdown(prev => !prev)}
+                    className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center overflow-hidden hover:bg-white/10 transition-colors cursor-pointer"
+                  >
+                    {formatAvatarUrl(mongoUser?.avatar || user.photoURL) ? (
+                      <img src={formatAvatarUrl(mongoUser?.avatar || user.photoURL)!} alt={user.displayName || 'User'} className="w-full h-full object-cover" />
+                    ) : (
+                      <User size={20} className="text-[#8B949E]" />
+                    )}
+                  </button>
+                ) : (
+                  <Link to="/login" title="Sign In" className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors">
+                    <User size={20} />
+                  </Link>
+                )}
+
+                <AnimatePresence>
+                  {showProfileDropdown && user && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="absolute top-full right-0 mt-2 w-60 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[100] before:content-[''] before:absolute before:-top-3 before:left-0 before:right-0 before:h-3"
+                    >
+                      <div className="p-3 bg-gradient-to-r from-gray-50 to-amber-50/60 border-b border-gray-100 flex items-center justify-between">
+                        <div className="min-w-0 pr-2">
+                          <p className="text-sm font-bold text-gray-900 truncate">{user.displayName || 'User'}</p>
+                          <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                        </div>
+                        <span className="text-[11px] font-black text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full shrink-0">
+                          {mongoUser?.points !== undefined ? mongoUser.points : 100} Pts
+                        </span>
+                      </div>
+                      <div className="py-2">
+                        <Link
+                          to="/profile"
+                          onClick={() => setShowProfileDropdown(false)}
+                          className="flex items-center gap-3 px-4 py-2 text-sm text-gray-600 hover:text-black hover:bg-gray-50 transition-colors"
+                        >
+                          <User size={16} /> My Profile
+                        </Link>
+                        <Link
+                          to="/profile?tab=orders"
+                          onClick={() => setShowProfileDropdown(false)}
+                          className="flex items-center gap-3 px-4 py-2 text-sm text-gray-600 hover:text-black hover:bg-gray-50 transition-colors"
+                        >
+                          <Package size={16} /> My Orders
+                        </Link>
+                        {(user.email === 'orian@admin.lk' || user.email === 'orion@admin.lk' || mongoUser?.isAdmin) && (
+                          <Link
+                            to="/admin"
+                            onClick={() => setShowProfileDropdown(false)}
+                            className="flex items-center gap-3 px-4 py-2 text-sm text-[#15803d] font-bold hover:bg-[#15803d]/10 transition-colors"
+                          >
+                            <Settings size={16} /> Admin Dashboard
+                          </Link>
+                        )}
+                      </div>
+                      <div className="py-2 border-t border-gray-100">
+                        <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors text-left font-bold cursor-pointer">
+                          <LogOut size={16} /> Sign Out
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <button
+                onClick={() => setIsCompareModalOpen(true)}
+                className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors relative cursor-pointer"
+              >
+                <Shuffle size={18} className={compareList.length > 0 ? "text-[#15803d]" : ""} />
+                {compareList.length > 0 && <span className="absolute -top-2 -right-2 bg-[#15803d] border-none text-white text-[10px] font-bold min-w-5 h-5 px-1 rounded-full flex items-center justify-center">{compareList.length}</span>}
+              </button>
+
+              <button onClick={() => setIsWishlistOpen(true)} className="w-10 h-10 rounded-full border border-[#30363D] flex items-center justify-center text-[#8B949E] hover:text-white hover:bg-white/10 transition-colors relative cursor-pointer">
+                <Heart size={20} className={wishlist.length > 0 ? "fill-[#15803d] text-[#15803d]" : ""} />
+                {wishlist.length > 0 && <span className="absolute -top-2 -right-2 bg-[#15803d] border-none text-white text-[10px] font-bold min-w-5 h-5 px-1 rounded-full flex items-center justify-center">{wishlist.length}</span>}
+              </button>
+
+              {/* Cart Pill Button matching custom design */}
+              <button
+                onClick={() => setIsCartOpen(true)}
+                className="h-10 pl-1.5 pr-4 rounded-full bg-blue-600 hover:bg-blue-700 transition-all duration-200 flex items-center gap-2.5 relative ml-2 shadow-sm hover:shadow-md cursor-pointer group"
+                aria-label="Shopping Cart"
+              >
+                <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center shadow-sm shrink-0 group-hover:scale-105 transition-transform">
+                  <ShoppingCart size={15} strokeWidth={2.2} className="text-blue-700 ml-[-1px]" />
+                </div>
+                <span className="font-black text-[13px] md:text-sm text-white tracking-tight whitespace-nowrap">
+                  LKR {cartTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+                {cart.reduce((sum, item) => sum + item.quantity, 0) > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-white text-blue-700 text-[10px] font-black min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center shadow-[0_2px_6px_rgba(0,0,0,0.15)] border border-blue-100">
+                    {cart.reduce((sum, item) => sum + item.quantity, 0)}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
-        </div>
         </div>
 
         {/* Sub Header */}
@@ -528,7 +533,7 @@ export default function Header() {
             </div>
 
             {/* Right Info */}
-            <div 
+            <div
               onMouseEnter={() => setActiveDropdown(null)}
               className="hidden md:flex items-center gap-8"
             >
@@ -565,18 +570,14 @@ export default function Header() {
           <button onClick={() => setIsWishlistOpen(true)} className="flex flex-col items-center gap-1 text-gray-500 hover:text-[#15803d] transition-colors relative">
             <div className="relative">
               <Heart size={22} strokeWidth={2} className={wishlist.length > 0 ? "fill-[#15803d] text-[#15803d]" : ""} />
-              <span className="absolute -top-1 -right-2 bg-[#15803d] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">
-                {wishlist.length}
-              </span>
+              {wishlist.length > 0 && <span className="absolute -top-1 -right-2 bg-[#15803d] text-white text-[9px] font-black min-w-4 h-4 px-1 rounded-full flex items-center justify-center">{wishlist.length}</span>}
             </div>
             <span className="text-[10px] font-bold">Wishlist</span>
           </button>
           <button onClick={() => setIsCartOpen(true)} className="flex flex-col items-center gap-1 text-gray-500 hover:text-[#f0364c] transition-colors relative">
             <div className="relative">
               <ShoppingCart size={22} strokeWidth={2} />
-              <span className="absolute -top-1 -right-2 bg-[#f0364c] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
-                {cart.reduce((a, b) => a + b.quantity, 0)}
-              </span>
+              {cart.reduce((sum, item) => sum + item.quantity, 0) > 0 && <span className="absolute -top-1 -right-2 bg-blue-600 text-white text-[9px] font-black min-w-4 h-4 px-1 rounded-full flex items-center justify-center shadow-sm">{cart.reduce((sum, item) => sum + item.quantity, 0)}</span>}
             </div>
             <span className="text-[10px] font-bold">Cart</span>
           </button>

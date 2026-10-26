@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { formatLKR } from '../data';
-import { getMyOrders, cancelMyOrder, ApiOrder, OrderItem } from '../lib/api';
+import { getMyOrders, cancelMyOrder, getReviews, submitReview, ApiOrder, OrderItem } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useShop } from '../context/ShopContext';
 
@@ -65,6 +65,7 @@ export default function Orders() {
   const [reviewComment, setReviewComment] = useState('');
   const [reviewerName, setReviewerName] = useState('');
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewError, setReviewError] = useState('');
   const [submittedReviews, setSubmittedReviews] = useState<Record<string, boolean>>(() => {
     try {
       return JSON.parse(localStorage.getItem('user_submitted_reviews') || '{}');
@@ -87,6 +88,10 @@ export default function Orders() {
     try {
       const data = await getMyOrders();
       setOrders(data);
+      const customerReviews = await getReviews({ mine: true });
+      const reviewState = Object.fromEntries(customerReviews.map(review => [`${review.orderNumber}_${review.productId}`, true]));
+      setSubmittedReviews(reviewState);
+      localStorage.setItem('user_submitted_reviews', JSON.stringify(reviewState));
       const snapshotKey = `customer_order_statuses_${user.uid}`;
       const previous: Record<string, string> = JSON.parse(localStorage.getItem(snapshotKey) || '{}');
       const next: Record<string, string> = {};
@@ -148,6 +153,7 @@ export default function Orders() {
     });
     setRating(5);
     setReviewComment('');
+    setReviewError('');
     setReviewerName(mongoUser?.name || user?.displayName || 'Customer');
   };
 
@@ -158,19 +164,13 @@ export default function Orders() {
     setReviewSubmitting(true);
     try {
       const reviewKey = `${reviewModal.orderNumber}_${reviewModal.item.productId}`;
-      const newReview = {
-        id: `rev_${Date.now()}`,
-        name: reviewerName.trim() || 'Verified Customer',
+      await submitReview({
+        productId: reviewModal.item.productId,
+        orderNumber: reviewModal.orderNumber,
         rating,
-        date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
         comment: reviewComment.trim(),
-        productName: reviewModal.item.name,
-      };
-
-      // Store in localStorage for product detail & order state
-      const productReviewsKey = `reviews_${reviewModal.item.productId}`;
-      const existingReviews = JSON.parse(localStorage.getItem(productReviewsKey) || '[]');
-      localStorage.setItem(productReviewsKey, JSON.stringify([newReview, ...existingReviews]));
+        customerName: reviewerName.trim(),
+      });
 
       const nextSubmitted = { ...submittedReviews, [reviewKey]: true };
       setSubmittedReviews(nextSubmitted);
@@ -179,7 +179,7 @@ export default function Orders() {
       setReviewModal({ isOpen: false, item: null, orderNumber: '' });
       addNotification('Review Published', `Thank you for reviewing ${reviewModal.item.name}!`);
     } catch (err) {
-      console.error('Failed to submit review:', err);
+      setReviewError(err instanceof Error ? err.message : 'Failed to submit review. Please try again.');
     } finally {
       setReviewSubmitting(false);
     }
@@ -445,9 +445,9 @@ export default function Orders() {
                             </span>
 
                             {/* Write Review Button */}
-                            {isReviewed ? (
+                            {order.status !== 'Delivered' ? null : isReviewed ? (
                               <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
-                                <Check size={12} /> Reviewed
+                                <Check size={12} /> Review submitted
                               </span>
                             ) : (
                               <button
@@ -611,6 +611,11 @@ export default function Orders() {
               </div>
 
               <form onSubmit={submitReview} className="space-y-4">
+                {reviewError && (
+                  <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
+                    {reviewError}
+                  </p>
+                )}
                 {/* Rating Stars */}
                 <div>
                   <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Rating</label>

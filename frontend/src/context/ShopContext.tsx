@@ -352,7 +352,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const cartTotal = cart.reduce((total, item) => total + (item.product.price * item.quantity), 0);
   const buildTotal = buildItems
-    ? buildItems.reduce((total, item) => total + (item.discount ? item.price : (item.originalPrice || item.price)), 0)
+    ? buildItems.reduce((total, item) => total + item.price, 0)
     : 0;
 
   return (

@@ -23,10 +23,12 @@ export default function AdminHomePage({ onSaved }: { onSaved?: () => void }) {
     products, bestSellerIds, setBestSellerIds,
     whatsappNumber, setWhatsappNumber,
     storeAddress, setStoreAddress,
+    brandLogoUrl, setBrandLogoUrl,
+    loadingGifUrl, setLoadingGifUrl,
     saveSettings,
   } = useAdmin();
 
-  const [activeTab, setActiveTab] = useState<'hero' | 'featured' | 'pc-builds' | 'promos' | 'video' | 'accessories' | 'bestsellers' | 'contact'>('hero');
+  const [activeTab, setActiveTab] = useState<'hero' | 'featured' | 'pc-builds' | 'promos' | 'video' | 'accessories' | 'bestsellers' | 'contact' | 'logo' | 'loader'>('hero');
   const heroFileRefs = useRef<HTMLInputElement[]>([]);
   const newHeroRef = useRef<HTMLInputElement>(null);
 
@@ -73,6 +75,8 @@ export default function AdminHomePage({ onSaved }: { onSaved?: () => void }) {
   const inputCls = "w-full bg-[#0d1117] border border-[#30363D] rounded-xl px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#2ee661]/50";
 
   const tabs = [
+    { id: 'logo', label: 'Site Logo', icon: ImageIcon },
+      { id: 'loader', label: 'Loading GIF', icon: ImageIcon },
     { id: 'hero', label: 'Hero Banner', icon: ImageIcon },
     { id: 'featured', label: 'Featured Images', icon: ImageIcon },
     { id: 'pc-builds', label: 'PC Builds', icon: ImageIcon },
@@ -104,6 +108,53 @@ export default function AdminHomePage({ onSaved }: { onSaved?: () => void }) {
           </button>
         ))}
       </div>
+
+      {/* Hero Banner */}
+      {activeTab === 'logo' && (
+        <div className="max-w-2xl space-y-4 rounded-xl border border-[#30363D] bg-[#161B22] p-5">
+          <div>
+            <h3 className="font-bold text-white">Store Logo</h3>
+            <p className="mt-1 text-xs text-gray-500">This image replaces the Orion.LK wordmark in the storefront header.</p>
+          </div>
+          {brandLogoUrl && <img src={brandLogoUrl} alt="Current Orion.LK logo" className="max-h-24 max-w-56 rounded-lg bg-[#0d1117] p-3 object-contain" />}
+          <div className="flex gap-2">
+            <input value={brandLogoUrl} onChange={e => setBrandLogoUrl(e.target.value)} placeholder="Logo image URL" className={`flex-1 ${inputCls}`} />
+            <label className="inline-flex cursor-pointer items-center rounded-xl border border-[#30363D] bg-[#0d1117] px-3 text-gray-300 hover:text-[#2ee661]">
+              <Upload size={16} />
+              <input type="file" accept="image/*" className="hidden" onChange={async e => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                try { setBrandLogoUrl(await uploadImageToServer(file)); }
+                catch (err: any) { alert('Image upload failed: ' + (err.message || 'Unknown error')); }
+                e.currentTarget.value = '';
+              }} />
+            </label>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'loader' && (
+        <div className="max-w-2xl space-y-4 rounded-xl border border-[#30363D] bg-[#161B22] p-5">
+          <div>
+            <h3 className="font-bold text-white">Orion.LK Loading GIF</h3>
+            <p className="mt-1 text-xs text-gray-500">Upload the GIF you want shown while the home page initializes.</p>
+          </div>
+          {loadingGifUrl && <img src={loadingGifUrl} alt="Loading animation preview" className="max-h-32 max-w-48 object-contain rounded-lg bg-[#0d1117] p-3" />}
+          <div className="flex gap-2">
+            <input value={loadingGifUrl} onChange={e => setLoadingGifUrl(e.target.value)} placeholder="GIF image URL" className={`flex-1 ${inputCls}`} />
+            <label className="inline-flex cursor-pointer items-center rounded-xl border border-[#30363D] bg-[#0d1117] px-3 text-gray-300 hover:text-[#2ee661]">
+              <Upload size={16} />
+              <input type="file" accept="image/gif,image/*" className="hidden" onChange={async e => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                try { setLoadingGifUrl(await uploadImageToServer(file)); }
+                catch (err: any) { alert('Animation upload failed: ' + (err.message || 'Unknown error')); }
+                e.currentTarget.value = '';
+              }} />
+            </label>
+          </div>
+        </div>
+      )}
 
       {/* Hero Banner */}
       {activeTab === 'hero' && (

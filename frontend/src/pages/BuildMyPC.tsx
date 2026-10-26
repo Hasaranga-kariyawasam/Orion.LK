@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useShop } from '../context/ShopContext';
 import { motion } from 'motion/react';
 import { ChevronRight, Settings, Download, ShoppingCart, Trash2, Cpu, HardDrive, MemoryStick, Maximize, Box, Battery, Wind, Server, Monitor, Keyboard, Mouse, PlusCircle, Search } from 'lucide-react';
-import { formatLKR, MOCK_PRODUCTS } from '../data';
+import { formatLKR } from '../data';
+import { useAdmin } from '../context/AdminContext';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -26,6 +27,7 @@ const BUILD_CATEGORIES = [
 
 export default function BuildMyPC() {
   const { buildItems, removeFromBuild, addToBuild, addToCart, buildTotal } = useShop();
+  const { products } = useAdmin();
   const [activeCategory, setActiveCategory] = useState(BUILD_CATEGORIES[0]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAI, setShowAI] = useState(false);
@@ -33,9 +35,15 @@ export default function BuildMyPC() {
   const { savedBuilds, saveBuild, loadBuild, deleteSavedBuild, setBuildItems } = useShop();
 
   // Find products matching active category
-  const availableProducts = MOCK_PRODUCTS.filter(p =>
-    activeCategory.keywords.some(kw => p.name.toLowerCase().includes(kw.toLowerCase()) || p.category.toLowerCase().includes(kw.toLowerCase()))
-  ).filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  const availableProducts = products.filter(product => {
+    const searchableFields = [product.name, product.category, product.brand, product.description, ...(product.tags || [])]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    const matchesCategory = activeCategory.keywords.some(keyword => searchableFields.includes(keyword.toLowerCase()));
+    const matchesSearch = searchQuery.trim() === '' || searchableFields.includes(searchQuery.trim().toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   // Add all build items to cart
   const handleAddAllToCart = () => {
@@ -103,7 +111,7 @@ export default function BuildMyPC() {
 
     // Table
     const tableData = buildItems.map(item => {
-      const price = item.discount ? item.price : (item.originalPrice || item.price);
+      const price = item.price;
       return [
         item.name,
         formatLKR(price).replace('Rs.', '').trim(),
@@ -159,10 +167,10 @@ export default function BuildMyPC() {
     doc.setFont("helvetica", "normal");
     doc.text("All prices are in Rs", 14, 265);
     doc.text("All prices are subject to change according to product availability.", 14, 270);
-    doc.text("Payments must be made to Tulip Computers", 14, 275);
+    doc.text("Prices and availability are subject to change.", 14, 275);
 
     doc.setFont('helvetica', 'italic');
-    doc.text("2026 @ Tulip Computers. All Right Reserved.", 195, 275, { align: "right" });
+    doc.text("2026 @ Orion.LK. All Rights Reserved.", 195, 275, { align: "right" });
 
     doc.save('PC_Quotation.pdf');
   };
@@ -358,7 +366,7 @@ export default function BuildMyPC() {
                     <div className="w-12 h-12 rounded-full border-[3px] border-dashed border-[#00AEEF] animate-spin absolute top-3 opacity-50"></div>
                     <div className="w-6 h-6 bg-blue-400 blur-xl absolute bottom-3 right-2 animate-pulse"></div>
                   </div>
-                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[#00AEEF] text-[7px] font-black tracking-widest uppercase" style={{ transform: 'translateZ(11px)' }}>TULIP</div>
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[#00AEEF] text-[7px] font-black tracking-widest uppercase" style={{ transform: 'translateZ(11px)' }}>ORION</div>
                 </motion.div>
               </div>
 
@@ -369,7 +377,7 @@ export default function BuildMyPC() {
                       <div key={item.id} className="flex justify-between items-start gap-3">
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-bold text-gray-800 leading-tight mb-1">{item.name}</p>
-                          <span className="text-xs font-bold text-gray-500">{formatLKR(item.discount ? item.price : (item.originalPrice || item.price))}</span>
+                          <span className="text-xs font-bold text-gray-500">{formatLKR(item.price)}</span>
                         </div>
                         <button onClick={() => removeFromBuild(item.id)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><Trash2 size={14} /></button>
                       </div>

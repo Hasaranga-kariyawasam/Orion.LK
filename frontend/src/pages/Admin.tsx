@@ -22,6 +22,7 @@ import AdminBrands from './admin/AdminBrands';
 import AdminPayments from './admin/AdminPayments';
 import AdminAnalytics from './admin/AdminAnalytics';
 import AdminNotifications from './admin/AdminNotifications';
+import AdminReviews from './admin/AdminReviews';
 
 const ALLOWED_ADMIN_EMAILS = ['orian@admin.lk', 'orion@admin.lk'];
 
@@ -30,7 +31,7 @@ export const isAuthorizedAdmin = (email?: string | null): boolean => {
   return ALLOWED_ADMIN_EMAILS.includes(email.trim().toLowerCase());
 };
 
-type TabId = 'dashboard' | 'analytics' | 'notifications' | 'products' | 'add-item' | 'orders' | 'users' | 'home-page' | 'special-offers' | 'categories' | 'brands' | 'payments';
+type TabId = 'dashboard' | 'analytics' | 'notifications' | 'products' | 'add-item' | 'orders' | 'users' | 'home-page' | 'special-offers' | 'categories' | 'brands' | 'payments' | 'reviews';
 
 interface NavItem {
   id: TabId;
@@ -56,6 +57,7 @@ const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
       { id: 'categories', label: 'Categories', icon: LayoutGrid },
       { id: 'brands', label: 'Brands', icon: Tags },
       { id: 'special-offers', label: 'Special Offers', icon: Star },
+      { id: 'reviews', label: 'Customer Reviews', icon: Star },
     ],
   },
   {
@@ -431,6 +433,7 @@ export default function Admin() {
               {activeTab === 'categories' && <AdminCategories />}
               {activeTab === 'brands' && <AdminBrands />}
               {activeTab === 'payments' && <AdminPayments />}
+              {activeTab === 'reviews' && <AdminReviews />}
             </motion.div>
           </AnimatePresence>
         </main>

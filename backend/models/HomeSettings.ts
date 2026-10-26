@@ -12,6 +12,9 @@ export interface IHomeSettings extends Document {
   storeAddress: string;
   specialOffers: unknown[];
   specialOffersDeadline: string;
+  brandLogoUrl: string;
+  specialOffersBannerUrl: string;
+  loadingGifUrl: string;
   updatedAt: Date;
 }
 
@@ -22,12 +25,15 @@ const HomeSettingsSchema = new Schema<IHomeSettings>(
     featuredImages: { type: [Schema.Types.Mixed], default: [] },
     pcBuildCards: { type: [Schema.Types.Mixed], default: [] },
     homePromoCards: { type: [Schema.Types.Mixed], default: [] },
-      accessories: { type: [Schema.Types.Mixed], default: [] },
-      bestSellerIds: { type: [String], default: [] },
-      whatsappNumber: { type: String, default: '' },
-      storeAddress: { type: String, default: '' },
-      specialOffers: { type: [Schema.Types.Mixed], default: [] },
-      specialOffersDeadline: { type: String, default: '' },
+    accessories: { type: [Schema.Types.Mixed], default: [] },
+    bestSellerIds: { type: [String], default: [] },
+    whatsappNumber: { type: String, default: '' },
+    storeAddress: { type: String, default: '' },
+    specialOffers: { type: [Schema.Types.Mixed], default: [] },
+    specialOffersDeadline: { type: String, default: '' },
+    brandLogoUrl: { type: String, default: '' },
+    specialOffersBannerUrl: { type: String, default: '' },
+    loadingGifUrl: { type: String, default: '' },
   },
   { timestamps: true }
 );
