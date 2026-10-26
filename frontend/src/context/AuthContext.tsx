@@ -68,9 +68,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const updated = await updateMyProfile(updates);
       if (updated) {
         setMongoUser(updated);
-        // Also sync displayName to Firebase Auth if updated
         if (updates.name && auth.currentUser) {
-          await updateProfile(auth.currentUser, { displayName: updates.name });
+          try {
+            await updateProfile(auth.currentUser, { displayName: updates.name });
+          } catch (error) {
+            console.warn('MongoDB profile saved, but Firebase display name sync failed:', error);
+          }
         }
       }
       return updated;

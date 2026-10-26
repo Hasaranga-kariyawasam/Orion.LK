@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { formatLKR } from '../data';
 import { useShop } from '../context/ShopContext';
 import { useAdmin } from '../context/AdminContext';
-import { fetchProductById } from '../lib/api';
+import { ApiProductReview, fetchProductById, fetchProductReviews, submitProductReview } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
 import {
   Heart, ShoppingCart, Check, ShieldCheck, ChevronRight, Truck, Headset,
   Scale, Facebook, Twitter, Linkedin, MapPin, Star, Minus, Plus,
@@ -16,6 +17,7 @@ import ProductDetailSkeleton from '../components/ProductDetailSkeleton';
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const { products } = useAdmin();
   const navigate = useNavigate();
 
@@ -30,16 +32,17 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
 
   // Reviews interactive state
-  const [reviewsList, setReviewsList] = useState([
-    { id: '1', name: 'Naveen Perera', rating: 5, date: '2 days ago', title: 'Exceptional Performance & Fast Delivery', comment: 'Ordered this for my new gaming workstation. Packaging was superb and delivery took just 24 hours to Colombo. Runs cool and delivers top-tier performance.' },
-    { id: '2', name: 'Dulantha Fernando', rating: 5, date: '1 week ago', title: '100% Genuine Sri Lankan Unit', comment: 'Verified the serial number with the authorized distributor and warranty registered without any issues. Orion.lk always delivers authentic goods.' }
-  ]);
+  const [reviewsList, setReviewsList] = useState<ApiProductReview[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [canReview, setCanReview] = useState(false);
+  const [alreadyReviewed, setAlreadyReviewed] = useState(false);
+  const [reviewError, setReviewError] = useState('');
   const [userRating, setUserRating] = useState(5);
-  const [reviewName, setReviewName] = useState('');
   const [reviewComment, setReviewComment] = useState('');
-  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const [reviewMessage, setReviewMessage] = useState('');
 
   const { addToCart, toggleWishlist, isInWishlist, toggleCompare, isInCompare, setIsCartOpen } = useShop();
+  const { user } = useAuth();
   const inWishlist = product ? isInWishlist(product.id) : false;
   const inCompare = product ? isInCompare(product.id) : false;
 
@@ -78,6 +81,31 @@ export default function ProductDetail() {
   }, [id, products]);
 
   useEffect(() => {
+    if (!product?.id) return;
+    let current = true;
+    setReviewsLoading(true);
+    setReviewsList([]);
+    setCanReview(false);
+    setAlreadyReviewed(false);
+    setReviewMessage('');
+    fetchProductReviews(String(product.id))
+      .then(result => {
+        if (!current) return;
+        setReviewsList(result.reviews);
+        setCanReview(result.canReview);
+        setAlreadyReviewed(result.alreadyReviewed);
+        setReviewError('');
+      })
+      .catch(error => {
+        if (current) setReviewError(error instanceof Error ? error.message : 'Failed to load reviews');
+      })
+      .finally(() => {
+        if (current) setReviewsLoading(false);
+      });
+    return () => { current = false; };
+  }, [product?.id, user?.uid]);
+
+  useEffect(() => {
     const handleScroll = () => {
       const totalScroll = document.documentElement.scrollTop;
       const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
@@ -91,6 +119,15 @@ export default function ProductDetail() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [id]);
+
+  useEffect(() => {
+    if (searchParams.get('tab') === 'reviews') setActiveTab('reviews');
+  }, [searchParams, id]);
+
+  useEffect(() => {
+    if (searchParams.get('tab') !== 'reviews' || isLoading || !product) return;
+    window.setTimeout(() => document.getElementById('product-reviews')?.scrollIntoView({ behavior: 'smooth' }), 0);
+  }, [searchParams, isLoading, product]);
 
   const handlePriceAlert = (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,29 +152,32 @@ export default function ProductDetail() {
     window.open(`https://wa.me/94770000000?text=${encodeURIComponent(text)}`, '_blank');
   };
 
-  const handleReviewSubmit = (e: React.FormEvent) => {
+  const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reviewName.trim() || !reviewComment.trim()) return;
-    setReviewsList(prev => [
-      {
-        id: Date.now().toString(),
-        name: reviewName,
+    if (!product?.id || !canReview || !reviewComment.trim()) return;
+    setReviewError('');
+    setReviewMessage('');
+    try {
+      await submitProductReview({
+        productId: String(product.id),
         rating: userRating,
-        date: 'Just now',
-        title: 'Verified Customer Review',
-        comment: reviewComment
-      },
-      ...prev
-    ]);
-    setReviewName('');
-    setReviewComment('');
-    setReviewSubmitted(true);
-    setTimeout(() => setReviewSubmitted(false), 4000);
+        comment: reviewComment.trim(),
+      });
+      setCanReview(false);
+      setAlreadyReviewed(true);
+      setReviewComment('');
+      setReviewMessage('Thank you. Your review is awaiting administrator approval.');
+    } catch (error) {
+      setReviewError(error instanceof Error ? error.message : 'Failed to submit review');
+    }
   };
 
   const relatedProducts = product ? products
     .filter(p => p.category === product.category && (p.id !== product.id && (p as any)._id !== product.id))
     .slice(0, 4) : [];
+  const averageRating = reviewsList.length
+    ? (reviewsList.reduce((total, review) => total + review.rating, 0) / reviewsList.length).toFixed(1)
+    : '0.0';
 
   if (isLoading) {
     return <ProductDetailSkeleton />;
@@ -570,35 +610,37 @@ export default function ProductDetail() {
 
             {/* Reviews Tab */}
             {activeTab === 'reviews' && (
-              <div>
+              <div id="product-reviews">
                 <h3 className="text-lg font-black text-gray-900 mb-6">Customer Ratings & Reviews</h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                   {/* Reviews List */}
                   <div>
                     <div className="flex items-center gap-4 mb-6 p-4 rounded-xl bg-gray-50 border border-gray-100">
-                      <div className="text-4xl font-black text-gray-900">5.0</div>
+                      <div className="text-4xl font-black text-gray-900">{averageRating}</div>
                       <div className="flex flex-col">
                         <div className="flex text-yellow-400">
-                          {[...Array(5)].map((_, i) => <Star key={i} size={16} className="fill-current" />)}
+                          {[...Array(5)].map((_, i) => <Star key={i} size={16} className={i < Math.round(Number(averageRating)) ? 'fill-current' : 'text-gray-300'} />)}
                         </div>
-                        <span className="text-xs text-gray-500 font-semibold mt-0.5">{reviewsList.length} verified customer review{reviewsList.length !== 1 ? 's' : ''}</span>
+                        <span className="text-xs text-gray-500 font-semibold mt-0.5">{reviewsList.length} approved customer review{reviewsList.length !== 1 ? 's' : ''}</span>
                       </div>
                     </div>
 
                     <div className="space-y-4">
-                      {reviewsList.map(r => (
-                        <div key={r.id} className="border-b border-gray-100 pb-4">
+                      {reviewsLoading ? (
+                        <p className="text-sm text-gray-500">Loading reviews...</p>
+                      ) : reviewsList.length ? reviewsList.map(review => (
+                        <div key={review._id} className="border-b border-gray-100 pb-4">
                           <div className="flex justify-between items-start mb-1">
-                            <span className="font-bold text-gray-900 text-sm">{r.name}</span>
-                            <span className="text-[11px] text-gray-400">{r.date}</span>
+                            <span className="font-bold text-gray-900 text-sm">{review.customerName}</span>
+                            <span className="text-[11px] text-gray-400">{new Date(review.createdAt).toLocaleDateString()}</span>
                           </div>
                           <div className="flex text-yellow-400 mb-2">
-                            {[...Array(r.rating)].map((_, i) => <Star key={i} size={12} className="fill-current" />)}
+                            {[...Array(review.rating)].map((_, i) => <Star key={i} size={12} className="fill-current" />)}
                           </div>
-                          <p className="text-xs text-gray-600 leading-relaxed">{r.comment}</p>
+                          <p className="text-xs text-gray-600 leading-relaxed">{review.comment}</p>
                         </div>
-                      ))}
+                      )) : <p className="text-sm text-gray-500">No approved reviews yet.</p>}
                     </div>
                   </div>
 
@@ -607,59 +649,36 @@ export default function ProductDetail() {
                     <h4 className="font-black text-gray-900 text-sm mb-1">Write a Customer Review</h4>
                     <p className="text-xs text-gray-500 mb-4">Share your experience with other buyers.</p>
 
-                    {reviewSubmitted && (
-                      <div className="mb-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2">
-                        <CheckCircle2 size={16} /> Thank you! Your review has been submitted.
-                      </div>
-                    )}
-
-                    <form onSubmit={handleReviewSubmit} className="space-y-3.5">
-                      <div>
-                        <span className="block text-xs font-bold text-gray-700 mb-1.5">Rating</span>
-                        <div className="flex gap-1">
-                          {[1, 2, 3, 4, 5].map((s) => (
-                            <button
-                              key={s}
-                              type="button"
-                              onClick={() => setUserRating(s)}
-                              className="text-yellow-400 hover:scale-110 transition-transform p-0.5"
-                            >
-                              <Star size={18} className={s <= userRating ? 'fill-current' : 'text-gray-300'} />
-                            </button>
-                          ))}
+                    {reviewMessage && <p role="status" className="mb-3 rounded-xl bg-emerald-50 p-3 text-xs font-bold text-emerald-800">{reviewMessage}</p>}
+                    {reviewError && <p role="alert" className="mb-3 rounded-xl bg-red-50 p-3 text-xs text-red-700">{reviewError}</p>}
+                    {!user ? (
+                      <p className="text-xs text-gray-600">Sign in and purchase this product to leave a review. <Link to="/login" className="font-bold underline">Sign in</Link></p>
+                    ) : alreadyReviewed ? (
+                      <p className="text-xs text-gray-600">You have already submitted a review for this product.</p>
+                    ) : canReview ? (
+                      <form onSubmit={handleReviewSubmit} className="space-y-3.5">
+                        <p className="text-xs text-gray-500">Only customers with a delivered order for this product can submit a review. Reviews appear after admin approval.</p>
+                        <div>
+                          <span className="block text-xs font-bold text-gray-700 mb-1.5">Rating</span>
+                          <div className="flex gap-1">
+                            {[1, 2, 3, 4, 5].map(rating => (
+                              <button key={rating} type="button" onClick={() => setUserRating(rating)} aria-label={`${rating} stars`} className="text-yellow-400 hover:scale-110 transition-transform p-0.5">
+                                <Star size={18} className={rating <= userRating ? 'fill-current' : 'text-gray-300'} />
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-gray-700 mb-1">Your Name *</label>
-                        <input
-                          type="text"
-                          required
-                          value={reviewName}
-                          onChange={(e) => setReviewName(e.target.value)}
-                          placeholder="e.g. Kasun Silva"
-                          className="w-full text-xs p-2.5 rounded-xl border border-gray-200 bg-white focus:border-black outline-none"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-gray-700 mb-1">Your Review *</label>
-                        <textarea
-                          required
-                          value={reviewComment}
-                          onChange={(e) => setReviewComment(e.target.value)}
-                          placeholder="What did you like about this product?"
-                          className="w-full text-xs p-2.5 rounded-xl border border-gray-200 bg-white focus:border-black outline-none h-24"
-                        />
-                      </div>
-
-                      <button
-                        type="submit"
-                        className="w-full bg-[#161B22] text-white font-black uppercase tracking-wider text-xs py-2.5 rounded-xl hover:bg-[#0D1117] transition-colors shadow-sm cursor-pointer"
-                      >
-                        Submit Review
-                      </button>
-                    </form>
+                        <div>
+                          <label className="block text-xs font-bold text-gray-700 mb-1">Your Review *</label>
+                          <textarea required maxLength={2000} value={reviewComment} onChange={event => setReviewComment(event.target.value)} placeholder="What did you like about this product?" className="w-full text-xs p-2.5 rounded-xl border border-gray-200 bg-white focus:border-black outline-none h-24" />
+                        </div>
+                        <button type="submit" className="w-full bg-[#161B22] text-white font-black uppercase tracking-wider text-xs py-2.5 rounded-xl hover:bg-[#0D1117] transition-colors shadow-sm cursor-pointer">
+                          Submit Review
+                        </button>
+                      </form>
+                    ) : (
+                      <p className="text-xs text-gray-600">A delivered order containing this product is required before you can submit a review.</p>
+                    )}
                   </div>
                 </div>
               </div>

@@ -8,6 +8,9 @@ import {
   signInWithPopup,
   updateProfile,
   updatePassword,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  sendPasswordResetEmail,
   onAuthStateChanged,
   User,
 } from 'firebase/auth';
@@ -41,6 +44,11 @@ export const registerWithEmail = async (name: string, email: string, password: s
 };
 
 export const loginWithGoogle = () => signInWithPopup(auth, googleProvider);
+export const sendResetPasswordEmail = (email: string) => sendPasswordResetEmail(auth, email);
+export const reauthenticateWithPassword = (user: User, password: string) => {
+  if (!user.email) throw new Error('This account does not have an email address for password verification.');
+  return reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, password));
+};
 
 export const logout = () => signOut(auth);
 

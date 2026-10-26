@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Eye, EyeOff, AlertCircle, CheckCircle, Loader2, Cpu, Laptop, ShieldCheck } from 'lucide-react';
-import { loginWithEmail, registerWithEmail, loginWithGoogle } from '../lib/firebase';
+import { loginWithEmail, registerWithEmail, loginWithGoogle, sendResetPasswordEmail } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import { BRAND_LOGO_URL } from '../data';
 
@@ -39,6 +39,7 @@ export default function AuthSplitLayout({ initialMode }: AuthSplitLayoutProps) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [resetMessage, setResetMessage] = useState('');
 
   // Register specific state
   const [name, setName] = useState('');
@@ -100,11 +101,30 @@ export default function AuthSplitLayout({ initialMode }: AuthSplitLayoutProps) {
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setResetMessage('');
     setLoading(true);
     try {
       await loginWithEmail(email, password);
       const dest = isAdminEmail(email) && from === '/' ? '/admin' : from;
       navigate(dest, { replace: true });
+    } catch (err: any) {
+      setError(getErrorMessage(err.code));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    setError('');
+    setResetMessage('');
+    if (!email.trim()) {
+      setError('Enter your email address first to receive a password reset link.');
+      return;
+    }
+    setLoading(true);
+    try {
+      await sendResetPasswordEmail(email.trim());
+      setResetMessage('If an account exists for this email, a password reset link has been sent.');
     } catch (err: any) {
       setError(getErrorMessage(err.code));
     } finally {
@@ -278,16 +298,14 @@ export default function AuthSplitLayout({ initialMode }: AuthSplitLayoutProps) {
                         <label htmlFor="login-password" className="text-xs font-semibold uppercase tracking-wider text-gray-700">
                           Password
                         </label>
-                        <a
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            alert('Password reset link has been dispatched or contact support@orion.lk.');
-                          }}
+                        <button
+                          type="button"
+                          onClick={() => void handlePasswordReset()}
+                          disabled={loading}
                           className="text-xs font-medium text-gray-500 hover:text-black underline underline-offset-2 transition-colors"
                         >
                           Forgot Password?
-                        </a>
+                        </button>
                       </div>
                       <div className="relative">
                         <input
@@ -326,6 +344,7 @@ export default function AuthSplitLayout({ initialMode }: AuthSplitLayoutProps) {
                         'Login'
                       )}
                     </button>
+                    {resetMessage && <p role="status" className="text-xs text-emerald-700">{resetMessage}</p>}
                   </form>
 
                   <div className="flex items-center gap-3 my-4">

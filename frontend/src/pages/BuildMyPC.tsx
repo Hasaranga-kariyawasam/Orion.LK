@@ -1,29 +1,12 @@
 import React, { useState } from 'react';
 import { useShop } from '../context/ShopContext';
 import { motion } from 'motion/react';
-import { ChevronRight, Settings, Download, ShoppingCart, Trash2, Cpu, HardDrive, MemoryStick, Maximize, Box, Battery, Wind, Server, Monitor, Keyboard, Mouse, PlusCircle, Search } from 'lucide-react';
+import { Download, ShoppingCart, Trash2, Box, PlusCircle, Search } from 'lucide-react';
 import { formatLKR } from '../data';
 import { useAdmin } from '../context/AdminContext';
+import { BUILD_CATEGORIES } from '../lib/buildCategories';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-
-const BUILD_CATEGORIES = [
-  { id: 'processor', name: 'Processor', icon: Cpu, keywords: ['Processor', 'CPU'] },
-  { id: 'motherboard', name: 'Motherboard', icon: Box, keywords: ['Motherboard'] },
-  { id: 'memory', name: 'Memory', icon: MemoryStick, keywords: ['RAM', 'Memory'] },
-  { id: 'graphics', name: 'Graphics card', icon: Maximize, keywords: ['Graphics', 'GPU', 'RTX', 'RX'] },
-  { id: 'primary-storage', name: 'Primary storage', icon: HardDrive, keywords: ['SSD', 'NVMe', 'Storage'] },
-  { id: 'extra-storage', name: 'Extra storage', icon: HardDrive, keywords: ['HDD', 'SSD'] },
-  { id: 'power-supply', name: 'Power supply', icon: Battery, keywords: ['Power', 'PSU'] },
-  { id: 'cpu-cooler', name: 'CPU cooler', icon: Wind, keywords: ['Cooler', 'Liquid'] },
-  { id: 'computer-case', name: 'Computer case', icon: Server, keywords: ['Case', 'Chassis'] },
-  { id: 'case-fans', name: 'Case fans', icon: Wind, keywords: ['Fan', 'RGB Fan'] },
-  { id: 'monitor', name: 'Monitor', icon: Monitor, keywords: ['Monitor', 'Display'] },
-  { id: 'keyboard', name: 'Keyboard', icon: Keyboard, keywords: ['Keyboard'] },
-  { id: 'mouse', name: 'Mouse', icon: Mouse, keywords: ['Mouse'] },
-  { id: 'ups', name: 'UPS', icon: Battery, keywords: ['UPS'] },
-  { id: 'more', name: 'More products', icon: PlusCircle, keywords: ['Accessories'] },
-];
 
 export default function BuildMyPC() {
   const { buildItems, removeFromBuild, addToBuild, addToCart, buildTotal } = useShop();
@@ -32,12 +15,12 @@ export default function BuildMyPC() {
   const [showAI, setShowAI] = useState(false);
   const [showSavedBuilds, setShowSavedBuilds] = useState(false);
   const { savedBuilds, saveBuild, loadBuild, deleteSavedBuild, setBuildItems } = useShop();
-  const { products } = useAdmin();
+  const { products, pcBuildCategoryMap } = useAdmin();
 
-  // Find products matching active category
-  const availableProducts = products.filter(p =>
-    activeCategory.keywords.some(kw => p.name.toLowerCase().includes(kw.toLowerCase()) || p.category.toLowerCase().includes(kw.toLowerCase()))
-  ).filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  const allowedCategories = (pcBuildCategoryMap[activeCategory.id] || []).map(category => category.trim().toLowerCase());
+  const availableProducts = products
+    .filter(product => allowedCategories.includes(product.category.trim().toLowerCase()))
+    .filter(product => product.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   // Add all build items to cart
   const handleAddAllToCart = () => {
@@ -273,7 +256,8 @@ export default function BuildMyPC() {
             <div className="flex flex-col relative before:content-[''] before:absolute before:left-6 before:top-4 before:bottom-4 before:w-px before:bg-gray-200">
               {BUILD_CATEGORIES.map(cat => {
                 const isActive = activeCategory.id === cat.id;
-                const isSelected = buildItems.some(item => cat.keywords.some(kw => item.name.toLowerCase().includes(kw.toLowerCase()) || item.category.toLowerCase().includes(kw.toLowerCase())));
+                const categoryNames = (pcBuildCategoryMap[cat.id] || []).map(category => category.trim().toLowerCase());
+                const isSelected = buildItems.some(item => categoryNames.includes(item.category.trim().toLowerCase()));
                 return (
                   <button
                     key={cat.id}

@@ -38,6 +38,13 @@ export async function PUT(req: NextRequest) {
           pcBuildCards: Array.isArray(body.pcBuildCards) ? body.pcBuildCards : [],
           homePromoCards: Array.isArray(body.homePromoCards) ? body.homePromoCards : [],
           brandBanner: body.brandBanner && typeof body.brandBanner === 'object' ? body.brandBanner : {},
+          secondBannerImage: String(body.secondBannerImage || ''),
+          homeProductCategories: Array.isArray(body.homeProductCategories)
+            ? body.homeProductCategories.map(String)
+            : [],
+          pcBuildCategoryMap: body.pcBuildCategoryMap && typeof body.pcBuildCategoryMap === 'object'
+            ? body.pcBuildCategoryMap
+            : {},
           accessories: Array.isArray(body.accessories) ? body.accessories : [],
           bestSellerIds: Array.isArray(body.bestSellerIds) ? body.bestSellerIds : [],
           whatsappNumber: String(body.whatsappNumber || ''),

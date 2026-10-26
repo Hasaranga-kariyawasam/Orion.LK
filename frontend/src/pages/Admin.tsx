@@ -22,6 +22,7 @@ import AdminBrands from './admin/AdminBrands';
 import AdminPayments from './admin/AdminPayments';
 import AdminAnalytics from './admin/AdminAnalytics';
 import AdminNotifications from './admin/AdminNotifications';
+import AdminReviews from './admin/AdminReviews';
 
 const ALLOWED_ADMIN_EMAILS = ['orian@admin.lk', 'orion@admin.lk'];
 
@@ -30,7 +31,7 @@ export const isAuthorizedAdmin = (email?: string | null): boolean => {
   return ALLOWED_ADMIN_EMAILS.includes(email.trim().toLowerCase());
 };
 
-type TabId = 'dashboard' | 'analytics' | 'notifications' | 'products' | 'add-item' | 'orders' | 'users' | 'home-page' | 'special-offers' | 'categories' | 'brands' | 'payments';
+type TabId = 'dashboard' | 'analytics' | 'notifications' | 'products' | 'add-item' | 'orders' | 'reviews' | 'users' | 'home-page' | 'special-offers' | 'categories' | 'brands' | 'payments';
 
 interface NavItem {
   id: TabId;
@@ -62,6 +63,7 @@ const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
     title: 'Commerce',
     items: [
       { id: 'orders', label: 'Orders', icon: ShoppingBag },
+      { id: 'reviews', label: 'Product Reviews', icon: Star },
       { id: 'users', label: 'Users', icon: Users },
       { id: 'payments', label: 'Payment Options', icon: CreditCard },
     ],
@@ -422,6 +424,7 @@ export default function Admin() {
               {activeTab === 'products' && <AdminProducts onAddItem={handleAddItem} onEditItem={handleEditItem} />}
               {activeTab === 'add-item' && <AdminAddItem onBack={handleBackFromAddItem} editId={editItemId} />}
               {activeTab === 'orders' && <AdminOrders />}
+              {activeTab === 'reviews' && <AdminReviews />}
               {activeTab === 'users' && <AdminUsers />}
               {activeTab === 'home-page' && <AdminHomePage onSaved={() => {
                 setSaveMessage({ type: 'success', text: 'Home page changes saved successfully.' });

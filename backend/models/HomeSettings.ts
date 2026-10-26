@@ -7,6 +7,9 @@ export interface IHomeSettings extends Document {
   pcBuildCards: unknown[];
   homePromoCards: unknown[];
   brandBanner: unknown;
+  secondBannerImage: string;
+  homeProductCategories: string[];
+  pcBuildCategoryMap: Record<string, string[]>;
   accessories: unknown[];
   bestSellerIds: string[];
   whatsappNumber: string;
@@ -24,6 +27,9 @@ const HomeSettingsSchema = new Schema<IHomeSettings>(
     pcBuildCards: { type: [Schema.Types.Mixed], default: [] },
     homePromoCards: { type: [Schema.Types.Mixed], default: [] },
     brandBanner: { type: Schema.Types.Mixed, default: {} },
+    secondBannerImage: { type: String, default: '' },
+    homeProductCategories: { type: [String], default: [] },
+    pcBuildCategoryMap: { type: Schema.Types.Mixed, default: {} },
     accessories: { type: [Schema.Types.Mixed], default: [] },
     bestSellerIds: { type: [String], default: [] },
     whatsappNumber: { type: String, default: '' },

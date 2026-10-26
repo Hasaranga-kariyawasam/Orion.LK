@@ -2,6 +2,8 @@ import React, { useRef, useState } from 'react';
 import { Upload, Trash2, Plus, Video, Image as ImageIcon, Phone, MapPin, Star, X } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { resolveMediaUrl, uploadImageToServer } from '../../lib/api';
+import { BUILD_CATEGORIES } from '../../lib/buildCategories';
+import { matchesCategoryName } from '../../lib/homeProductSections';
 
 const GRADIENT_PRESETS = [
   'from-purple-800 to-indigo-600',
@@ -21,13 +23,17 @@ export default function AdminHomePage({ onSaved }: { onSaved?: () => void }) {
     pcBuildCards, setPcBuildCards,
     homePromoCards, setHomePromoCards,
     brandBanner, setBrandBanner,
+    secondBannerImage, setSecondBannerImage,
+    homeProductCategories, setHomeProductCategories,
+    pcBuildCategoryMap, setPcBuildCategoryMap, categories,
+    brands,
     products, bestSellerIds, setBestSellerIds,
     whatsappNumber, setWhatsappNumber,
     storeAddress, setStoreAddress,
     saveSettings,
   } = useAdmin();
 
-  const [activeTab, setActiveTab] = useState<'hero' | 'brand-banner' | 'featured' | 'pc-builds' | 'promos' | 'video' | 'accessories' | 'bestsellers' | 'contact'>('hero');
+  const [activeTab, setActiveTab] = useState<'hero' | 'brand-banner' | 'second-banner' | 'featured' | 'pc-builds' | 'pc-build-categories' | 'promos' | 'video' | 'accessories' | 'bestsellers' | 'contact'>('hero');
   const heroFileRefs = useRef<HTMLInputElement[]>([]);
   const newHeroRef = useRef<HTMLInputElement>(null);
 
@@ -37,6 +43,13 @@ export default function AdminHomePage({ onSaved }: { onSaved?: () => void }) {
   const handleHeroFile = async (i: number, file: File) => {
     try {
       updateHeroImage(i, await uploadImageToServer(file));
+    } catch (err: any) {
+      alert('Image upload failed: ' + (err.message || 'Unknown error'));
+    }
+  };
+  const handleSecondBannerFile = async (file: File) => {
+    try {
+      setSecondBannerImage(await uploadImageToServer(file));
     } catch (err: any) {
       alert('Image upload failed: ' + (err.message || 'Unknown error'));
     }
@@ -80,12 +93,19 @@ export default function AdminHomePage({ onSaved }: { onSaved?: () => void }) {
   };
 
   const inputCls = "w-full bg-[#0d1117] border border-[#30363D] rounded-xl px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#2ee661]/50";
+  const haylouBrandBanner = brandBanner.image
+    || brands.find(brand => brand.name.toLowerCase() === 'haylou')?.banner
+    || products.find(product => product.brand?.toLowerCase() === 'haylou' || product.name.toLowerCase().includes('haylou'))?.image
+    || '';
 
   const tabs = [
     { id: 'hero', label: 'Hero Banner', icon: ImageIcon },
     { id: 'brand-banner', label: 'Haylou Banner', icon: ImageIcon },
+    { id: 'second-banner', label: 'Second Banner', icon: ImageIcon },
+    { id: 'home-products', label: 'Home Products', icon: Plus },
     { id: 'featured', label: 'Featured Images', icon: ImageIcon },
     { id: 'pc-builds', label: 'PC Builds', icon: ImageIcon },
+    { id: 'pc-build-categories', label: 'Build Categories', icon: Plus },
     { id: 'promos', label: 'Promo Cards', icon: ImageIcon },
     { id: 'video', label: 'Video', icon: Video },
     { id: 'accessories', label: 'Accessories', icon: Plus },
@@ -156,10 +176,10 @@ export default function AdminHomePage({ onSaved }: { onSaved?: () => void }) {
 
       {activeTab === 'brand-banner' && (
         <div className="space-y-4">
-          <p className="text-gray-500 text-sm">Change the image and content shown in the Haylou banner on the home page.</p>
+          <p className="text-gray-500 text-sm">Upload or set the Haylou banner image. Recommended image dimensions: 740 × 334 px. The home page banner displays the image without text.</p>
           <div className="bg-[#161B22] border border-[#30363D] rounded-2xl p-6 space-y-4">
-            <div className="h-48 rounded-xl bg-[#0d1117] overflow-hidden">
-              {brandBanner.image && <img src={resolveMediaUrl(brandBanner.image)} alt="Home brand banner preview" className="w-full h-full object-cover" />}
+            <div className="w-full max-w-[740px] aspect-[370/167] rounded-xl bg-white overflow-hidden">
+              {haylouBrandBanner && <img src={resolveMediaUrl(haylouBrandBanner)} alt="Haylou banner preview" className="w-full h-full object-contain" />}
             </div>
             <div className="flex gap-2">
               <input value={brandBanner.image} onChange={event => setBrandBanner({ ...brandBanner, image: event.target.value })} placeholder="Banner image URL..." className={`flex-1 ${inputCls}`} />
@@ -172,24 +192,61 @@ export default function AdminHomePage({ onSaved }: { onSaved?: () => void }) {
                 }} />
               </label>
             </div>
-            <div className="grid md:grid-cols-2 gap-4">
-              <label className="text-xs font-bold text-gray-500 uppercase">Brand Name
-                <input value={brandBanner.brandName} onChange={event => setBrandBanner({ ...brandBanner, brandName: event.target.value })} className={`${inputCls} mt-2`} />
-              </label>
-              <label className="text-xs font-bold text-gray-500 uppercase">Title
-                <input value={brandBanner.title} onChange={event => setBrandBanner({ ...brandBanner, title: event.target.value })} className={`${inputCls} mt-2`} />
-              </label>
-              <label className="text-xs font-bold text-gray-500 uppercase">Subtitle
-                <input value={brandBanner.subtitle} onChange={event => setBrandBanner({ ...brandBanner, subtitle: event.target.value })} className={`${inputCls} mt-2`} />
-              </label>
-              <label className="text-xs font-bold text-gray-500 uppercase">Button Text
-                <input value={brandBanner.buttonText} onChange={event => setBrandBanner({ ...brandBanner, buttonText: event.target.value })} className={`${inputCls} mt-2`} />
-              </label>
-              <label className="text-xs font-bold text-gray-500 uppercase md:col-span-2">Button Link
-                <input value={brandBanner.href} onChange={event => setBrandBanner({ ...brandBanner, href: event.target.value })} placeholder="/shop?search=Haylou" className={`${inputCls} mt-2`} />
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'second-banner' && (
+        <div className="space-y-4">
+          <p className="text-gray-500 text-sm">Upload or set the second home page banner image. Recommended image dimensions: 740 × 334 px. The banner displays the image without text.</p>
+          <div className="bg-[#161B22] border border-[#30363D] rounded-2xl p-6 space-y-4">
+            <div className="w-full max-w-[740px] aspect-[370/167] rounded-xl bg-white overflow-hidden">
+              {secondBannerImage && <img src={resolveMediaUrl(secondBannerImage)} alt="Second banner preview" className="w-full h-full object-contain" />}
+            </div>
+            <div className="flex gap-2">
+              <input value={secondBannerImage} onChange={event => setSecondBannerImage(event.target.value)} placeholder="Banner image URL..." className={`flex-1 ${inputCls}`} />
+              <label className="px-4 py-3 bg-[#0d1117] border border-[#30363D] rounded-xl text-gray-400 hover:text-[#2ee661] hover:border-[#2ee661]/40 transition-colors cursor-pointer">
+                <Upload size={16} />
+                <input type="file" accept="image/*" className="hidden" onChange={event => {
+                  const file = event.target.files?.[0];
+                  if (file) void handleSecondBannerFile(file);
+                  event.target.value = '';
+                }} />
               </label>
             </div>
           </div>
+        </div>
+      )}
+
+      {activeTab === 'home-products' && (
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-lg font-bold text-white">Product categories on Home</h3>
+            <p className="text-gray-500 text-sm mt-1">Select categories to show as product sections on the home page. Each section displays up to four live products from your catalog.</p>
+          </div>
+          {products.length === 0 ? (
+            <p className="rounded-xl border border-[#30363D] bg-[#161B22] p-4 text-sm text-gray-400">No catalog products are available yet. Add products with categories first.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {Array.from(new Set<string>(products.map(product => product.category.trim()).filter(Boolean))).sort().map(category => {
+                const checked = homeProductCategories.some(selected => matchesCategoryName(selected, category));
+                return (
+                  <label key={category} className="flex items-center gap-2 rounded-lg bg-[#161B22] border border-[#30363D] px-3 py-3 text-sm text-gray-300 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => setHomeProductCategories(checked
+                        ? homeProductCategories.filter(selected => !matchesCategoryName(selected, category))
+                        : [...homeProductCategories, category])}
+                      className="accent-[#2ee661]"
+                    />
+                    {category}
+                  </label>
+                );
+              })}
+            </div>
+          )}
+          <p className="text-xs text-gray-500">{homeProductCategories.length} categories selected</p>
         </div>
       )}
 
@@ -292,6 +349,46 @@ export default function AdminHomePage({ onSaved }: { onSaved?: () => void }) {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {activeTab === 'pc-build-categories' && (
+        <div className="space-y-5">
+          <p className="text-gray-500 text-sm">Choose the database product categories allowed in each Build My PC section. Products outside the selected categories will not appear in that section.</p>
+          {BUILD_CATEGORIES.map(buildCategory => {
+            const selectedCategories = pcBuildCategoryMap[buildCategory.id] || [];
+            return (
+              <section key={buildCategory.id} className="bg-[#161B22] border border-[#30363D] rounded-2xl p-5">
+                <h3 className="text-white font-bold mb-4">{buildCategory.name}</h3>
+                {categories.length === 0 ? (
+                  <p className="text-sm text-amber-400">No database categories are available to assign.</p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                    {categories.map(category => {
+                      const checked = selectedCategories.includes(category.name);
+                      return (
+                        <label key={category.id} className="flex items-center gap-2 rounded-lg bg-[#0d1117] border border-[#30363D] px-3 py-2 text-sm text-gray-300 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => setPcBuildCategoryMap({
+                              ...pcBuildCategoryMap,
+                              [buildCategory.id]: checked
+                                ? selectedCategories.filter(name => name !== category.name)
+                                : [...selectedCategories, category.name],
+                            })}
+                            className="accent-[#2ee661]"
+                          />
+                          {category.name}
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+                <p className="text-xs text-gray-500 mt-3">{selectedCategories.length} categories selected</p>
+              </section>
+            );
+          })}
         </div>
       )}
 

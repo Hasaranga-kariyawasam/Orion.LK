@@ -6,11 +6,12 @@ import HeroCarousel from '../components/HeroCarousel';
 import { useAdmin } from '../context/AdminContext';
 import { resolveMediaUrl } from '../lib/api';
 import { getActiveSpecialOffers, getOfferProduct } from '../lib/specialOffers';
+import { matchesCategoryName } from '../lib/homeProductSections';
 import { Truck, Smile, ShieldCheck, Award, CheckCircle, ChevronLeft, ChevronRight, Play, Youtube, Volume2, VolumeX, ArrowRight } from 'lucide-react';
 import { motion } from 'motion/react';
 
 
-const AnimatedSection = ({ children, className }: { children: React.ReactNode, className?: string, delay?: number }) => (
+const AnimatedSection = ({ children, className }: { children: React.ReactNode, className?: string, delay?: number, key?: React.Key }) => (
   <section className={className}>
     {children}
   </section>
@@ -78,10 +79,11 @@ const getYouTubeEmbedUrl = (value: string) => {
 const FALLBACK_VIDEO_URL = 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4';
 
 export default function Home() {
-  const { videoUrl, heroImages, accessories, featuredImages, pcBuildCards, homePromoCards, brandBanner, brands, categories, products, bestSellerIds, specialOffers, specialOffersDeadline, whatsappNumber, storeAddress, refreshHomeSettings, homeSettingsReady } = useAdmin();
+  const { videoUrl, heroImages, accessories, featuredImages, pcBuildCards, homePromoCards, brandBanner, secondBannerImage, homeProductCategories, brands, categories, products, bestSellerIds, specialOffers, specialOffersDeadline, whatsappNumber, storeAddress, refreshHomeSettings, homeSettingsReady } = useAdmin();
   const [isMuted, setIsMuted] = useState(true);
   const [videoFailed, setVideoFailed] = useState(false);
   const [showVideoText, setShowVideoText] = useState(false);
+  const [failedBannerImages, setFailedBannerImages] = useState<string[]>([]);
   useEffect(() => {
     const refresh = () => {
       if (document.visibilityState === 'visible') void refreshHomeSettings();
@@ -196,6 +198,7 @@ export default function Home() {
   const campaignDeadline = specialOffersDeadline ? Date.parse(specialOffersDeadline) : NaN;
   const remainingSeconds = Number.isFinite(campaignDeadline) ? Math.max(0, Math.floor((campaignDeadline - now) / 1000)) : 0;
   const timeLeft = {
+    days: Math.floor(remainingSeconds / 86400),
     hours: Math.floor((remainingSeconds % 86400) / 3600),
     mins: Math.floor((remainingSeconds % 3600) / 60),
     secs: remainingSeconds % 60,
@@ -216,9 +219,38 @@ export default function Home() {
   const gamingPromo = homePromoCards[2];
   const keyboardsPromo = homePromoCards[3];
   const speakersPromo = homePromoCards[4];
+  const haylouBrand = brands.find(brand => brand.name.toLowerCase() === 'haylou');
+  const haylouProductImages = products
+    .filter(product => product.brand?.toLowerCase() === 'haylou' || product.name.toLowerCase().includes('haylou'))
+    .flatMap(product => product.images?.length ? product.images : [product.image])
+    .map(resolveMediaUrl)
+    .filter(Boolean);
+  const haylouBannerImages = Array.from(new Set([
+    resolveMediaUrl(brandBanner.image),
+    resolveMediaUrl(haylouBrand?.banner),
+    ...haylouProductImages,
+  ].filter(Boolean)));
+  const bannerImagesKey = [...haylouBannerImages, resolveMediaUrl(secondBannerImage)].join('|');
+  useEffect(() => setFailedBannerImages([]), [bannerImagesKey]);
+  const haylouBannerImage = haylouBannerImages.find(image => !failedBannerImages.includes(image));
+  const homeBannerImages = [
+    { image: haylouBannerImage, alt: 'Haylou banner' },
+    { image: resolveMediaUrl(secondBannerImage), alt: 'Second promotional banner' },
+  ].filter((banner): banner is { image: string; alt: string } =>
+    Boolean(banner.image) && !failedBannerImages.includes(banner.image)
+  );
 
   const laptopProducts = products.filter(p => p.category === 'Laptops' || p.category.toLowerCase().includes('laptop')).slice(0, 4);
   const displayLaptops = laptopProducts.length > 0 ? laptopProducts : products.slice(0, 4);
+  const homeProductSections = homeProductCategories
+    .map(selectedCategory => {
+      const categoryProducts = products.filter(product => matchesCategoryName(product.category, selectedCategory));
+      return {
+        category: categoryProducts[0]?.category || selectedCategory,
+        products: categoryProducts.slice(0, 4),
+      };
+    })
+    .filter(section => section.products.length > 0);
 
   useEffect(() => {
     const hideTextTimer = window.setTimeout(() => setShowVideoText(false), 5000);
@@ -530,25 +562,37 @@ export default function Home() {
           </div>
         </AnimatedSection>
 
-        {/* 9. Haylou Banner */}
-        <AnimatedSection className="max-w-7xl mx-auto px-4 mt-12 md:mt-16 mb-8">
-          <div
-            className="w-full bg-[#030816] rounded-2xl overflow-hidden relative shadow-md min-h-[250px] md:min-h-[350px] lg:min-h-[400px] flex items-center"
-            style={brandBanner.image ? {
-              backgroundImage: `linear-gradient(90deg, rgba(3,8,22,.92), rgba(3,8,22,.28)), url("${resolveMediaUrl(brandBanner.image)}")`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            } : undefined}
-          >
-            {!brandBanner.image && <div className="absolute inset-0 bg-gradient-to-r from-[#030816] via-[#091530] to-[#030816]" />}
-            <div className="relative z-10 p-8 md:p-16 max-w-2xl text-white">
-              <p className="font-medium tracking-[0.2em] text-sm mb-4">{brandBanner.brandName}</p>
-              <h3 className="text-4xl md:text-6xl font-black uppercase tracking-tight">{brandBanner.title}</h3>
-              <p className="text-[#8fb0ff] font-black text-xl md:text-3xl tracking-[0.15em] uppercase mt-2">{brandBanner.subtitle}</p>
-              <Link to={brandBanner.href || '/shop'} className="inline-flex bg-[#15803d] hover:bg-[#166534] text-white font-bold py-2.5 px-8 rounded mt-8 shadow-lg transition-transform hover:scale-105 text-sm">
-                {brandBanner.buttonText || 'Buy Now'}
+        {homeProductSections.map(section => (
+          <AnimatedSection key={section.category} className="max-w-7xl mx-auto px-4 mt-12 md:mt-16">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-black text-gray-900 uppercase">{section.category}</h2>
+              <Link to={`/shop?category=${encodeURIComponent(section.category)}`} className="text-xs font-bold text-gray-900 flex items-center gap-1 hover:text-black transition-colors">
+                View More <ChevronRight size={14} />
               </Link>
             </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {section.products.map((product, index) => (
+                <ProductCard key={product.id || index} product={product} index={index} />
+              ))}
+            </div>
+          </AnimatedSection>
+        ))}
+
+        {/* Home banners */}
+        <AnimatedSection className="max-w-7xl mx-auto px-4 mt-12 md:mt-16 mb-8">
+          <div className={`grid gap-6 ${homeBannerImages.length > 1 ? 'md:grid-cols-2' : 'grid-cols-1'}`}>
+            {homeBannerImages.map(banner => (
+              <div key={banner.image} className="w-full max-w-[740px] mx-auto aspect-[370/167] rounded-2xl overflow-hidden bg-white shadow-md">
+                <img
+                  src={banner.image}
+                  alt={banner.alt}
+                  loading="lazy"
+                  decoding="async"
+                  className="block w-full h-full object-contain"
+                  onError={() => setFailedBannerImages(previous => [...previous, banner.image])}
+                />
+              </div>
+            ))}
           </div>
         </AnimatedSection>
         {/* 7. Browse Laptops */}
@@ -601,6 +645,10 @@ export default function Home() {
                 {/* Red Countdown Timer */}
                 <div className="flex items-center gap-2.5">
                   <div className="bg-[#ea364c] text-white px-3.5 py-2 rounded-lg flex flex-col items-center min-w-[56px] shadow-lg">
+                    <span className="text-2xl font-black leading-none">{String(timeLeft.days).padStart(2, '0')}</span>
+                    <span className="text-[9px] uppercase font-black tracking-wider mt-1">DAYS</span>
+                  </div>
+                  <div className="bg-[#ea364c] text-white px-3.5 py-2 rounded-lg flex flex-col items-center min-w-[56px] shadow-lg">
                     <span className="text-2xl font-black leading-none">{String(timeLeft.hours).padStart(2, '0')}</span>
                     <span className="text-[9px] uppercase font-black tracking-wider mt-1">HOURS</span>
                   </div>
@@ -636,6 +684,9 @@ export default function Home() {
                   <span className="absolute top-3 left-3 z-10 bg-[#f0364c] text-white text-[10px] font-black uppercase px-2 py-1 rounded-md">{offer.badgeText}</span>
                 </div>
               ))}
+              {displayClearance.length === 0 && (
+                <p className="col-span-full py-10 text-center text-sm font-bold text-gray-400">No active special offers at the moment.</p>
+              )}
             </div>
 
             {/* Bottom Link */}

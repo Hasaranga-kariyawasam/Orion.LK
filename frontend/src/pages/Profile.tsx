@@ -10,7 +10,7 @@ import { formatLKR } from '../data';
 import { useShop } from '../context/ShopContext';
 import { useAuth } from '../context/AuthContext';
 import { getMyOrders, cancelMyOrder, ApiOrder, MongoAddress, formatAvatarUrl } from '../lib/api';
-import { updatePassword, auth } from '../lib/firebase';
+import { updatePassword, auth, reauthenticateWithPassword } from '../lib/firebase';
 
 const ORDER_STEPS = ['Pending', 'Processing', 'Shipped', 'Delivered'] as const;
 const ORDER_FILTERS = ['All', 'Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'] as const;
@@ -56,6 +56,7 @@ export default function Profile() {
   const [saveError, setSaveError] = useState('');
 
   // Password States
+  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [pwSaving, setPwSaving] = useState(false);
@@ -183,6 +184,11 @@ export default function Profile() {
       return;
     }
 
+    if (!currentPassword) {
+      setPwError('Enter your current password.');
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
       setPwError('Passwords do not match.');
       return;
@@ -191,8 +197,10 @@ export default function Profile() {
     setPwSaving(true);
     try {
       if (auth.currentUser) {
+        await reauthenticateWithPassword(auth.currentUser, currentPassword);
         await updatePassword(auth.currentUser, newPassword);
         setPwSuccess(true);
+        setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
         setTimeout(() => setPwSuccess(false), 3000);
@@ -200,6 +208,8 @@ export default function Profile() {
     } catch (err: any) {
       if (err.code === 'auth/requires-recent-login') {
         setPwError('For security, please log out and log back in before changing your password.');
+      } else if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        setPwError('Your current password is incorrect.');
       } else {
         setPwError(err.message || 'Failed to change password.');
       }
@@ -604,7 +614,20 @@ export default function Profile() {
                             <div>
                               <h3 className="text-xs font-black uppercase tracking-wider text-gray-500 mb-2">Products</h3>
                               <div className="space-y-2">
-                                {order.items.map((item, index) => <div key={index} className="flex gap-2 items-center"><div className="w-10 h-10 bg-white rounded-lg border border-gray-100 overflow-hidden shrink-0">{item.image && <img src={item.image} alt={item.name} className="w-full h-full object-cover" />}</div><div className="min-w-0"><p className="text-xs font-bold text-gray-900 truncate">{item.name}</p><p className="text-[10px] text-gray-500">Qty {item.quantity} · {formatLKR(item.price)}</p></div></div>)}
+                                {order.items.map((item, index) => (
+                                  <div key={index} className="flex gap-2 items-center">
+                                    <div className="w-10 h-10 bg-white rounded-lg border border-gray-100 overflow-hidden shrink-0">{item.image && <img src={item.image} alt={item.name} className="w-full h-full object-cover" />}</div>
+                                    <div className="min-w-0 flex-1">
+                                      <p className="text-xs font-bold text-gray-900 truncate">{item.name}</p>
+                                      <p className="text-[10px] text-gray-500">Qty {item.quantity} · {formatLKR(item.price)}</p>
+                                    </div>
+                                    {order.status === 'Delivered' && item.productId && (
+                                      <Link to={`/product/${item.productId}?tab=reviews`} className="shrink-0 rounded-lg border border-green-200 bg-green-50 px-2.5 py-1.5 text-[10px] font-black uppercase text-green-700 hover:bg-green-100">
+                                        Review
+                                      </Link>
+                                    )}
+                                  </div>
+                                ))}
                               </div>
                             </div>
                             <div>
@@ -1131,6 +1154,17 @@ export default function Profile() {
 
               <form onSubmit={handleChangePassword} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Current Password</label>
+                    <input
+                      type="password"
+                      autoComplete="current-password"
+                      value={currentPassword}
+                      onChange={e => setCurrentPassword(e.target.value)}
+                      required
+                      className="w-full p-3 rounded-xl border border-gray-200 focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-all bg-gray-50 focus:bg-white text-gray-900 text-sm"
+                    />
+                  </div>
                   <div>
                     <label className="block text-xs font-bold text-gray-700 uppercase mb-2">New Password</label>
                     <input

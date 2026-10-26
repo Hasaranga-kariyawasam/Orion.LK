@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { Product } from '../types';
 import { inferProductType } from '../lib/productClassification';
+import { BUILD_CATEGORIES, BUILD_CATEGORY_DEFAULT_KEYWORDS } from '../lib/buildCategories';
 import {
   getAllUsersFromDb,
   fetchProducts,
@@ -175,6 +176,12 @@ interface AdminContextType {
   setHomePromoCards: (cards: HomePromoCard[]) => void;
   brandBanner: BrandBanner;
   setBrandBanner: (banner: BrandBanner) => void;
+  secondBannerImage: string;
+  setSecondBannerImage: (image: string) => void;
+  homeProductCategories: string[];
+  setHomeProductCategories: (categories: string[]) => void;
+  pcBuildCategoryMap: Record<string, string[]>;
+  setPcBuildCategoryMap: (mapping: Record<string, string[]>) => void;
   brands: Brand[];
   setBrands: (brands: Brand[]) => void;
   saveSettings: () => Promise<void>;
@@ -319,6 +326,13 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     buttonText: 'Buy Now',
     href: '/shop?search=Haylou',
   });
+  const [secondBannerImage, setSecondBannerImage] = useState('');
+  const [homeProductCategories, setHomeProductCategories] = useState<string[]>([
+    'Speakers',
+    'Smart Watches',
+  ]);
+  const [pcBuildCategoryMap, setPcBuildCategoryMap] = useState<Record<string, string[]>>({});
+  const [pcBuildCategoryMapConfigured, setPcBuildCategoryMapConfigured] = useState(false);
   const [brands, setBrands] = useState<Brand[]>(() => loadState('admin_brands', []));
   const [products, setProducts] = useState<AdminProductItem[]>([]);
   const [productsLoading, setProductsLoading] = useState(true);
@@ -424,6 +438,19 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       }));
       setCategories(mapped);
       localStorage.setItem('admin_categories', JSON.stringify(mapped));
+      if (!pcBuildCategoryMapConfigured) {
+        const suggestedMapping = Object.fromEntries(BUILD_CATEGORIES.map(buildCategory => [
+          buildCategory.id,
+          mapped
+            .filter(category => {
+              if (category.productType !== 'pc' || buildCategory.id === 'more') return false;
+              const categoryName = category.name.toLowerCase();
+              return BUILD_CATEGORY_DEFAULT_KEYWORDS[buildCategory.id].some(keyword => categoryName.includes(keyword));
+            })
+            .map(category => category.name),
+        ]));
+        setPcBuildCategoryMap(suggestedMapping);
+      }
     } catch (e) {
       console.warn('Error refreshing categories:', e);
     }
@@ -704,6 +731,21 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           href: banner.href || '/shop?search=Haylou',
         });
       }
+      if (typeof settings.secondBannerImage === 'string') {
+        setSecondBannerImage(resolveMediaUrl(settings.secondBannerImage));
+      }
+      if (Array.isArray(settings.homeProductCategories)) {
+        setHomeProductCategories(settings.homeProductCategories.map(String));
+      }
+      if (settings.pcBuildCategoryMap && typeof settings.pcBuildCategoryMap === 'object') {
+        setPcBuildCategoryMapConfigured(true);
+        setPcBuildCategoryMap(Object.fromEntries(
+          Object.entries(settings.pcBuildCategoryMap).map(([key, values]) => [
+            key,
+            Array.isArray(values) ? values.map(String) : [],
+          ])
+        ));
+      }
       if (Array.isArray(settings.accessories) && settings.accessories.length > 0) {
         setAccessories((settings.accessories as Accessory[]).map(accessory => ({ ...accessory, image: resolveMediaUrl(accessory.image) })));
       }
@@ -736,6 +778,9 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     localStorage.setItem('admin_pcBuildCards', JSON.stringify(pcBuildCards));
     localStorage.setItem('admin_homePromoCards', JSON.stringify(homePromoCards));
     localStorage.setItem('admin_brandBanner', JSON.stringify(brandBanner));
+    localStorage.setItem('admin_secondBannerImage', JSON.stringify(secondBannerImage));
+    localStorage.setItem('admin_homeProductCategories', JSON.stringify(homeProductCategories));
+    localStorage.setItem('admin_pcBuildCategoryMap', JSON.stringify(pcBuildCategoryMap));
     localStorage.setItem('admin_brands', JSON.stringify(brands));
     localStorage.setItem('admin_products', JSON.stringify(products));
     localStorage.setItem('admin_orders', JSON.stringify(orders));
@@ -748,7 +793,7 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     localStorage.setItem('admin_address', JSON.stringify(storeAddress));
     localStorage.setItem('admin_bestsellers', JSON.stringify(bestSellerIds));
     const saved = await saveHomeSettingsApi({
-      heroImages, featuredImages, pcBuildCards, homePromoCards, brandBanner,
+      heroImages, featuredImages, pcBuildCards, homePromoCards, brandBanner, secondBannerImage, homeProductCategories, pcBuildCategoryMap,
       accessories, bestSellerIds, whatsappNumber, storeAddress,
       specialOffers, specialOffersDeadline,
     });
@@ -764,6 +809,9 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       pcBuildCards, setPcBuildCards,
       homePromoCards, setHomePromoCards,
       brandBanner, setBrandBanner,
+      secondBannerImage, setSecondBannerImage,
+      homeProductCategories, setHomeProductCategories,
+      pcBuildCategoryMap, setPcBuildCategoryMap,
       brands, setBrands,
       saveSettings,
       products, setProducts, productsLoading, productsError,

@@ -34,6 +34,9 @@ export interface HomeSettingsPayload {
     buttonText: string;
     href: string;
   };
+  secondBannerImage: string;
+  homeProductCategories: string[];
+  pcBuildCategoryMap: Record<string, string[]>;
   accessories: unknown[];
   bestSellerIds: string[];
   whatsappNumber: string;
@@ -62,6 +65,87 @@ export async function saveHomeSettings(settings: HomeSettingsPayload): Promise<H
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || 'Failed to save home page settings');
   return data.settings || settings;
+}
+
+export interface ApiProductReview {
+  _id: string;
+  id?: string;
+  productId: string;
+  userId: string;
+  customerName: string;
+  rating: number;
+  comment: string;
+  status: 'Pending' | 'Approved';
+  createdAt: string;
+  productName?: string;
+}
+
+export async function fetchProductReviews(productId: string): Promise<{
+  reviews: ApiProductReview[];
+  canReview: boolean;
+  alreadyReviewed: boolean;
+}> {
+  const authHeaders = await getAuthHeader();
+  const res = await fetch(`${API_BASE_URL}/api/reviews?productId=${encodeURIComponent(productId)}`, {
+    headers: authHeaders,
+    cache: 'no-store',
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Failed to load product reviews');
+  return {
+    reviews: data.reviews || [],
+    canReview: Boolean(data.canReview),
+    alreadyReviewed: Boolean(data.alreadyReviewed),
+  };
+}
+
+export async function submitProductReview(input: {
+  productId: string;
+  rating: number;
+  comment: string;
+}): Promise<ApiProductReview> {
+  const authHeaders = await getAuthHeader();
+  if (!authHeaders.Authorization) throw new Error('Sign in to submit a review');
+  const res = await fetch(`${API_BASE_URL}/api/reviews`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders },
+    body: JSON.stringify(input),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Failed to submit product review');
+  return data.review;
+}
+
+export async function fetchAdminProductReviews(): Promise<ApiProductReview[]> {
+  const authHeaders = await getAuthHeader();
+  if (!authHeaders.Authorization) throw new Error('Sign in as an administrator to manage reviews');
+  const res = await fetch(`${API_BASE_URL}/api/reviews?admin=true`, {
+    headers: authHeaders,
+    cache: 'no-store',
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Failed to load product reviews');
+  return data.reviews || [];
+}
+
+export async function moderateProductReview(
+  reviewId: string,
+  action: 'approve' | 'pending' | 'delete',
+): Promise<void> {
+  const authHeaders = await getAuthHeader();
+  if (!authHeaders.Authorization) throw new Error('Sign in as an administrator to manage reviews');
+  const res = action === 'delete'
+    ? await fetch(`${API_BASE_URL}/api/reviews/${encodeURIComponent(reviewId)}`, {
+      method: 'DELETE',
+      headers: authHeaders,
+    })
+    : await fetch(`${API_BASE_URL}/api/reviews/${encodeURIComponent(reviewId)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      body: JSON.stringify({ status: action === 'approve' ? 'Approved' : 'Pending' }),
+    });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Failed to update product review');
 }
 
 async function getAuthHeader(): Promise<Record<string, string>> {

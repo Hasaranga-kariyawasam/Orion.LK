@@ -150,14 +150,14 @@ export default function Checkout() {
           addresses,
         });
         if (!updatedProfile) {
-          throw new Error('Profile address could not be saved');
+          console.warn('Checkout address could not be saved to the user profile; continuing with the current order address.');
         }
       }
 
       navigate('/payment');
     } catch (error) {
       console.error('Failed to save checkout details:', error);
-      setSaveError('We could not save your address to your profile. Please try again.');
+      setSaveError('We could not save your checkout details. Please check the information and try again.');
     } finally {
       setIsSaving(false);
     }
