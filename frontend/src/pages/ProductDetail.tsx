@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   Heart, ShoppingCart, Check, ShieldCheck, ChevronRight, Truck, Headset,
   Scale, Facebook, Twitter, Linkedin, MapPin, Star, Minus, Plus,
-  Bell, Zap, RefreshCw, MessageCircle, CheckCircle2, CreditCard
+  Bell, Zap, RefreshCw, MessageCircle, CheckCircle2, XCircle, CreditCard
 } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import FAQAccordion from '../components/FAQAccordion';
@@ -45,6 +45,8 @@ export default function ProductDetail() {
   const { user } = useAuth();
   const inWishlist = product ? isInWishlist(product.id) : false;
   const inCompare = product ? isInCompare(product.id) : false;
+  const availableStock = Number(product?.stock) || 0;
+  const isInStock = availableStock > 0 && !['out of stock', 'sold out'].includes(String(product?.status || '').toLowerCase());
 
   useEffect(() => {
     let isMounted = true;
@@ -142,6 +144,7 @@ export default function ProductDetail() {
   };
 
   const handleBuyNow = () => {
+    if (!isInStock) return;
     addToCart({ ...product, price: product.price * quantity });
     setIsCartOpen(false);
     navigate('/checkout');
@@ -245,8 +248,9 @@ export default function ProductDetail() {
 
             {/* Stock status & Warranty badge */}
             <div className="flex flex-wrap items-center gap-2 mb-4">
-              <span className="bg-emerald-50 text-emerald-700 text-xs font-black px-2.5 py-1 rounded-md border border-emerald-200 flex items-center gap-1">
-                <CheckCircle2 size={13} /> IN STOCK & READY TO SHIP
+              <span className={`${isInStock ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'} text-xs font-black px-2.5 py-1 rounded-md border flex items-center gap-1`}>
+                {isInStock ? <CheckCircle2 size={13} /> : <XCircle size={13} />}
+                {isInStock ? 'IN STOCK & READY TO SHIP' : 'OUT OF STOCK'}
               </span>
               <span className="bg-gray-100 text-gray-800 text-xs font-black px-2.5 py-1 rounded-md border border-gray-200 flex items-center gap-1">
                 <ShieldCheck size={13} /> {product.warranty ? product.warranty.toUpperCase() : '06 MONTHS OFFICIAL WARRANTY'}
@@ -382,7 +386,8 @@ export default function ProductDetail() {
                   <button
                     type="button"
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="px-3.5 text-gray-500 hover:text-black hover:bg-gray-100 h-full transition-colors"
+                    disabled={!isInStock}
+                    className="px-3.5 text-gray-500 hover:text-black hover:bg-gray-100 h-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <Minus size={16} />
                   </button>
@@ -394,8 +399,9 @@ export default function ProductDetail() {
                   />
                   <button
                     type="button"
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="px-3.5 text-gray-500 hover:text-black hover:bg-gray-100 h-full transition-colors"
+                    onClick={() => setQuantity(Math.min(availableStock, quantity + 1))}
+                    disabled={!isInStock || quantity >= availableStock}
+                    className="px-3.5 text-gray-500 hover:text-black hover:bg-gray-100 h-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <Plus size={16} />
                   </button>
@@ -404,15 +410,17 @@ export default function ProductDetail() {
                 <button
                   type="button"
                   onClick={handleBuyNow}
-                  className="flex-1 bg-[#161B22] text-white font-black uppercase tracking-wider text-xs sm:text-sm h-12 sm:h-14 rounded-xl hover:bg-[#0D1117] active:scale-[0.99] transition-all shadow-sm cursor-pointer"
+                  disabled={!isInStock}
+                  className="flex-1 bg-[#161B22] text-white font-black uppercase tracking-wider text-xs sm:text-sm h-12 sm:h-14 rounded-xl hover:bg-[#0D1117] active:scale-[0.99] transition-all shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   BUY NOW
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => addToCart({ ...product, price: product.price * quantity })}
-                  className="w-12 sm:w-14 h-12 sm:h-14 bg-[#161B22] text-white rounded-xl flex items-center justify-center hover:bg-[#0D1117] active:scale-[0.99] transition-all shrink-0 shadow-sm group cursor-pointer"
+                  onClick={() => { if (isInStock) addToCart({ ...product, price: product.price * quantity }); }}
+                  disabled={!isInStock}
+                  className="w-12 sm:w-14 h-12 sm:h-14 bg-[#161B22] text-white rounded-xl flex items-center justify-center hover:bg-[#0D1117] active:scale-[0.99] transition-all shrink-0 shadow-sm group cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   title="Add to Cart"
                 >
                   <ShoppingCart size={20} strokeWidth={2.2} className="group-hover:scale-110 transition-transform" />
